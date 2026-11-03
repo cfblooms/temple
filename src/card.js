@@ -1,5 +1,4 @@
 // 拍立得祈福卡：畫到 canvas，輸出 PNG。
-import { avatarSVGString } from './avatar.js';
 import { cn } from './fortunes.js';
 import hallBg from './assets/hall-bg.webp';
 
@@ -53,8 +52,9 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
 
   // 人偶
   try {
-    const img = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(avatarSVGString(avatar, 400, 480)));
-    g.drawImage(img, 160, py + 40, 400, 480);
+    const img = await loadImg(avatar);
+    const h = 400, w = img.width * h / img.height;
+    g.drawImage(img, 360 - w / 2, py + ph - 40 - h, w, h);
   } catch {}
 
   g.fillStyle = '#FFF1C8'; g.font = `30px ${UI}`; g.textAlign = 'left';

@@ -1,6 +1,6 @@
 import './style.css';
 import { SCENE_SVG } from './scene.js';
-import { OPTIONS, DEFAULT_AVATAR, avatarMarkup } from './avatar.js';
+import { CHARS, DEFAULT_CHAR, charById } from './chars.js';
 import { FORTUNES, CATEGORIES, DAILY, cn } from './fortunes.js';
 import { initFx, emit, burst, onTick, REDUCED_MOTION } from './fx.js';
 import * as sfx from './audio.js';
@@ -18,7 +18,7 @@ const rand = (a, b) => a + Math.random() * (b - a);
 /* ---------- 存檔（只存在這支手機的瀏覽器） ---------- */
 const KEY = 'cyber-temple.v1';
 const state = {
-  name: '香客', avatar: { ...DEFAULT_AVATAR }, muted: false,
+  name: '香客', char: DEFAULT_CHAR, muted: false,
   fish: 0, streak: 0, lastCheckin: '', affection: 0,
   fortune: null, // { no, cat, wish, date }
 };
@@ -75,8 +75,12 @@ const svg = $('#sceneHost svg');
 const S = (id) => svg.getElementById ? svg.getElementById(id) : svg.querySelector('#' + id);
 
 function paintAvatar() {
-  S('avatarSlot').innerHTML = avatarMarkup(state.avatar);
-  $('#meThumb').innerHTML = avatarMarkup(state.avatar);
+  const c = charById(state.char);
+  const el = S('avatarImg'), h = 142 * c.scale, w = 130 * c.scale;
+  el.setAttribute('href', c.kneel);
+  el.setAttribute('width', w); el.setAttribute('height', h);
+  el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 538 - h);
+  $('#meThumb').src = c.face;
   $('#meName').textContent = state.name;
 }
 paintAvatar();
@@ -338,7 +342,7 @@ async function openCard() {
   const f = state.fortune && FORTUNES.find((x) => x.no === state.fortune.no);
   const cat = state.fortune && (CATEGORIES.find((c) => c.id === state.fortune.cat) || CATEGORIES[0]);
   const dIdx = [...dayKey()].reduce((a, c) => a + c.charCodeAt(0), 0) % DAILY.length;
-  const url = await renderCard({ avatar: state.avatar, name: state.name, dateLine, fortune: f, category: cat?.name, wish: state.fortune?.wish, daily: DAILY[dIdx], bg: hallImg() });
+  const url = await renderCard({ avatar: charById(state.char).kneel, name: state.name, dateLine, fortune: f, category: cat?.name, wish: state.fortune?.wish, daily: DAILY[dIdx], bg: hallImg() });
   if ($('#sheet').hidden) return;
   const shareText = f
     ? `我在心靈大廟抽到第${cn(f.no)}籤「${f.title}」${f.level}：${f.poem.join('，')}。`
@@ -439,31 +443,24 @@ function greetDeity() {
   say(DAILY[i], 'god');
 }
 
-/* ---------- 捏人偶 ---------- */
+/* ---------- 選角色 ---------- */
 function openAvatar() {
-  const draft = { ...DEFAULT_AVATAR, ...state.avatar };
-  const swatches = (group, list) => `<div class="chips" data-swatch="${group}">${list.map((c) => `<button type="button" class="swatch" style="background:${c}" data-v="${c}" aria-label="${{ skin: '膚色', hairColor: '髮色', eyeColor: '瞳色' }[group]} ${c}" aria-pressed="${draft[group] === c}"></button>`).join('')}</div>`;
-  const body = openSheet('捏我的 Q 版人偶', `
-    <div class="av-preview"><svg viewBox="0 0 100 120" id="avPrev" aria-label="人偶預覽">${avatarMarkup(draft)}</svg></div>
+  let pick = charById(state.char).id;
+  const body = openSheet('選我的人偶', `
     <label class="field"><span>暱稱</span><input type="text" id="avName" maxlength="12" value="${esc(state.name)}"></label>
-    <div class="field"><span>髮型</span>${chipGroup('hair', OPTIONS.hair, draft.hair)}</div>
-    <div class="field"><span>髮色</span>${swatches('hairColor', OPTIONS.hairColor)}</div>
-    <div class="field"><span>膚色</span>${swatches('skin', OPTIONS.skin)}</div>
-    <div class="field"><span>眼睛</span>${chipGroup('eyes', OPTIONS.eyes, draft.eyes)}</div>
-    <div class="field"><span>瞳色</span>${swatches('eyeColor', OPTIONS.eyeColor)}</div>
-    <div class="field"><span>穿著</span>${chipGroup('outfit', OPTIONS.outfit, draft.outfit)}</div>
-    <div class="field"><span>配件</span>${chipGroup('acc', OPTIONS.acc, draft.acc)}</div>
-    <p class="hint">這是免費版人偶（方案 A）。上傳照片生成 3D 黏土人偶（方案 B）要接雲端 AI，之後再做。</p>
+    <div class="char-grid" role="radiogroup" aria-label="角色">${CHARS.map((c) => `
+      <button type="button" class="char" data-id="${c.id}" role="radio" aria-checked="${c.id === pick}">
+        <img src="${c.face}" alt="" loading="lazy"><span>${c.name}</span></button>`).join('')}
+    </div>
+    <p class="hint">之後會加「上傳照片，生成自己的人偶」。</p>
     <button class="btn" id="avSave">完成，回到大殿</button>`);
-  const repaint = () => { $('#avPrev', body).innerHTML = avatarMarkup(draft); };
-  bindChips(body, (g, v) => { draft[g] = v; repaint(); });
-  body.querySelectorAll('[data-swatch]').forEach((g) => g.addEventListener('click', (e) => {
-    const b = e.target.closest('button[data-v]'); if (!b) return;
-    g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
-    draft[g.dataset.swatch] = b.dataset.v; repaint();
-  }));
+  body.querySelector('.char-grid').addEventListener('click', (e) => {
+    const b = e.target.closest('.char'); if (!b) return;
+    pick = b.dataset.id;
+    body.querySelectorAll('.char').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+  });
   $('#avSave').addEventListener('click', () => {
-    state.avatar = draft; state.name = $('#avName').value.trim() || '香客'; save(); paintAvatar();
+    state.char = pick; state.name = $('#avName').value.trim() || '香客'; save(); paintAvatar();
     closeSheet(); say(`${esc(state.name)}，歡迎回到大殿。`);
   });
 }

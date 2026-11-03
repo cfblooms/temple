@@ -120,7 +120,7 @@ export const SCENE_SVG = (bg) => `
   </g>
 
   <!-- 人偶跪在拜墊上 -->
-  <svg id="avatarSlot" x="128" y="406" width="108" height="130" viewBox="0 0 100 120"></svg>
+  <image id="avatarImg" x="117" y="396" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
 
   <!-- 筊杯 -->
   <g id="jiaoLayer">${jiaoBlock('jiaoA')}${jiaoBlock('jiaoB')}</g>

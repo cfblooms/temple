@@ -47,7 +47,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 /* header */
 .top { display: flex; align-items: center; gap: 10px; }
 .me { display: flex; align-items: center; gap: 6px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 3px; }
-.me svg { width: 34px; height: 34px; border-radius: 50%; background: var(--chip); }
+.me img { width: 34px; height: 34px; border-radius: 50%; background: var(--chip); object-fit: cover; }
 .me-name { max-width: 6.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
 .lunar { flex: 1; min-width: 0; text-align: center; font-family: var(--font-serif); font-weight: 600; font-size: 13px; color: var(--muted); line-height: 1.25; }
 .lunar b { color: var(--red); font-weight: 900; }
@@ -193,3 +193,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
 #lunar{cursor:pointer}
+
+.char-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; }
+.char { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border-radius: 14px; border: 2px solid transparent; background: var(--chip); font: inherit; font-size: 12px; color: inherit; cursor: pointer; }
+.char img { width: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; }
+.char[aria-checked="true"] { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 25%, var(--chip)); }
