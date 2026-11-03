@@ -6,6 +6,7 @@ import { initFx, emit, burst, onTick, REDUCED_MOTION } from './fx.js';
 import * as sfx from './audio.js';
 import { renderCard } from './card.js';
 import { FURNACE_SVG, bindJoss } from './joss.js';
+import { initCaishen } from './caishen.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
@@ -69,6 +70,7 @@ $('#sceneHost').innerHTML = SCENE_SVG(hallImg());
 $('#lunar').addEventListener('click', () => {
   festive = !festive;
   $('#hallBg').setAttribute('href', hallImg());
+  cai.setFestive(festive);
   say(festive ? '這是過年過節的廟：紅燈籠全掛上了。再點一次農曆換回平日。' : '換回平日的廟。');
 });
 initFx($('#fx'));
@@ -655,7 +657,7 @@ const AREAS = [
   { id: 'jigong', name: '濟公解憂林', x: 25.3, y: 20.5, w: 12.5, info: '濟公解憂林：讓濟公師父用破芭蕉扇拍散執念，跳出看破人生的語錄。' },
   { id: 'yuelao', name: '月老閣', x: 79.1, y: 20.5, w: 11, info: '月老閣：抽清醒戀愛籤，和另一半一起綁定連理紅燭。' },
   { id: 'wenchang', name: '文昌閣', x: 14.4, y: 31.3, w: 9, info: '文昌閣：求考運，准考證順時針過香爐三圈。' },
-  { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
+  { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, main: true, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
   { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
   { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, info: '流水席紅圓桌：全服一起湊菜，湊滿就開席。' },
   { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
@@ -676,25 +678,36 @@ function buildMap() {
     const b = e.target.closest('[data-area]'); if (!b) return;
     const a = AREAS.find((x) => x.id === b.dataset.area);
     if (a.id === 'hall') { showHall(); return; }
+    if (a.id === 'caishen') { showCai(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中，目前開放的是正殿。`);
+    say(`${a.info}這一區還在興建中，目前開放的是正殿和財神聚寶閣。`);
   });
 }
 
 function showMap() {
-  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#mapView').hidden = false;
+  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#mapView').hidden = false;
   $('#btnMap').hidden = true;
-  say('這是心靈大廟全區。從山門走進來，正殿已經開放參拜，其他殿堂陸續興建中。點紅色的「正殿」進去吧。');
+  say('這是心靈大廟全區。從山門走進來，正殿和右邊的財神聚寶閣已經開放，其他殿堂陸續興建中。點紅色的標籤進去吧。');
 }
 
 function showHall() {
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#bar').hidden = false;
+  $('#sceneHost').hidden = false; $('#caiHost').hidden = true; $('#caiBar').hidden = true;
   $('#btnMap').hidden = false;
   sfx.bowl();
   greet();
   markNext();
 }
+function showCai() {
+  $('#mapView').hidden = true; $('#bar').hidden = true; $('#sceneHost').hidden = true;
+  $('#sceneWrap').hidden = false; $('#caiHost').hidden = false; $('#caiBar').hidden = false;
+  $('#btnMap').hidden = false;
+  sfx.bowl();
+  cai.enter(charById(state.char));
+}
 $('#btnMap').addEventListener('click', showMap);
+const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
+cai.setFestive(festive);
 buildMap();
 
 showMap();

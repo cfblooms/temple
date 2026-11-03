@@ -91,7 +91,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .hall-hit { position: absolute; left: 33%; top: 33%; width: 36%; height: 17%; background: transparent; border: 0; border-radius: 12px; }
 .plaque { position: absolute; left: 51.1%; top: 85.3%; transform: translate(-50%, -50%); width: 14%; padding: .25cqw 0; background: #5A2318; color: #FFE29A; border: .3cqw solid #E6B85C; border-radius: .6cqw; font-size: 1.9cqw; letter-spacing: .4cqw; text-align: center; pointer-events: none; }
 .scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.5581); aspect-ratio: 360 / 645; max-width: 100%; border-radius: 26px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
-#sceneHost, #sceneHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#sceneHost, #sceneHost svg, #caiHost, #caiHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hit { cursor: pointer; outline: none; }
 .hit:focus-visible { filter: drop-shadow(0 0 4px #FFE08A) drop-shadow(0 0 2px #FFE08A); }
@@ -217,3 +217,22 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .offer.pop { transform-box: fill-box; transform-origin: 50% 100%; animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 @keyframes offerPop { from { transform: translateY(-14px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .offer.pop { animation: none; } }
+
+/* ---------- 財神聚寶閣 ---------- */
+#caiHost[hidden], #sceneHost[hidden] { display: none; }
+.cai-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+.bar.cai-bar { grid-template-columns: repeat(4, 1fr); }
+.cai-ingot, .cai-bowl, .cai-coin { transform-box: fill-box; transform-origin: 50% 80%; cursor: pointer; }
+.cai-coin { cursor: grab; }
+.cai-ingot.rub { transform: scale(1.04, .97); }
+.cai-ingot.wiggle { animation: wiggle .5s ease-in-out 2; }
+.cai-ingot.glow { animation: caiGlow 1.4s ease-out; }
+@keyframes caiGlow { 0% { filter: brightness(1); } 30% { filter: brightness(1.45) drop-shadow(0 0 6px #FFE08A); } 100% { filter: brightness(1); } }
+.cai-bowl.bounce { animation: jelly .55s ease-out; }
+.cai-hb { position: relative; width: 150px; margin: 4px auto 10px; text-align: center; }
+.cai-hb img { width: 140px; height: auto; display: block; margin: 0 auto; }
+.cai-hb b { position: absolute; left: 0; right: 0; top: 44%; color: var(--gold); font-size: 22px; letter-spacing: 2px; text-shadow: 0 1px 2px rgb(0 0 0 / .4); }
+.cai-jiao { display: flex; justify-content: center; gap: 18px; align-items: center; height: 70px; margin: 6px 0; }
+.cai-jiao img { width: 56px; height: auto; }
+.cai-jiao img.flat { width: 40px; transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .cai-ingot.wiggle, .cai-ingot.glow, .cai-bowl.bounce { animation: none; } }
