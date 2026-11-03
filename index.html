@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>心靈大廟</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Q 版賽博廟宇：點燭、上香、擲筊、抽籤、摸虎爺、做祈福卡。">
+<meta name="theme-color" content="#7A1E1A">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&family=Noto+Serif+TC:wght@600;900&display=swap">
+</head>
+<body>
+<div class="app" id="app">
+  <header class="top">
+    <button class="me" id="btnAvatar" aria-label="編輯我的人偶">
+      <svg viewBox="8 6 84 76" id="meThumb" aria-hidden="true"></svg>
+      <span class="me-name" id="meName">香客</span>
+    </button>
+    <div class="lunar" id="lunar"></div>
+    <div class="top-right">
+      <span class="fish" title="開運小魚乾" aria-label="開運小魚乾數量"><svg viewBox="0 0 24 14" aria-hidden="true"><path d="M2 7c4-6 11-6 15 0-4 6-11 6-15 0z" fill="var(--gold)"/><path d="M17 7l5-4v8z" fill="var(--gold)"/><circle cx="6" cy="6" r="1.2" fill="var(--ink)"/></svg><b id="fishCount">0</b></span>
+      <button class="icon-btn" id="btnMute" aria-label="關閉聲音">聲</button>
+    </div>
+  </header>
+
+  <div class="say" id="say" role="status" aria-live="polite">
+    <span class="say-who" id="sayWho">廟公</span>
+    <span class="say-text" id="sayText">歡迎來參拜。順序是點燭、上香，再抽籤；擲筊可以隨時問神明。</span>
+  </div>
+
+  <main class="stage">
+    <div class="scene-wrap" id="sceneWrap">
+      <div id="sceneHost"></div>
+      <canvas id="fx" aria-hidden="true"></canvas>
+    </div>
+  </main>
+
+  <nav class="bar" aria-label="參拜動作">
+    <button data-act="candle"><svg viewBox="0 0 24 24"><path d="M12 2c2 3 2 5 0 6-2-1-2-3 0-6z" fill="var(--gold)"/><rect x="7" y="9" width="10" height="12" rx="4" fill="var(--red)"/></svg><span>點燭</span></button>
+    <button data-act="incense"><svg viewBox="0 0 24 24"><path d="M8 13l-2-10M12 13V2M16 13l2-10" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/><path d="M4 13h16l-2 7H6z" fill="var(--gold)"/></svg><span>上香</span></button>
+    <button data-act="jiao"><svg viewBox="0 0 24 24"><path d="M2 12c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)"/><path d="M13 14c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)" opacity=".7"/></svg><span>擲筊</span></button>
+    <button data-act="draw"><svg viewBox="0 0 24 24"><rect x="6" y="9" width="12" height="13" rx="2" fill="var(--jade)"/><path d="M9 10V3M12 10V1.5M15 10V4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg><span>抽籤</span></button>
+    <button data-act="card"><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.4"/><rect x="7" y="5" width="10" height="9" fill="var(--red)"/><rect x="13" y="16" width="4" height="4" fill="var(--red)"/></svg><span>祈福卡</span></button>
+  </nav>
+</div>
+
+<div class="sheet-back" id="sheetBack" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="sheet-head">
+    <h2 id="sheetTitle"></h2>
+    <button class="icon-btn" id="sheetClose" aria-label="關閉">✕</button>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</section>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
