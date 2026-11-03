@@ -1,6 +1,7 @@
 // 拍立得祈福卡：畫到 canvas，輸出 PNG。
 import { avatarSVGString } from './avatar.js';
 import { cn } from './fortunes.js';
+import hallBg from './assets/hall-bg.webp';
 
 const SERIF = '"Noto Serif TC", "Songti TC", serif';
 const UI = '"Huninn", "PingFang TC", "Microsoft JhengHei", sans-serif';
@@ -38,6 +39,7 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
   const bg = g.createLinearGradient(0, py, 0, py + ph);
   bg.addColorStop(0, '#F59A86'); bg.addColorStop(1, '#C9504C');
   g.fillStyle = bg; g.fillRect(px, py, pw, ph);
+  try { const hb = await loadImg(hallBg); const sh = hb.width * ph / pw; g.drawImage(hb, 0, hb.height * 0.36 - sh / 2, hb.width, sh, px, py, pw, ph); } catch {}
   const halo = g.createRadialGradient(360, 300, 10, 360, 300, 300);
   halo.addColorStop(0, 'rgba(255,225,150,.75)'); halo.addColorStop(.55, 'rgba(242,185,74,.2)'); halo.addColorStop(1, 'rgba(242,185,74,0)');
   g.fillStyle = halo; g.fillRect(px, py, pw, ph);
@@ -45,7 +47,7 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
   for (let i = 0; i < 40; i++) { const x = px + 20 + ((i * 97) % (pw - 40)), y = py + 20 + ((i * 53) % (ph - 40)); g.beginPath(); g.arc(x, y, (i % 3) + 1.2, 0, Math.PI * 2); g.fill(); }
 
   // 地面＋拜墊
-  g.fillStyle = '#E3A880'; g.fillRect(px, py + ph - 110, pw, 110);
+  g.fillStyle = 'rgba(40,20,10,.25)'; g.fillRect(px, py + ph - 110, pw, 110);
   g.fillStyle = '#E6B85C'; g.beginPath(); g.ellipse(360, py + ph - 52, 170, 36, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#D8A23A'; g.beginPath(); g.ellipse(360, py + ph - 52, 130, 24, 0, 0, Math.PI * 2); g.fill();
 

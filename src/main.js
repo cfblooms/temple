@@ -6,6 +6,7 @@ import { initFx, emit, burst, onTick, REDUCED_MOTION } from './fx.js';
 import * as sfx from './audio.js';
 import { renderCard } from './card.js';
 import mapUrl from './assets/temple-map.webp';
+import hallBg from './assets/hall-bg.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -54,7 +55,7 @@ function say(text, who = 'temple') {
 }
 
 /* ---------- 場景 ---------- */
-$('#sceneHost').innerHTML = SCENE_SVG;
+$('#sceneHost').innerHTML = SCENE_SVG(hallBg);
 initFx($('#fx'));
 const svg = $('#sceneHost svg');
 const S = (id) => svg.getElementById ? svg.getElementById(id) : svg.querySelector('#' + id);
@@ -81,7 +82,7 @@ function lightCandles(quiet) {
   sfx.pop(); setTimeout(sfx.pop, 160); sfx.buzz(8);
   for (const id of ['L', 'R']) {
     S('flame' + id).setAttribute('opacity', '1');
-    burst('spark', id === 'L' ? 80 : 280, 168, 14);
+    burst('spark', id === 'L' ? 106 : 258, 333, 14);
   }
   onTick((t) => {
     // 規格書的燭光公式：alpha = 0.8 + 0.2 * sin(time * frequency)
@@ -90,7 +91,7 @@ function lightCandles(quiet) {
     S('glowR').setAttribute('opacity', b.toFixed(3));
     S('flameL').setAttribute('transform', `translate(80 176) scale(${(0.95 + 0.07 * Math.sin(t * 11)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 9)).toFixed(3)})`);
     S('flameR').setAttribute('transform', `translate(280 176) scale(${(0.95 + 0.07 * Math.sin(t * 10 + 2)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 8 + 1)).toFixed(3)})`);
-    S('halo').setAttribute('opacity', (0.85 + 0.1 * Math.sin(t * 1.5)).toFixed(3));
+    S('halo').setAttribute('opacity', (0.45 + 0.12 * Math.sin(t * 1.5)).toFixed(3));
   });
   if (!quiet) say('兩支小胖蠟燭點亮了，殿裡暖起來了。接著上香吧。');
   markNext();
@@ -106,7 +107,7 @@ function offerIncense() {
   session.incenseUntil = Date.now() + BURN * 1000;
   S('incense').style.display = '';
   sfx.pop(); sfx.buzz(8);
-  burst('spark', 180, 165, 10);
+  burst('spark', 182, 305, 10);
   let acc = 0;
   onTick((t, dt) => {
     const left = (session.incenseUntil - Date.now()) / 1000;
@@ -122,7 +123,7 @@ function offerIncense() {
     if (acc > (REDUCED_MOTION ? 0.6 : 0.16)) {
       acc = 0;
       const i = Math.floor(Math.random() * 3), [x1, y1, x2, y2] = STICKS[i];
-      emit('smoke', x1 + (x2 - x1) * k, y1 + (y2 - y1) * k - 2);
+      emit('smoke', 2 + x1 + (x2 - x1) * k, 140 + y1 + (y2 - y1) * k - 2);
     }
   });
   say((auto ? '幫你先把燭點好了。' : '') + '三炷清香插進香爐，青煙裊裊往上飄。可以在心裡跟神明說說話，再來抽籤。');
@@ -145,8 +146,8 @@ function throwJiao() {
     const key = r < 0.5 ? 'sheng' : r < 0.75 ? 'xiao' : 'yin';
     const faces = [...JIAO[key].faces]; if (Math.random() < 0.5) faces.reverse();
     const blocks = [
-      { el: S('jiaoA'), x0: 166, y0: 470, x1: rand(138, 162), y1: rand(362, 376), spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
-      { el: S('jiaoB'), x0: 194, y0: 470, x1: rand(198, 222), y1: rand(366, 382), spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
+      { el: S('jiaoA'), x0: 172, y0: 480, x1: rand(132, 158), y1: rand(580, 596), spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
+      { el: S('jiaoB'), x0: 192, y0: 480, x1: rand(206, 232), y1: rand(584, 600), spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
     ];
     const dur = REDUCED_MOTION ? 0.2 : 0.95;
     let t0 = null, landed = false;
@@ -277,7 +278,7 @@ async function confirmStick() {
     say(`聖筊！神明確認就是第${cn(draft.no)}籤，去看籤詩吧。`, 'god');
     state.fortune = { no: draft.no, cat: draft.cat, wish: draft.wish, date: dayKey() };
     save(); markNext();
-    burst('spark', 180, 370, 18);
+    burst('spark', 182, 590, 18);
     await sleep(900);
     showFortune();
   } else {
@@ -348,7 +349,7 @@ function catHappy() {
   const tiger = S('tiger');
   S('catEyesOpen').style.display = 'none'; S('catEyesClosed').style.display = '';
   tiger.classList.remove('happy'); void tiger.getBoundingClientRect(); tiger.classList.add('happy');
-  burst('heart', 180, 280, 5);
+  burst('heart', 130, 420, 5);
   sfx.purr(); sfx.buzz([15, 30, 15, 30, 15]);
   clearTimeout(catHappy.t);
   catHappy.t = setTimeout(() => { S('catEyesOpen').style.display = ''; S('catEyesClosed').style.display = 'none'; tiger.classList.remove('happy'); }, 1600);
@@ -372,7 +373,7 @@ function petTiger() {
   state.affection += 1; save();
   const gain = checkin();
   if (gain) {
-    burst('fish', 180, 290, Math.min(gain, 5));
+    burst('fish', 130, 430, Math.min(gain, 5));
     say(`虎爺伸了個懶腰，叼來今天的開運小魚乾 ×${gain}！${state.streak % 7 === 0 ? '連續七天，加碼！' : `已連續參拜 ${state.streak} 天。`}${isYa ? '今天做牙，虎爺加菜雙倍。' : ''}點右上角小魚乾可以餵虎爺。`, 'cat');
   } else {
     const lines = ['呼嚕呼嚕……（虎爺翻出肚子）', '虎爺用頭蹭了蹭你的手。', '虎爺瞇起眼睛，鈴鐺叮了一聲。', '虎爺說：今天也辛苦了喵。', '虎爺把尾巴捲在你手上，看起來很放心。'];
@@ -403,8 +404,8 @@ function openTiger() {
       if (!state.fish) return;
       const before = level();
       state.fish -= 1; state.affection += 10; save(); updateFish();
-      catHappy(); burst('fish', 180, 300, 1);
-      emit('text', 180, 262, { text: '好感 +10', color: '#FFD0A0' });
+      catHappy(); burst('fish', 130, 435, 1);
+      emit('text', 130, 400, { text: '好感 +10', color: '#FFD0A0' });
       say(level() > before ? `虎爺好感升到 Lv.${level()}！祂把鈴鐺搖得叮叮響。` : '虎爺吃得津津有味，舔舔嘴巴。', 'cat');
       body.innerHTML = draw(); rebind();
     });
@@ -418,12 +419,12 @@ function ringQing() {
   const b = S('qingBowl');
   b.classList.remove('ring'); void b.getBoundingClientRect(); b.classList.add('ring');
   sfx.bowl(); sfx.buzz(200);
-  emit('text', 56, 400, { text: CALM[Math.floor(Math.random() * CALM.length)] });
+  emit('text', 309, 515, { text: CALM[Math.floor(Math.random() * CALM.length)] });
   say('噹——磬聲慢慢散開。跟著吸氣四秒，停兩秒，再吐氣四秒。');
 }
 function greetDeity() {
-  const h = S('halo'); h.setAttribute('opacity', '1');
-  burst('spark', 180, 125, 12);
+  const h = S('halo'); h.setAttribute('opacity', '.75');
+  burst('spark', 182, 290, 12);
   const i = Math.floor(Math.random() * DAILY.length);
   say(DAILY[i], 'god');
 }
