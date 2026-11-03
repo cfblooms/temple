@@ -76,10 +76,10 @@ const S = (id) => svg.getElementById ? svg.getElementById(id) : svg.querySelecto
 
 function paintAvatar() {
   const c = charById(state.char);
-  const el = S('avatarImg'), h = 142 * c.scale, w = 130 * c.scale;
+  const el = S('avatarImg'), h = 130 * c.scale, w = 120 * c.scale;
   el.setAttribute('href', c.kneel);
   el.setAttribute('width', w); el.setAttribute('height', h);
-  el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 538 - h);
+  el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h);
   $('#meThumb').src = c.face;
   $('#meName').textContent = state.name;
 }

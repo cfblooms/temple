@@ -41,9 +41,9 @@ const lantern = (x, cls) => `
   </g>`;
 
 const jiaoBlock = (id) => `
-  <g id="${id}" opacity="0">
-    <g class="face-flat"><image href="${jiaoFlat}" x="-14.3" y="-22" width="28.6" height="44" transform="rotate(90)"/></g>
-    <g class="face-round" style="display:none"><image href="${jiaoRound}" x="-14.3" y="-22" width="28.6" height="44" transform="rotate(90)"/></g>
+  <g id="${id}" opacity="0" filter="url(#toy)">
+    <g class="face-flat"><image href="${jiaoFlat}" x="-10.3" y="-15.8" width="20.6" height="31.7" transform="rotate(90)"/></g>
+    <g class="face-round" style="display:none"><image href="${jiaoRound}" x="-10.3" y="-15.8" width="20.6" height="31.7" transform="rotate(90)"/></g>
   </g>`;
 
 export const SCENE_SVG = (bg) => `
@@ -73,6 +73,15 @@ export const SCENE_SVG = (bg) => `
     <radialGradient id="redCushion" cx=".45" cy=".35" r=".7"><stop offset="0" stop-color="#FF9A8A"/><stop offset="1" stop-color="#D84A42"/></radialGradient>
     <linearGradient id="jiaoG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8564A"/><stop offset="1" stop-color="#A82A24"/></linearGradient>
     <filter id="toy" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="2.4" flood-color="#5A1A10" flood-opacity=".3"/></filter>
+    <!-- 把亮彩的 3D 人偶/道具調成跟正殿同樣的暖色逆光 -->
+    <filter id="lit" color-interpolation-filters="sRGB">
+      <feColorMatrix type="saturate" values=".82"/>
+      <feColorMatrix type="matrix" values=".93 .05 0 0 .01  .02 .82 0 0 0  0 .02 .66 0 0  0 0 0 1 0"/>
+      <feComponentTransfer><feFuncR type="gamma" amplitude="1" exponent="1.08"/><feFuncG type="gamma" amplitude="1" exponent="1.1"/><feFuncB type="gamma" amplitude="1" exponent="1.12"/></feComponentTransfer>
+    </filter>
+    <!-- 窗光從左邊來，影子往右下拖 -->
+    <filter id="cast" x="-50%" y="-50%" width="200%" height="200%"><feFlood flood-color="#1E0E05" flood-opacity=".5"/><feComposite in2="SourceAlpha" operator="in"/><feGaussianBlur stdDeviation="2.2"/></filter>
+    <radialGradient id="contact"><stop offset="0" stop-color="#1A0A04" stop-opacity=".7"/><stop offset="1" stop-color="#1A0A04" stop-opacity="0"/></radialGradient>
     <radialGradient id="floorShadow"><stop offset="0" stop-color="#2A1408" stop-opacity=".45"/><stop offset="1" stop-color="#2A1408" stop-opacity="0"/></radialGradient>
   </defs>
 
@@ -84,8 +93,8 @@ export const SCENE_SVG = (bg) => `
   <rect id="deity" class="hit" data-hit="deity" role="button" tabindex="0" aria-label="向神明問安" x="150" y="255" width="65" height="100" rx="20" fill="transparent"/>
 
   <!-- 供桌兩端的蠟燭 -->
-  <g transform="translate(34 182) scale(.9)">${candle(80, 'L')}</g>
-  <g transform="translate(6 182) scale(.9)">${candle(280, 'R')}</g>
+  <g transform="translate(54 238) scale(.65)" filter="url(#lit)">${candle(80, 'L')}</g>
+  <g transform="translate(76 238) scale(.65)" filter="url(#lit)">${candle(280, 'R')}</g>
 
   <!-- 香爐（背景圖裡的）與香 -->
   <g class="hit" data-hit="incense" role="button" tabindex="0" aria-label="上香">
@@ -99,29 +108,34 @@ export const SCENE_SVG = (bg) => `
   </g>
 
   <!-- 籤筒（放在左邊地上） -->
-  <ellipse cx="46" cy="562" rx="26" ry="7" fill="url(#floorShadow)"/>
+  <use href="#tubeScene" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 561) matrix(1 0 -1.3 .26 0 0) translate(0 -561)"/>
+  <ellipse cx="46" cy="561" rx="18" ry="4" fill="url(#contact)"/>
   <g class="hit" data-hit="draw" role="button" tabindex="0" aria-label="抽籤">
-    <g id="tubeScene"><image href="${tubeUrl}" x="30" y="479" width="32" height="82"/></g>
+    <g id="tubeScene" filter="url(#lit)"><image href="${tubeUrl}" x="30" y="479" width="32" height="82"/></g>
   </g>
 
   <!-- 橘貓虎爺（供桌下） -->
-  <ellipse cx="130" cy="470" rx="30" ry="7" fill="url(#floorShadow)"/>
+  <use href="#catBody" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 472) matrix(1 0 -1.3 .26 0 0) translate(0 -472)"/>
+  <ellipse cx="123" cy="471" rx="21" ry="4" fill="url(#contact)"/>
   <g id="tiger" class="hit" data-hit="tiger" role="button" tabindex="0" aria-label="摸摸虎爺">
-    <g class="cat-body">
-      <image id="catEyesOpen" href="${tigerAwake}" x="90" y="410" width="60" height="64"/>
-      <image id="catEyesClosed" href="${tigerHappy}" x="90" y="410" width="60" height="64" style="display:none"/>
+    <g class="cat-body" id="catBody" filter="url(#lit)">
+      <image id="catEyesOpen" href="${tigerAwake}" x="99" y="421" width="48" height="51"/>
+      <image id="catEyesClosed" href="${tigerHappy}" x="99" y="421" width="48" height="51" style="display:none"/>
     </g>
   </g>
 
   <!-- 磬（右邊地上） -->
-  <ellipse cx="305" cy="572" rx="38" ry="9" fill="url(#floorShadow)"/>
+  <use href="#qingImg" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 572) matrix(1 0 -1.3 .26 0 0) translate(0 -572)"/>
+  <ellipse cx="308" cy="571" rx="30" ry="6" fill="url(#contact)"/>
   <g class="hit" data-hit="qing" role="button" tabindex="0" aria-label="敲磬">
-    <g class="qing-bowl" id="qingBowl"><image href="${qingUrl}" x="270" y="506" width="80" height="68"/></g>
+    <g class="qing-bowl" id="qingBowl"><image id="qingImg" filter="url(#lit)" href="${qingUrl}" x="270" y="506" width="80" height="68"/></g>
   </g>
 
   <!-- 人偶跪在拜墊上 -->
-  <image id="avatarImg" x="117" y="396" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
+  <use href="#avatarImg" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 534) matrix(1 0 -1.3 .26 0 0) translate(0 -534)"/>
+  <ellipse cx="184" cy="533" rx="44" ry="7" fill="url(#contact)"/>
+  <image id="avatarImg" filter="url(#lit)" x="117" y="396" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
 
   <!-- 筊杯 -->
-  <g id="jiaoLayer">${jiaoBlock('jiaoA')}${jiaoBlock('jiaoB')}</g>
+  <g id="jiaoLayer" filter="url(#lit)">${jiaoBlock('jiaoA')}${jiaoBlock('jiaoB')}</g>
 </svg>`;
