@@ -7,6 +7,7 @@ import * as sfx from './audio.js';
 import { renderCard } from './card.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
+import hallFest from './assets/hall-festival.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -36,14 +37,20 @@ function lunar(d = new Date()) {
     const m = parts.find((p) => p.type === 'month').value, day = +parts.find((p) => p.type === 'day').value;
     const leap = /閏|bis/.test(m), mon = parseInt(m.replace(/\D/g, ''), 10);
     if (!mon || !day) return null;
-    return { text: `農曆${leap ? '閏' : ''}${LM[mon - 1]}月${LD(day)}`, day };
+    return { text: `農曆${leap ? '閏' : ''}${LM[mon - 1]}月${LD(day)}`, day, mon, leap };
   } catch { return null; }
 }
 const L = lunar();
 const isYa = !!L && (L.day === 2 || L.day === 16); // 初二、十六做牙
+// 節慶廟（方案三）：春節 正月初一～十五、媽祖生 三月廿三、中秋 八月十五、三太子 九月初九。中元不換紅燈籠。
+const FESTS = [[1, 1, 15, '春節'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕']];
+const fest = L && !L.leap ? FESTS.find(([m, a, b]) => L.mon === m && L.day >= a && L.day <= b) : null;
+let festive = !!fest;
+const hallImg = () => festive ? hallFest : hallBg;
 const today = new Date();
 const dateLine = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}${L ? '・' + L.text : ''}`;
-$('#lunar').innerHTML = L ? `${L.text}${isYa ? '<br><b>今日做牙</b>' : ''}` : '';
+const lunarLine = () => { $('#lunar').innerHTML = L ? `${L.text}${fest ? `<br><b>${fest[3]}</b>` : isYa ? '<br><b>今日做牙</b>' : ''}` : ''; };
+lunarLine();
 
 /* ---------- 對話列 ---------- */
 const WHO = { temple: ['廟公', ''], cat: ['虎爺', 'cat'], god: ['神明指引', 'god'] };
@@ -55,7 +62,13 @@ function say(text, who = 'temple') {
 }
 
 /* ---------- 場景 ---------- */
-$('#sceneHost').innerHTML = SCENE_SVG(hallBg);
+$('#sceneHost').innerHTML = SCENE_SVG(hallImg());
+// 點農曆可預覽平日／節慶兩種廟（試玩用）
+$('#lunar').addEventListener('click', () => {
+  festive = !festive;
+  $('#sceneHost svg image').setAttribute('href', hallImg());
+  say(festive ? '這是過年過節的廟：紅燈籠全掛上了。再點一次農曆換回平日。' : '換回平日的廟。');
+});
 initFx($('#fx'));
 const svg = $('#sceneHost svg');
 const S = (id) => svg.getElementById ? svg.getElementById(id) : svg.querySelector('#' + id);
@@ -328,7 +341,7 @@ async function openCard() {
   const f = state.fortune && FORTUNES.find((x) => x.no === state.fortune.no);
   const cat = state.fortune && (CATEGORIES.find((c) => c.id === state.fortune.cat) || CATEGORIES[0]);
   const dIdx = [...dayKey()].reduce((a, c) => a + c.charCodeAt(0), 0) % DAILY.length;
-  const url = await renderCard({ avatar: state.avatar, name: state.name, dateLine, fortune: f, category: cat?.name, wish: state.fortune?.wish, daily: DAILY[dIdx] });
+  const url = await renderCard({ avatar: state.avatar, name: state.name, dateLine, fortune: f, category: cat?.name, wish: state.fortune?.wish, daily: DAILY[dIdx], bg: hallImg() });
   if ($('#sheet').hidden) return;
   const shareText = f
     ? `我在心靈大廟抽到第${cn(f.no)}籤「${f.title}」${f.level}：${f.poem.join('，')}。`

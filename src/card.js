@@ -19,7 +19,7 @@ function wrap(g, text, maxW) {
   return lines;
 }
 
-export async function renderCard({ avatar, name, dateLine, fortune, category, wish, daily }) {
+export async function renderCard({ avatar, name, dateLine, fortune, category, wish, daily, bg: photo = hallBg }) {
   const W = 720, H = 1080;
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
@@ -39,7 +39,7 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
   const bg = g.createLinearGradient(0, py, 0, py + ph);
   bg.addColorStop(0, '#F59A86'); bg.addColorStop(1, '#C9504C');
   g.fillStyle = bg; g.fillRect(px, py, pw, ph);
-  try { const hb = await loadImg(hallBg); const sh = hb.width * ph / pw; g.drawImage(hb, 0, hb.height * 0.36 - sh / 2, hb.width, sh, px, py, pw, ph); } catch {}
+  try { const hb = await loadImg(photo); const sh = hb.width * ph / pw; g.drawImage(hb, 0, hb.height * 0.36 - sh / 2, hb.width, sh, px, py, pw, ph); } catch {}
   const halo = g.createRadialGradient(360, 300, 10, 360, 300, 300);
   halo.addColorStop(0, 'rgba(255,225,150,.75)'); halo.addColorStop(.55, 'rgba(242,185,74,.2)'); halo.addColorStop(1, 'rgba(242,185,74,0)');
   g.fillStyle = halo; g.fillRect(px, py, pw, ph);
