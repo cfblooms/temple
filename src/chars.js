@@ -8,7 +8,8 @@ const LIST = [
   ['hoodie', '帽T男孩'], ['shorthair', '皮衣女孩'], ['shades', '墨鏡女孩'], ['glam', '辣妹'],
   ['engineer', '工程師'], ['finance', '金融菁英'], ['lawyer', '律師'], ['driver', '司機大哥'],
   ['pilgrim', '進香團大叔'], ['pilgrim2', '進香阿伯'], ['bajiu', '8+9'], ['taimei', '小太妹'],
-  ['miaokou', '廟口少年'],
+  ['miaokou', '廟口少年'], ['farmer', '農夫阿伯'], ['worker', '工地大哥'], ['councilor', '議員'],
+  ['boss', '大老闆'], ['mama', '孕媽咪'],
 ];
 
 export const CHARS = LIST.map(([id, name, scale = 1]) => ({

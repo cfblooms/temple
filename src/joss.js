@@ -1,13 +1,11 @@
+import furnaceUrl from './assets/furnace.webp';
+import sheetUrl from './assets/joss-sheet.webp';
+import stackUrl from './assets/joss-stack.webp';
+
 // 廟埕金爐：把金紙一張一張拖進爐口化掉。自成一格的小 SVG 場景，自己跑粒子。
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const paper = (id, x, y, r = 0) => `
-  <g id="${id}" transform="translate(${x} ${y}) rotate(${r})">
-    <rect x="-34" y="-25" width="68" height="50" rx="3" fill="#E9CF96" stroke="#C9A060" stroke-width="1"/>
-    <rect x="-17" y="-15" width="34" height="30" rx="2" fill="url(#foilG)"/>
-    <rect x="-7" y="-7" width="14" height="14" rx="2" fill="none" stroke="#C0302A" stroke-width="1.6"/>
-    <text x="0" y="4.2" text-anchor="middle" font-family="Noto Serif TC, serif" font-weight="900" font-size="10" fill="#C0302A">福</text>
-  </g>`;
+const paper = (id, x, y, r = 0) => `<g id="${id}" transform="translate(${x} ${y}) rotate(${r})"><image href="${sheetUrl}" x="-29" y="-30" width="58" height="60"/></g>`;
 
 const flame = (x, h, w, d, cls) => `<path class="jf ${cls}" style="animation-delay:${d}s" d="M${x} 0 C${x + w} ${-h * .45} ${x + w * .4} ${-h * .8} ${x} ${-h} C${x - w * .4} ${-h * .8} ${x - w} ${-h * .45} ${x} 0 Z"/>`;
 
@@ -22,34 +20,20 @@ export const FURNACE_SVG = `
     <radialGradient id="heatG"><stop offset="0" stop-color="#FFB850" stop-opacity=".7"/><stop offset="1" stop-color="#FFB850" stop-opacity="0"/></radialGradient>
     <linearGradient id="jfG" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFE27A"/><stop offset=".6" stop-color="#FF8A2E"/><stop offset="1" stop-color="#E8452A"/></linearGradient>
     <filter id="jtoy" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#3A0E08" flood-opacity=".35"/></filter>
-    <clipPath id="mouthClip"><path d="M112 222 V180 Q150 140 188 180 V222 Z"/></clipPath>
+    <clipPath id="mouthClip"><path d="M128 228 V200 Q150 176 172 200 V228 Z"/></clipPath>
   </defs>
   <rect width="300" height="350" rx="18" fill="#4A1E16"/>
   <ellipse cx="150" cy="318" rx="140" ry="22" fill="#2E120C"/>
-  <circle id="heat" cx="150" cy="190" r="110" fill="url(#heatG)" opacity=".5"/>
-  <g filter="url(#jtoy)">
-    <!-- 煙囪與屋頂 -->
-    <rect x="132" y="22" width="36" height="40" rx="6" fill="url(#brickG)"/>
-    <path d="M118 30 Q150 6 182 30 Z" fill="url(#roofJ)"/>
-    <path d="M62 92 Q150 34 238 92 Q244 100 232 100 H68 Q56 100 62 92 Z" fill="url(#roofJ)"/>
-    <circle cx="150" cy="52" r="7" fill="url(#goldJ)"/>
-    <!-- 爐身 -->
-    <path d="M78 100 H222 Q232 100 232 112 V250 Q232 262 220 262 H80 Q68 262 68 250 V112 Q68 100 78 100 Z" fill="url(#brickG)"/>
-    <path d="M68 140 H232 M68 200 H232" stroke="#8E2A24" stroke-opacity=".35" stroke-width="2"/>
-    <rect x="62" y="252" width="176" height="20" rx="6" fill="url(#goldJ)"/>
-    <text x="150" y="126" text-anchor="middle" font-family="Noto Serif TC, serif" font-weight="900" font-size="15" fill="#FFE9A0" letter-spacing="4">天公金爐</text>
-    <!-- 爐口 -->
-    <path d="M108 226 V178 Q150 134 192 178 V226 Z" fill="url(#goldJ)"/>
-    <path d="M112 222 V180 Q150 140 188 180 V222 Z" fill="url(#mouthG)"/>
-    <g clip-path="url(#mouthClip)"><g id="fire" transform="translate(150 224)">
-      ${flame(-22, 34, 13, 0, 'a')}${flame(18, 40, 14, -.2, 'b')}${flame(-2, 54, 18, -.35, 'c')}
-      <path d="M-40 0 Q0 -12 40 0 Z" fill="#2A0C06"/>
-    </g></g>
-  </g>
+  <circle id="heat" cx="150" cy="205" r="90" fill="url(#heatG)" opacity=".5"/>
+  <!-- 金爐（Gemini 公仔圖），爐口在 (150, 205) -->
+  <image href="${furnaceUrl}" x="40" y="8" width="220" height="280" filter="url(#jtoy)"/>
+  <g clip-path="url(#mouthClip)"><g id="fire" transform="translate(150 226)">
+    ${flame(-12, 22, 9, 0, 'a')}${flame(10, 26, 9, -.2, 'b')}${flame(-1, 34, 12, -.35, 'c')}
+  </g></g>
   <g id="burning"></g>
   <g id="embers" pointer-events="none"></g>
   <!-- 金紙疊 -->
-  <g id="stack">${paper('p3', 152, 312, 4)}${paper('p2', 148, 308, -3)}${paper('p1', 150, 304, 1)}</g>
+  <g id="stack"><image href="${stackUrl}" x="112" y="282" width="78" height="62" id="p3"/><g id="p2"></g><g id="p1"></g></g>
   <g id="jossTop" class="joss-top" role="button" tabindex="0" aria-label="拿一張金紙放進金爐">${paper('pTop', 150, 300, 0)}</g>
 </svg>`;
 
@@ -57,13 +41,13 @@ export function bindJoss(root, { total = 5, onBurn, onDone }) {
   const svg = root.querySelector('svg.joss-svg');
   const $ = (id) => svg.querySelector('#' + id);
   const top = $('jossTop'), embers = $('embers'), burning = $('burning'), fire = $('fire'), heat = $('heat');
-  const MOUTH = { x: 150, y: 196 };
+  const MOUTH = { x: 150, y: 210 };
   let left = total, drag = null, flare = 0, parts = [], raf = 0, alive = true, flying = false;
 
   const pt = (e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
   const setTop = (x, y, r = 0) => top.setAttribute('transform', `translate(${x - 150} ${y - 300}) rotate(${r} 150 300)`);
   const paintStack = () => {
-    ['p1', 'p2', 'p3'].forEach((id, i) => { $(id).style.display = left - 1 > i ? '' : 'none'; });
+    $('p3').style.display = left > 1 ? '' : 'none';
     top.style.display = left > 0 ? '' : 'none';
   };
 
@@ -71,7 +55,7 @@ export function bindJoss(root, { total = 5, onBurn, onDone }) {
     if (!alive) return;
     flare = Math.max(0, flare - 0.016 * 1.2);
     const s = 1 + flare * .7 + .04 * Math.sin(now / 90);
-    fire.setAttribute('transform', `translate(150 224) scale(${(1 + flare * .25).toFixed(3)} ${s.toFixed(3)})`);
+    fire.setAttribute('transform', `translate(150 226) scale(${(1 + flare * .25).toFixed(3)} ${s.toFixed(3)})`);
     heat.setAttribute('opacity', (.45 + flare * .5 + .05 * Math.sin(now / 200)).toFixed(3));
     if (Math.random() < .05 + flare * .5) spawn(1);
     for (let i = parts.length - 1; i >= 0; i--) {
@@ -92,7 +76,7 @@ export function bindJoss(root, { total = 5, onBurn, onDone }) {
       el.setAttribute('r', isAsh ? (1.6 + Math.random() * 1.6).toFixed(1) : (1 + Math.random() * 1.8).toFixed(1));
       el.setAttribute('fill', isAsh ? '#7A6A60' : Math.random() < .5 ? '#FFD86B' : '#FF8A3A');
       embers.appendChild(el);
-      parts.push({ el, x: 130 + Math.random() * 40, y: 190 + Math.random() * 20, vx: (Math.random() - .5) * 1.2, vy: -(1 + Math.random() * 1.8), age: 0, life: 1.2 + Math.random() * 1.4, seed: Math.random() * 9 });
+      parts.push({ el, x: 136 + Math.random() * 28, y: 200 + Math.random() * 18, vx: (Math.random() - .5) * 1.2, vy: -(1 + Math.random() * 1.8), age: 0, life: 1.2 + Math.random() * 1.4, seed: Math.random() * 9 });
     }
   }
 

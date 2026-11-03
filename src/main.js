@@ -95,8 +95,8 @@ function markNext() {
 }
 
 /* ---------- 手上的工具：打火機、三炷香 ---------- */
-const WICK = { L: [106, 349], R: [258, 349] };   // 燭芯
-const FIRE = { L: [106, 337], R: [258, 337] };   // 燭火
+const WICK = { L: [106, 345], R: [258, 345] };   // 燭芯
+const FIRE = { L: [106, 335], R: [258, 335] };   // 燭火
 const BURNER = [182, 356];                       // 香爐口
 const lit = { L: false, R: false };
 const tool = { kind: null, x: 0, y: 0, down: false, hold: 0, sticksLit: false, then: null, smoke: 0 };
@@ -183,11 +183,11 @@ function lightOne(id) {
       // 規格書的燭光公式：alpha = 0.8 + 0.2 * sin(time * frequency)
       if (lit.L) {
         S('glowL').setAttribute('opacity', (0.8 + 0.2 * Math.sin(t * 7)).toFixed(3));
-        S('flameL').setAttribute('transform', `translate(80 176) scale(${(0.95 + 0.07 * Math.sin(t * 11)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 9)).toFixed(3)})`);
+        S('flameL').setAttribute('transform', `translate(106 346) scale(${(.65 * (0.95 + 0.07 * Math.sin(t * 11))).toFixed(3)} ${(.65 * (0.97 + 0.08 * Math.sin(t * 9))).toFixed(3)})`);
       }
       if (lit.R) {
         S('glowR').setAttribute('opacity', (0.8 + 0.2 * Math.sin(t * 5.3 + 1)).toFixed(3));
-        S('flameR').setAttribute('transform', `translate(280 176) scale(${(0.95 + 0.07 * Math.sin(t * 10 + 2)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 8 + 1)).toFixed(3)})`);
+        S('flameR').setAttribute('transform', `translate(258 346) scale(${(.65 * (0.95 + 0.07 * Math.sin(t * 10 + 2))).toFixed(3)} ${(.65 * (0.97 + 0.08 * Math.sin(t * 8 + 1))).toFixed(3)})`);
       }
       if (session.lit) S('halo').setAttribute('opacity', (0.45 + 0.12 * Math.sin(t * 1.5)).toFixed(3));
     });
@@ -559,6 +559,20 @@ function ringQing() {
   emit('text', 309, 515, { text: CALM[Math.floor(Math.random() * CALM.length)] });
   say('噹——磬聲慢慢散開。跟著吸氣四秒，停兩秒，再吐氣四秒。');
 }
+const OFFER_IDS = ['offFlowerL', 'offFlowerR', 'offFruit', 'offCakes', 'offTea'];
+function offerGifts() {
+  if (session.offered) { burst('heart', 182, 370, 6); say('供品都擺好了，神明收到你的心意。'); return; }
+  session.offered = true; session.busy = true;
+  say('雙手捧著鮮花、水果、糕餅和清茶，一樣一樣擺上供桌……');
+  OFFER_IDS.forEach((id, i) => setTimeout(() => {
+    const el = S(id); el.style.display = ''; el.classList.remove('pop'); void el.getBoundingClientRect(); el.classList.add('pop');
+    sfx.pop(); const b = el.getBBox(); burst('spark', b.x + b.width / 2, b.y + 6, 5);
+    if (i === OFFER_IDS.length - 1) {
+      session.busy = false; bow(); sfx.chime(); S('halo').setAttribute('opacity', '.7');
+      say('供品擺好了。鮮花表敬意、水果求平安、糕餅圓滿、清茶清心。');
+    }
+  }, 380 * i));
+}
 function greetDeity() {
   const h = S('halo'); h.setAttribute('opacity', '.75');
   burst('spark', 182, 290, 12);
@@ -592,7 +606,7 @@ function openAvatar() {
 const ACTIONS = {
   candle: () => startLighter(), incense: startIncense, jiao: freeJiao, joss: openJoss,
   draw: () => (state.fortune && state.fortune.date === dayKey() ? showFortune() : openDraw()),
-  card: openCard, deity: greetDeity, tiger: petTiger, qing: ringQing,
+  card: openCard, offer: offerGifts, deity: greetDeity, tiger: petTiger, qing: ringQing,
 };
 // 用鍵盤（沒有拖曳）時，點燭、上香直接完成
 const QUICK = {

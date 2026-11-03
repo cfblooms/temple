@@ -1,4 +1,11 @@
 import candleUrl from './assets/candle.webp';
+import candleRUrl from './assets/candle-r.webp';
+import lighterUrl from './assets/lighter.webp';
+import flowersUrl from './assets/offer/flowers.webp';
+import flowersRUrl from './assets/offer/flowers-r.webp';
+import fruitUrl from './assets/offer/fruit.webp';
+import cakesUrl from './assets/offer/cakes.webp';
+import teaUrl from './assets/offer/tea.webp';
 import tigerAwake from './assets/tiger-awake.webp';
 import tigerHappy from './assets/tiger-happy.webp';
 import tubeUrl from './assets/tube.webp';
@@ -18,15 +25,19 @@ const animeEye = (cx, cy, irisId, rx = 5.6, ry = 7) => `
   <circle cx="${cx - rx * .35}" cy="${cy - ry * .4}" r="${rx * .42}" fill="#FFF"/>
   <circle cx="${cx + rx * .4}" cy="${cy + ry * .42}" r="${rx * .2}" fill="#FFF"/>`;
 
-const candle = (x, id) => `
+// 龍鳳燭：立在供桌上，燭芯在 (x, 345)
+const candle = (x, id, url) => `
   <g class="hit" data-hit="candle" role="button" tabindex="0" aria-label="點燭">
-    <circle id="glow${id}" cx="${x}" cy="182" r="50" fill="url(#glowG)" opacity="0"/>
-    <image href="${candleUrl}" x="${x - 21}" y="172" width="42.5" height="51"/>
-    <g id="flame${id}" opacity="0" transform="translate(${x} 176)">
+    <circle id="glow${id}" cx="${x}" cy="336" r="32" fill="url(#glowG)" opacity="0"/>
+    <image href="${url}" x="${x - 12.5}" y="343" width="25" height="40" filter="url(#lit)"/>
+    <g id="flame${id}" opacity="0" transform="translate(${x} 346) scale(.65)">
       <path d="M0 -24 C10 -11 9 0 0 2 C-9 0 -10 -11 0 -24 Z" fill="url(#flameG)"/>
       <path d="M0 -13 C4 -7 4 -1 0 0 C-4 -1 -4 -7 0 -13 Z" fill="#FFFBE0"/>
     </g>
   </g>`;
+
+// 供品（獻供之後才出現）
+const offer = (id, url, x, y, w, h) => `<image id="${id}" class="offer" href="${url}" x="${x}" y="${y}" width="${w}" height="${h}" filter="url(#lit)" style="display:none"/>`;
 
 const lantern = (x, cls) => `
   <g class="lantern ${cls}" filter="url(#toy)">
@@ -42,8 +53,8 @@ const lantern = (x, cls) => `
 
 const jiaoBlock = (id) => `
   <g id="${id}" opacity="0" filter="url(#toy)">
-    <g class="face-flat"><image href="${jiaoFlat}" x="-10.3" y="-15.8" width="20.6" height="31.7" transform="rotate(90)"/></g>
-    <g class="face-round" style="display:none"><image href="${jiaoRound}" x="-10.3" y="-15.8" width="20.6" height="31.7" transform="rotate(90)"/></g>
+    <g class="face-flat"><image href="${jiaoFlat}" x="-10.3" y="-15.3" width="20.6" height="30.5" transform="rotate(90)"/></g>
+    <g class="face-round" style="display:none"><image href="${jiaoRound}" x="-15.5" y="-12.2" width="31" height="24.5"/></g>
   </g>`;
 
 export const SCENE_SVG = (bg) => `
@@ -93,8 +104,14 @@ export const SCENE_SVG = (bg) => `
   <rect id="deity" class="hit" data-hit="deity" role="button" tabindex="0" aria-label="向神明問安" x="150" y="255" width="65" height="100" rx="20" fill="transparent"/>
 
   <!-- 供桌兩端的蠟燭 -->
-  <g transform="translate(54 238) scale(.65)" filter="url(#lit)">${candle(80, 'L')}</g>
-  <g transform="translate(76 238) scale(.65)" filter="url(#lit)">${candle(280, 'R')}</g>
+  ${candle(106, 'L', candleUrl)}${candle(258, 'R', candleRUrl)}
+
+  <!-- 供品：後排鮮花，前排水果、糕餅、清茶 -->
+  <g id="offerings" class="hit" data-hit="offer" role="button" tabindex="0" aria-label="獻供">
+    <rect x="120" y="355" width="125" height="40" fill="transparent"/>
+    ${offer('offFlowerL', flowersUrl, 121, 343, 21, 39)}${offer('offFlowerR', flowersRUrl, 223, 343, 21, 39)}
+    ${offer('offFruit', fruitUrl, 124, 366, 28, 32)}${offer('offTea', teaUrl, 164, 379, 32, 23)}${offer('offCakes', cakesUrl, 205, 369, 34, 30)}
+  </g>
 
   <!-- 香爐（背景圖裡的）與香 -->
   <g class="hit" data-hit="incense" role="button" tabindex="0" aria-label="上香">
@@ -111,16 +128,16 @@ export const SCENE_SVG = (bg) => `
   <use href="#tubeScene" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 561) matrix(1 0 -1.3 .26 0 0) translate(0 -561)"/>
   <ellipse cx="46" cy="561" rx="18" ry="4" fill="url(#contact)"/>
   <g class="hit" data-hit="draw" role="button" tabindex="0" aria-label="抽籤">
-    <g id="tubeScene" filter="url(#lit)"><image href="${tubeUrl}" x="30" y="479" width="32" height="82"/></g>
+    <g id="tubeScene" filter="url(#lit)"><image href="${tubeUrl}" x="27" y="479" width="38" height="82"/></g>
   </g>
 
   <!-- 橘貓虎爺（供桌下） -->
   <use href="#catBody" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 472) matrix(1 0 -1.3 .26 0 0) translate(0 -472)"/>
-  <ellipse cx="123" cy="471" rx="21" ry="4" fill="url(#contact)"/>
+  <ellipse cx="140" cy="469" rx="20" ry="4" fill="url(#contact)"/>
   <g id="tiger" class="hit" data-hit="tiger" role="button" tabindex="0" aria-label="摸摸虎爺">
     <g class="cat-body" id="catBody" filter="url(#lit)">
-      <image id="catEyesOpen" href="${tigerAwake}" x="99" y="421" width="48" height="51"/>
-      <image id="catEyesClosed" href="${tigerHappy}" x="99" y="421" width="48" height="51" style="display:none"/>
+      <image id="catEyesOpen" href="${tigerAwake}" x="119" y="419" width="42" height="51"/>
+      <image id="catEyesClosed" href="${tigerHappy}" x="119" y="419" width="42" height="51" style="display:none"/>
     </g>
   </g>
 
@@ -147,12 +164,7 @@ export const SCENE_SVG = (bg) => `
         <path d="M0 -15 C6 -8 6 -1 0 1 C-6 -1 -6 -8 0 -15 Z" fill="url(#flameG)"/>
         <path d="M0 -8 C2.4 -5 2.4 -1 0 0 C-2.4 -1 -2.4 -5 0 -8 Z" fill="#E8F4FF"/>
       </g>
-      <rect x="-7" y="1" width="14" height="9" rx="2" fill="#D8DDE4" stroke="#8C949E" stroke-width="1"/>
-      <circle cx="-9" cy="7" r="4.2" fill="#9AA3AD" stroke="#6A727C" stroke-width="1"/>
-      <path d="M-11 7h4M-9 5v4" stroke="#6A727C" stroke-width=".8"/>
-      <rect x="-10" y="10" width="20" height="40" rx="7" fill="url(#candleG)"/>
-      <rect x="-6" y="14" width="4" height="30" rx="2" fill="#FFF" opacity=".45"/>
-      <rect x="-10" y="10" width="20" height="5" fill="#B8342C" opacity=".35"/>
+      <image href="${lighterUrl}" x="-57" y="-1.5" width="60" height="60"/>
     </g>
     <g id="toolSticks" style="display:none">
       <path d="M-6 2 L-2 58 M0 -2 L0 58 M6 2 L2 58" stroke="#9A4A2E" stroke-width="2.6" stroke-linecap="round"/>

@@ -113,10 +113,10 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .deity-halo { transition: opacity .6s; }
 
 /* action bar */
-.bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
 .bar button {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 0 5px; font-size: 13px;
+  background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 0 5px; font-size: 12px;
   transition: transform .12s;
 }
 .bar button:active { transform: translateY(2px); }
@@ -213,3 +213,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jf.b { animation-duration: .38s; } .jf.c { animation-duration: .52s; }
 @keyframes jflick { from { transform: scale(.9, .92) skewX(-3deg); } to { transform: scale(1.06, 1.1) skewX(3deg); } }
 @media (prefers-reduced-motion: reduce) { .jf, #avatarImg.bow { animation: none; } }
+
+.offer.pop { transform-box: fill-box; transform-origin: 50% 100%; animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes offerPop { from { transform: translateY(-14px) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .offer.pop { animation: none; } }
