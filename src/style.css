@@ -113,7 +113,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .deity-halo { transition: opacity .6s; }
 
 /* action bar */
-.bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; padding-bottom: env(safe-area-inset-bottom, 0px); }
 .bar button {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 0 5px; font-size: 13px;
@@ -198,3 +198,18 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .char { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 2px; border-radius: 14px; border: 2px solid transparent; background: var(--chip); font: inherit; font-size: 12px; color: inherit; cursor: pointer; }
 .char img { width: 100%; aspect-ratio: 1; border-radius: 50%; object-fit: cover; }
 .char[aria-checked="true"] { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 25%, var(--chip)); }
+
+/* 插香後人偶拜三拜 */
+#avatarImg.bow { transform-box: fill-box; transform-origin: 50% 100%; animation: bow .8s ease-in-out 3; }
+@keyframes bow { 50% { transform: translateY(3px) scaleY(.93); } }
+
+/* 金爐 */
+.joss-stage { display: flex; justify-content: center; }
+.joss-svg { width: min(100%, 320px); height: auto; touch-action: none; user-select: none; }
+.joss-top { cursor: grab; outline: none; }
+.joss-top:focus-visible { filter: drop-shadow(0 0 4px #FFE08A); }
+.joss-count { text-align: center; font-weight: 700; }
+.jf { fill: url(#jfG); transform-box: fill-box; transform-origin: 50% 100%; animation: jflick .45s ease-in-out infinite alternate; }
+.jf.b { animation-duration: .38s; } .jf.c { animation-duration: .52s; }
+@keyframes jflick { from { transform: scale(.9, .92) skewX(-3deg); } to { transform: scale(1.06, 1.1) skewX(3deg); } }
+@media (prefers-reduced-motion: reduce) { .jf, #avatarImg.bow { animation: none; } }

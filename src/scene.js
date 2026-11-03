@@ -138,4 +138,29 @@ export const SCENE_SVG = (bg) => `
 
   <!-- 筊杯 -->
   <g id="jiaoLayer" filter="url(#lit)">${jiaoBlock('jiaoA')}${jiaoBlock('jiaoB')}</g>
+  <!-- 拿在手上的工具：打火機／三炷香（尖端在 0,0） -->
+  <circle id="aim" r="15" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 4" opacity="0" pointer-events="none"/>
+  <g id="tool" style="display:none" pointer-events="none" filter="url(#toy)">
+    <g id="toolLighter">
+      <g id="lighterFlame" style="display:none">
+        <circle cx="0" cy="-4" r="13" fill="url(#glowG)" opacity=".8"/>
+        <path d="M0 -15 C6 -8 6 -1 0 1 C-6 -1 -6 -8 0 -15 Z" fill="url(#flameG)"/>
+        <path d="M0 -8 C2.4 -5 2.4 -1 0 0 C-2.4 -1 -2.4 -5 0 -8 Z" fill="#E8F4FF"/>
+      </g>
+      <rect x="-7" y="1" width="14" height="9" rx="2" fill="#D8DDE4" stroke="#8C949E" stroke-width="1"/>
+      <circle cx="-9" cy="7" r="4.2" fill="#9AA3AD" stroke="#6A727C" stroke-width="1"/>
+      <path d="M-11 7h4M-9 5v4" stroke="#6A727C" stroke-width=".8"/>
+      <rect x="-10" y="10" width="20" height="40" rx="7" fill="url(#candleG)"/>
+      <rect x="-6" y="14" width="4" height="30" rx="2" fill="#FFF" opacity=".45"/>
+      <rect x="-10" y="10" width="20" height="5" fill="#B8342C" opacity=".35"/>
+    </g>
+    <g id="toolSticks" style="display:none">
+      <path d="M-6 2 L-2 58 M0 -2 L0 58 M6 2 L2 58" stroke="#9A4A2E" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M-4 40 L-2 60 M0 40 L0 60 M4 40 L2 60" stroke="#E0443E" stroke-width="3" stroke-linecap="round"/>
+      <g id="handTips" opacity=".0">
+        <circle cx="-6" cy="2" r="2.6" fill="#FF6A3A"/><circle cx="0" cy="-2" r="2.6" fill="#FF6A3A"/><circle cx="6" cy="2" r="2.6" fill="#FF6A3A"/>
+        <circle cx="0" cy="0" r="9" fill="url(#glowG)" opacity=".6"/>
+      </g>
+    </g>
+  </g>
 </svg>`;
