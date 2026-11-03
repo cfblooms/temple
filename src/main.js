@@ -8,6 +8,7 @@ import { renderCard } from './card.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
+import tubeUrl from './assets/tube.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -66,7 +67,7 @@ $('#sceneHost').innerHTML = SCENE_SVG(hallImg());
 // 點農曆可預覽平日／節慶兩種廟（試玩用）
 $('#lunar').addEventListener('click', () => {
   festive = !festive;
-  $('#sceneHost svg image').setAttribute('href', hallImg());
+  $('#hallBg').setAttribute('href', hallImg());
   say(festive ? '這是過年過節的廟：紅燈籠全掛上了。再點一次農曆換回平日。' : '換回平日的廟。');
 });
 initFx($('#fx'));
@@ -252,11 +253,7 @@ function openDraw() {
   });
 }
 
-const TUBE = `<svg viewBox="0 0 140 170" aria-hidden="true"><g class="tube" id="bigTube">
-  <g stroke="#E8C77A" stroke-width="7" stroke-linecap="round"><path d="M42 70V30M56 70V18M70 70V24M84 70V14M98 70V28"/></g>
-  <g stroke="#C8352B" stroke-width="7" stroke-linecap="round"><path d="M42 30v0M56 18v0M70 24v0M84 14v0M98 28v0"/></g>
-  <rect x="30" y="64" width="80" height="100" rx="10" fill="#2F6B5E"/><rect x="30" y="78" width="80" height="8" fill="#E6B85C"/><rect x="30" y="142" width="80" height="8" fill="#E6B85C"/>
-  <text x="70" y="124" text-anchor="middle" font-family="Noto Serif TC, serif" font-weight="900" font-size="28" fill="#F6D98A">籤</text></g>
+const TUBE = `<svg viewBox="0 0 140 170" aria-hidden="true"><g class="tube" id="bigTube"><image href="${tubeUrl}" x="38" y="6" width="63" height="160"/></g>
   <g id="outStick" style="display:none"><rect x="96" y="0" width="12" height="70" rx="5" fill="#E8C77A" transform="rotate(18 102 35)"/><rect x="96" y="0" width="12" height="12" rx="5" fill="#C8352B" transform="rotate(18 102 35)"/></g></svg>`;
 
 async function shake() {
