@@ -71,7 +71,25 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @keyframes pop { 0% { transform: scale(.97); } 60% { transform: scale(1.01); } 100% { transform: none; } }
 
 /* scene */
-.stage { flex: 1; min-height: 0; container-type: size; display: grid; place-items: center; }
+.stage { position: relative; flex: 1; min-height: 0; container-type: size; display: grid; place-items: center; }
+
+/* 全廟地圖 */
+.map-view { position: absolute; inset: 0; display: grid; place-items: center; }
+.map-wrap { position: relative; width: min(100cqw, 100cqh * 0.6977); aspect-ratio: 900 / 1290; container-type: inline-size; border-radius: 22px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .2); }
+.map-wrap img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.area {
+  position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center;
+  min-height: 3.1cqw; padding: .3cqw 1.2cqw; border: 0; border-radius: 99px;
+  background: #FFF6E8; color: #4A2A1E; font-size: max(2.3cqw, 10.5px); line-height: 1.2; text-align: center; white-space: nowrap;
+  box-shadow: 0 .3cqw .8cqw rgb(60 25 10 / .35);
+}
+.area.two { white-space: normal; border-radius: 1.6cqw; }
+.area.main { background: #E0544A; color: #FFF6E8; font-size: max(2.8cqw, 12.5px); animation: beckon 1.8s ease-in-out infinite; }
+.area.title { background: #FFF6E8; }
+@keyframes beckon { 50% { box-shadow: 0 0 0 1.2cqw rgb(255 210 120 / .55), 0 .3cqw .8cqw rgb(60 25 10 / .35); } }
+.area .soon { display: block; font-size: 1.5cqw; color: #A07A60; }
+.hall-hit { position: absolute; left: 33%; top: 33%; width: 36%; height: 17%; background: transparent; border: 0; border-radius: 12px; }
+.plaque { position: absolute; left: 51.1%; top: 85.3%; transform: translate(-50%, -50%); width: 14%; padding: .25cqw 0; background: #5A2318; color: #FFE29A; border: .3cqw solid #E6B85C; border-radius: .6cqw; font-size: 1.9cqw; letter-spacing: .4cqw; text-align: center; pointer-events: none; }
 .scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.6667); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 26px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
 #sceneHost, #sceneHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }

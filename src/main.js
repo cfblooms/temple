@@ -5,6 +5,7 @@ import { FORTUNES, CATEGORIES, DAILY, cn } from './fortunes.js';
 import { initFx, emit, burst, onTick, REDUCED_MOTION } from './fx.js';
 import * as sfx from './audio.js';
 import { renderCard } from './card.js';
+import mapUrl from './assets/temple-map.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -483,9 +484,65 @@ paintMute();
 
 // 一進來的招呼
 if (state.fortune && state.fortune.date !== dayKey()) state.fortune = null;
+function greet() {
 if (state.lastCheckin !== dayKey()) say(`歡迎來參拜${state.name !== '香客' ? '，' + esc(state.name) : ''}。先點燭、上香，再抽籤。供桌下的橘貓虎爺也在等你摸摸祂。${isYa ? '今天是做牙日，虎爺的小魚乾雙倍。' : ''}`);
 else say('又見面了。今天想問什麼？擲筊可以隨時問神明。');
-markNext();
+}
+
+/* ---------- 全廟地圖 ---------- */
+// x / y 是標籤中心在地圖上的百分比，w 是寬度百分比（要蓋住原圖上的標籤）
+const AREAS = [
+  { id: 'hall', name: '正殿・進入參拜', x: 51.1, y: 31.3, w: 24, main: true },
+  { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, title: true, info: '後院長效靜心閣：點一支 25 分鐘會慢慢融化的蠟燭，配著古寺夜雨聲專心讀書。' },
+  { id: 'study', name: '伴讀自習室', x: 70, y: 7.1, w: 19.5, info: '伴讀自習室：番茄鐘燃燭計時，手機橫放就是開運桌面擺飾。' },
+  { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
+  { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, title: true, info: '兩廂專科殿堂：文昌、財神、濟公、月老、觀音、天公、母娘、彌勒、太歲九座殿。' },
+  { id: 'jigong', name: '濟公解憂林', x: 25.3, y: 20.5, w: 12.5, info: '濟公解憂林：讓濟公師父用破芭蕉扇拍散執念，跳出看破人生的語錄。' },
+  { id: 'yuelao', name: '月老閣', x: 79.1, y: 20.5, w: 11, info: '月老閣：抽清醒戀愛籤，和另一半一起綁定連理紅燭。' },
+  { id: 'wenchang', name: '文昌閣', x: 14.4, y: 31.3, w: 9, info: '文昌閣：求考運，准考證順時針過香爐三圈。' },
+  { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
+  { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
+  { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, info: '流水席紅圓桌：全服一起湊菜，湊滿就開席。' },
+  { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
+  { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, info: '許願放生池：把蓮花水燈放進池裡，看它慢慢綻放。' },
+  { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, info: '青衣阿嬤收驚攤：寫下委屈字條化煙，阿嬤持香為你拂塵安神。' },
+  { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, info: '鵝頸橋打小人攤：寫下討厭的代號，婆婆用舊拖鞋幫你打走霉運。' },
+  { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
+  { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
+];
+
+function buildMap() {
+  const wrap = $('#mapWrap');
+  $('#mapImg').src = mapUrl;
+  const html = AREAS.map((a) => `<button type="button" class="area${a.main ? ' main' : ''}${a.title ? ' title' : ''}" data-area="${a.id}"
+    style="left:${a.x}%;top:${a.y}%;min-width:${a.w}%;${a.h ? `min-height:${a.h * 1.433}cqw;` : ''}">${esc(a.name)}</button>`).join('');
+  wrap.insertAdjacentHTML('beforeend', `<button type="button" class="hall-hit" data-area="hall" aria-label="進入正殿參拜"></button><div class="plaque">心靈大廟</div>${html}`);
+  wrap.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-area]'); if (!b) return;
+    const a = AREAS.find((x) => x.id === b.dataset.area);
+    if (a.id === 'hall') { showHall(); return; }
+    sfx.knock();
+    say(`${a.info}這一區還在興建中，目前開放的是正殿。`);
+  });
+}
+
+function showMap() {
+  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#mapView').hidden = false;
+  $('#btnMap').hidden = true;
+  say('這是心靈大廟全區。從山門走進來，正殿已經開放參拜，其他殿堂陸續興建中。點紅色的「正殿」進去吧。');
+}
+
+function showHall() {
+  $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#bar').hidden = false;
+  $('#btnMap').hidden = false;
+  sfx.bowl();
+  greet();
+  markNext();
+}
+$('#btnMap').addEventListener('click', showMap);
+buildMap();
+
+showMap();
 
 // PWA：只在正式網站（非內嵌預覽）註冊離線快取
 if (import.meta.env.PROD && 'serviceWorker' in navigator && window.top === window.self) {

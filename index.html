@@ -24,6 +24,7 @@
     <div class="lunar" id="lunar"></div>
     <div class="top-right">
       <span class="fish" title="開運小魚乾" aria-label="開運小魚乾數量"><svg viewBox="0 0 24 14" aria-hidden="true"><path d="M2 7c4-6 11-6 15 0-4 6-11 6-15 0z" fill="var(--gold)"/><path d="M17 7l5-4v8z" fill="var(--gold)"/><circle cx="6" cy="6" r="1.2" fill="var(--ink)"/></svg><b id="fishCount">0</b></span>
+      <button class="icon-btn" id="btnMap" aria-label="回到全廟地圖">圖</button>
       <button class="icon-btn" id="btnMute" aria-label="關閉聲音">聲</button>
     </div>
   </header>
@@ -34,13 +35,16 @@
   </div>
 
   <main class="stage">
-    <div class="scene-wrap" id="sceneWrap">
+    <div class="map-view" id="mapView">
+      <div class="map-wrap" id="mapWrap"><img id="mapImg" alt="心靈大廟全廟地圖：山門、廟埕、正殿、兩廂專科殿堂與後院靜心閣"></div>
+    </div>
+    <div class="scene-wrap" id="sceneWrap" hidden>
       <div id="sceneHost"></div>
       <canvas id="fx" aria-hidden="true"></canvas>
     </div>
   </main>
 
-  <nav class="bar" aria-label="參拜動作">
+  <nav class="bar" id="bar" aria-label="參拜動作" hidden>
     <button data-act="candle"><svg viewBox="0 0 24 24"><path d="M12 2c2 3 2 5 0 6-2-1-2-3 0-6z" fill="var(--gold)"/><rect x="7" y="9" width="10" height="12" rx="4" fill="var(--red)"/></svg><span>點燭</span></button>
     <button data-act="incense"><svg viewBox="0 0 24 24"><path d="M8 13l-2-10M12 13V2M16 13l2-10" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/><path d="M4 13h16l-2 7H6z" fill="var(--gold)"/></svg><span>上香</span></button>
     <button data-act="jiao"><svg viewBox="0 0 24 24"><path d="M2 12c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)"/><path d="M13 14c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)" opacity=".7"/></svg><span>擲筊</span></button>
