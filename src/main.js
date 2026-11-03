@@ -7,6 +7,7 @@ import * as sfx from './audio.js';
 import { renderCard } from './card.js';
 import { FURNACE_SVG, bindJoss } from './joss.js';
 import { initCaishen } from './caishen.js';
+import { initYuelao } from './yuelao.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
@@ -70,8 +71,9 @@ $('#sceneHost').innerHTML = SCENE_SVG(hallImg());
 $('#lunar').addEventListener('click', () => {
   festive = !festive;
   $('#hallBg').setAttribute('href', hallImg());
-  cai.setFestive(festive);
-  say(festive ? '這是過年過節的廟：紅燈籠全掛上了。再點一次農曆換回平日。' : '換回平日的廟。');
+  cai.setFestive(festive); yue.setFestive(festive);
+  const inYue = !$('#yueHost').hidden;
+  say(festive ? (inYue ? '這是七夕的月老閣：滿天蓮花燈、桃花瓣飄下來。再點一次農曆換回平日。' : '這是過年過節的廟：紅燈籠全掛上了。再點一次農曆換回平日。') : '換回平日的廟。');
 });
 initFx($('#fx'));
 const svg = $('#sceneHost svg');
@@ -655,7 +657,7 @@ const AREAS = [
   { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
   { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, title: true, info: '兩廂專科殿堂：文昌、財神、濟公、月老、觀音、天公、母娘、彌勒、太歲九座殿。' },
   { id: 'jigong', name: '濟公解憂林', x: 25.3, y: 20.5, w: 12.5, info: '濟公解憂林：讓濟公師父用破芭蕉扇拍散執念，跳出看破人生的語錄。' },
-  { id: 'yuelao', name: '月老閣', x: 79.1, y: 20.5, w: 11, info: '月老閣：抽清醒戀愛籤，和另一半一起綁定連理紅燭。' },
+  { id: 'yuelao', name: '月老閣', x: 79.1, y: 20.5, w: 11, main: true, info: '月老閣：抽清醒戀愛籤，和另一半一起綁定連理紅燭。' },
   { id: 'wenchang', name: '文昌閣', x: 14.4, y: 31.3, w: 9, info: '文昌閣：求考運，准考證順時針過香爐三圈。' },
   { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, main: true, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
   { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
@@ -679,28 +681,37 @@ function buildMap() {
     const a = AREAS.find((x) => x.id === b.dataset.area);
     if (a.id === 'hall') { showHall(); return; }
     if (a.id === 'caishen') { showCai(); return; }
+    if (a.id === 'yuelao') { showYue(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中，目前開放的是正殿和財神聚寶閣。`);
+    say(`${a.info}這一區還在興建中，目前開放的是正殿、財神聚寶閣和月老閣。`);
   });
 }
 
 function showMap() {
-  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#mapView').hidden = false;
+  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#mapView').hidden = false;
   $('#btnMap').hidden = true;
-  say('這是心靈大廟全區。從山門走進來，正殿和右邊的財神聚寶閣已經開放，其他殿堂陸續興建中。點紅色的標籤進去吧。');
+  say('這是心靈大廟全區。從山門走進來，正殿、財神聚寶閣和月老閣已經開放，其他殿堂陸續興建中。點紅色的標籤進去吧。');
 }
 
 function showHall() {
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#bar').hidden = false;
-  $('#sceneHost').hidden = false; $('#caiHost').hidden = true; $('#caiBar').hidden = true;
+  $('#sceneHost').hidden = false; $('#caiHost').hidden = true; $('#caiBar').hidden = true; $('#yueHost').hidden = true; $('#yueBar').hidden = true;
   $('#btnMap').hidden = false;
   sfx.bowl();
   greet();
   markNext();
 }
+function showSub(id) { // 進入某一座專科殿堂
+  $('#mapView').hidden = true; $('#bar').hidden = true; $('#sceneHost').hidden = true; $('#sceneWrap').hidden = false;
+  for (const k of ['cai', 'yue']) { $(`#${k}Host`).hidden = k !== id; $(`#${k}Bar`).hidden = k !== id; }
+}
+function showYue() {
+  showSub('yue'); $('#btnMap').hidden = false;
+  sfx.bowl();
+  yue.enter(charById(state.char));
+}
 function showCai() {
-  $('#mapView').hidden = true; $('#bar').hidden = true; $('#sceneHost').hidden = true;
-  $('#sceneWrap').hidden = false; $('#caiHost').hidden = false; $('#caiBar').hidden = false;
+  showSub('cai');
   $('#btnMap').hidden = false;
   sfx.bowl();
   cai.enter(charById(state.char));
@@ -708,6 +719,8 @@ function showCai() {
 $('#btnMap').addEventListener('click', showMap);
 const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
 cai.setFestive(festive);
+const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
+yue.setFestive(festive);
 buildMap();
 
 showMap();
