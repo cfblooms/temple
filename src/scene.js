@@ -42,8 +42,8 @@ const lantern = (x, cls) => `
 
 const jiaoBlock = (id) => `
   <g id="${id}" opacity="0">
-    <g class="face-flat"><image href="${jiaoFlat}" x="-12" y="-22" width="24" height="44" transform="rotate(90)"/></g>
-    <g class="face-round" style="display:none"><image href="${jiaoRound}" x="-12" y="-22" width="24" height="44" transform="rotate(90)"/></g>
+    <g class="face-flat"><image href="${jiaoFlat}" x="-14.3" y="-22" width="28.6" height="44" transform="rotate(90)"/></g>
+    <g class="face-round" style="display:none"><image href="${jiaoRound}" x="-14.3" y="-22" width="28.6" height="44" transform="rotate(90)"/></g>
   </g>`;
 
 export const SCENE_SVG = (bg) => `
