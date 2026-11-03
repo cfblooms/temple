@@ -1,14 +1,14 @@
 /* Layout: one phone-height app — header, one-line "who's speaking" strip, the temple scene scaled to fit, action bar. */
 :root {
-  --bg: #EFDCC6;        /* 金紙米 */
+  --bg: #FCE9DC;        /* 金紙米 */
   --paper: #FFF8EC;
   --ink: #3B1F17;
   --muted: #7A5A4C;
-  --red: #B8322A;       /* 廟紅 */
-  --gold: #C8912F;      /* 描金 */
-  --jade: #2F6B5E;      /* 剪黏綠釉 */
-  --line: #DCC3A6;
-  --chip: #F6E6D0;
+  --red: #E0544A;       /* 廟紅 */
+  --gold: #E0A440;      /* 描金 */
+  --jade: #3E9E86;      /* 剪黏綠釉 */
+  --line: #F0CDB8;
+  --chip: #FBE0D2;
   --font-ui: "Huninn", "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
   --font-serif: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
 }
@@ -72,7 +72,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* scene */
 .stage { flex: 1; min-height: 0; container-type: size; display: grid; place-items: center; }
-.scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.6667); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
+.scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.6667); aspect-ratio: 2 / 3; max-width: 100%; border-radius: 26px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
 #sceneHost, #sceneHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hit { cursor: pointer; outline: none; }

@@ -80,15 +80,15 @@ function lightCandles(quiet) {
   sfx.pop(); setTimeout(sfx.pop, 160); sfx.buzz(8);
   for (const id of ['L', 'R']) {
     S('flame' + id).setAttribute('opacity', '1');
-    burst('spark', id === 'L' ? 82 : 278, 170, 14);
+    burst('spark', id === 'L' ? 80 : 280, 168, 14);
   }
   onTick((t) => {
     // 規格書的燭光公式：alpha = 0.8 + 0.2 * sin(time * frequency)
     const a = 0.8 + 0.2 * Math.sin(t * 7), b = 0.8 + 0.2 * Math.sin(t * 5.3 + 1);
     S('glowL').setAttribute('opacity', a.toFixed(3));
     S('glowR').setAttribute('opacity', b.toFixed(3));
-    S('flameL').setAttribute('transform', `translate(82 178) scale(${(0.95 + 0.07 * Math.sin(t * 11)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 9)).toFixed(3)})`);
-    S('flameR').setAttribute('transform', `translate(278 178) scale(${(0.95 + 0.07 * Math.sin(t * 10 + 2)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 8 + 1)).toFixed(3)})`);
+    S('flameL').setAttribute('transform', `translate(80 176) scale(${(0.95 + 0.07 * Math.sin(t * 11)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 9)).toFixed(3)})`);
+    S('flameR').setAttribute('transform', `translate(280 176) scale(${(0.95 + 0.07 * Math.sin(t * 10 + 2)).toFixed(3)} ${(0.97 + 0.08 * Math.sin(t * 8 + 1)).toFixed(3)})`);
     S('halo').setAttribute('opacity', (0.85 + 0.1 * Math.sin(t * 1.5)).toFixed(3));
   });
   if (!quiet) say('兩支小胖蠟燭點亮了，殿裡暖起來了。接著上香吧。');
@@ -429,8 +429,8 @@ function greetDeity() {
 
 /* ---------- 捏人偶 ---------- */
 function openAvatar() {
-  const draft = { ...state.avatar };
-  const swatches = (group, list) => `<div class="chips" data-swatch="${group}">${list.map((c) => `<button type="button" class="swatch" style="background:${c}" data-v="${c}" aria-label="${group === 'skin' ? '膚色' : '髮色'} ${c}" aria-pressed="${draft[group] === c}"></button>`).join('')}</div>`;
+  const draft = { ...DEFAULT_AVATAR, ...state.avatar };
+  const swatches = (group, list) => `<div class="chips" data-swatch="${group}">${list.map((c) => `<button type="button" class="swatch" style="background:${c}" data-v="${c}" aria-label="${{ skin: '膚色', hairColor: '髮色', eyeColor: '瞳色' }[group]} ${c}" aria-pressed="${draft[group] === c}"></button>`).join('')}</div>`;
   const body = openSheet('捏我的 Q 版人偶', `
     <div class="av-preview"><svg viewBox="0 0 100 120" id="avPrev" aria-label="人偶預覽">${avatarMarkup(draft)}</svg></div>
     <label class="field"><span>暱稱</span><input type="text" id="avName" maxlength="12" value="${esc(state.name)}"></label>
@@ -438,6 +438,7 @@ function openAvatar() {
     <div class="field"><span>髮色</span>${swatches('hairColor', OPTIONS.hairColor)}</div>
     <div class="field"><span>膚色</span>${swatches('skin', OPTIONS.skin)}</div>
     <div class="field"><span>眼睛</span>${chipGroup('eyes', OPTIONS.eyes, draft.eyes)}</div>
+    <div class="field"><span>瞳色</span>${swatches('eyeColor', OPTIONS.eyeColor)}</div>
     <div class="field"><span>穿著</span>${chipGroup('outfit', OPTIONS.outfit, draft.outfit)}</div>
     <div class="field"><span>配件</span>${chipGroup('acc', OPTIONS.acc, draft.acc)}</div>
     <p class="hint">這是免費版人偶（方案 A）。上傳照片生成 3D 黏土人偶（方案 B）要接雲端 AI，之後再做。</p>

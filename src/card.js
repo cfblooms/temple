@@ -36,7 +36,7 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
   // 照片區：正殿紅牆＋光暈
   const px = 40, py = 40, pw = 640, ph = 560;
   const bg = g.createLinearGradient(0, py, 0, py + ph);
-  bg.addColorStop(0, '#7A1E1A'); bg.addColorStop(1, '#3E0D0B');
+  bg.addColorStop(0, '#F59A86'); bg.addColorStop(1, '#C9504C');
   g.fillStyle = bg; g.fillRect(px, py, pw, ph);
   const halo = g.createRadialGradient(360, 300, 10, 360, 300, 300);
   halo.addColorStop(0, 'rgba(255,225,150,.75)'); halo.addColorStop(.55, 'rgba(242,185,74,.2)'); halo.addColorStop(1, 'rgba(242,185,74,0)');
@@ -45,7 +45,7 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
   for (let i = 0; i < 40; i++) { const x = px + 20 + ((i * 97) % (pw - 40)), y = py + 20 + ((i * 53) % (ph - 40)); g.beginPath(); g.arc(x, y, (i % 3) + 1.2, 0, Math.PI * 2); g.fill(); }
 
   // 地面＋拜墊
-  g.fillStyle = '#6B3A26'; g.fillRect(px, py + ph - 110, pw, 110);
+  g.fillStyle = '#E3A880'; g.fillRect(px, py + ph - 110, pw, 110);
   g.fillStyle = '#E6B85C'; g.beginPath(); g.ellipse(360, py + ph - 52, 170, 36, 0, 0, Math.PI * 2); g.fill();
   g.fillStyle = '#D8A23A'; g.beginPath(); g.ellipse(360, py + ph - 52, 130, 24, 0, 0, Math.PI * 2); g.fill();
 
@@ -55,7 +55,7 @@ export async function renderCard({ avatar, name, dateLine, fortune, category, wi
     g.drawImage(img, 160, py + 40, 400, 480);
   } catch {}
 
-  g.fillStyle = '#F2CC74'; g.font = `900 30px ${SERIF}`; g.textAlign = 'left';
+  g.fillStyle = '#FFF1C8'; g.font = `30px ${UI}`; g.textAlign = 'left';
   g.fillText('心靈大廟', px + 24, py + 50);
   g.font = `22px ${UI}`; g.fillStyle = 'rgba(255,240,210,.85)';
   g.fillText(dateLine, px + 24, py + 84);
