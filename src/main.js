@@ -17,6 +17,9 @@ import caiFest from './assets/cai/cai-festival.webp';
 import yueBg from './assets/yue/yue-bg.webp';
 import yueFest from './assets/yue/yue-festival.webp';
 import tubeUrl from './assets/tube.webp';
+import godMazu from './assets/gods/mazu.webp';
+import godCai from './assets/gods/caishen.webp';
+import godYue from './assets/gods/yuelao.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -57,9 +60,9 @@ const fest = L && !L.leap ? FESTS.find(([m, a, b]) => L.mon === m && L.day >= a 
 let festive = !!fest;
 // 每座殿：背景、人偶跪的高度（拜墊）、香爐的上下位移。點燭、上香、擲筊、抽籤共用同一套。
 const HALLS = {
-  main: { name: '正殿', bg: hallBg, fest: hallFest, base: 536, burnerDy: 0 },
-  cai: { name: '財神聚寶閣', bg: caiBg, fest: caiFest, base: 536, burnerDy: 0 },
-  yue: { name: '月老閣', bg: yueBg, fest: yueFest, base: 593, burnerDy: 14 },
+  main: { name: '正殿', god: '媽祖', face: godMazu, bg: hallBg, fest: hallFest, base: 536, burnerDy: 0 },
+  cai: { name: '財神聚寶閣', god: '財神', face: godCai, bg: caiBg, fest: caiFest, base: 536, burnerDy: 0 },
+  yue: { name: '月老閣', god: '月老', face: godYue, bg: yueBg, fest: yueFest, base: 593, burnerDy: 14 },
 };
 let hall = 'main';
 const hallImg = () => festive ? HALLS[hall].fest : HALLS[hall].bg;
@@ -260,6 +263,8 @@ function plantIncense() {
   burst('spark', 182, 305 + HALLS[hall].burnerDy, 10);
   runIncense();
   say('三炷清香插進香爐，青煙裊裊往上飄。可以抽籤問事，拜完也可以去廟埕的金爐<b>燒金紙</b>。');
+  const gain = checkin(); // 不管拜哪位神明，上完香就算今天參拜，連續天數 +1
+  if (gain) setTimeout(() => { burst('fish', 182, 470, Math.min(gain, 5)); say(`今天的參拜完成！已連續參拜 <b>${state.streak}</b> 天，虎爺叼來開運小魚乾 ×${gain}。${state.streak % 7 === 0 ? '連續七天，加碼！' : ''}接著可以抽籤問事。`, 'cat'); }, 1900);
   markNext();
 }
 let incenseRun = 0;
@@ -737,6 +742,7 @@ const ROUTE = [
   { id: 'yue', name: '月老閣', area: 'yuelao', how: '上香' },
   { id: 'joss', name: '金亭', area: 'jinting', how: '化金紙' },
 ];
+const routeDay = () => (!!L && (L.day === 1 || L.day === 15)) || !!fest || festive; // 初一、十五、節日才走全廟巡禮
 function route() {
   if (!state.route || state.route.date !== dayKey()) state.route = { date: dayKey(), done: [], bonus: false };
   return state.route;
@@ -747,6 +753,7 @@ function paintRoute() {
   document.querySelectorAll('.area').forEach((el) => { const st = ROUTE.find((x) => x.area === el.dataset.area); el.classList.toggle('done', !!st && r.done.includes(st.id)); });
 }
 function routeDone(id) {
+  if (!routeDay()) return;
   const r = route();
   if (r.done.includes(id)) return;
   r.done.push(id); save(); paintRoute();
@@ -754,7 +761,7 @@ function routeDone(id) {
   r.bonus = true; state.fish += 3; save(); updateFish();
   setTimeout(() => {
     sfx.chime(); sfx.buzz([20, 60, 20, 60, 40]);
-    say('今日參拜<b>圓滿</b>！正殿、財神、月老都拜過，金紙也化了。虎爺叼來開運小魚乾 ×3，明天再來走一趟吧。', 'cat');
+    say('今日巡禮<b>圓滿</b>！正殿、財神、月老都拜過，金紙也化了。虎爺叼來開運小魚乾 ×3。下次初一、十五再來走一趟吧。', 'cat');
     if (!$('#sceneWrap').hidden) burst('spark', 182, 300, REDUCED_MOTION ? 6 : 30);
   }, 1600);
 }
@@ -767,9 +774,10 @@ function openStep(id) {
 function showMap() {
   if (tool.kind) unequip();
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#mapView').hidden = false;
-  $('#btnMap').hidden = true; $('#routeBar').hidden = false; paintRoute();
+  $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
-  say(!r.done.length ? '這是心靈大廟全區。像真的去廟裡一樣，照下面的<b>今日參拜路線</b>走：先拜正殿，再到財神閣、月老閣，最後到金亭化金紙。'
+  if (!routeDay()) { say('這是心靈大廟全區，可以到處逛逛。紅色標籤的地方已經開放。每逢初一、十五和節日，會有<b>全廟巡禮</b>，一殿一殿拜完有加碼。'); return; }
+  say(!r.done.length ? '今天有<b>全廟巡禮</b>！像真的去廟裡一樣，照下面的路線走：先拜正殿，再到財神閣、月老閣，最後到金亭化金紙，走完有加碼。'
     : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
     : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
 }
@@ -795,8 +803,19 @@ function switchHall(h) {
   for (const k of ['A', 'B']) S('jiao' + k).setAttribute('opacity', '0');
   for (const k of ['cai', 'yue']) { $(`#${k}Host`).hidden = k !== h; $(`#${k}Bar`).hidden = k !== h; }
   sfx.bowl();
+  state.home = h; save(); paintGods();
   markNext();
 }
+function paintGods() {
+  $('#godBar').innerHTML = Object.entries(HALLS).map(([id, H]) => `<button type="button" class="god${id === hall ? ' on' : ''}" data-god="${id}" role="tab" aria-selected="${id === hall}"><img src="${H.face}" alt=""><span>${H.god}</span></button>`).join('')
+    + '<button type="button" class="god soon" data-god="soon" aria-label="更多神明"><b>＋</b><span>更多</span></button>';
+}
+$('#godBar').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-god]'); if (!b) return;
+  if (b.dataset.god === 'soon') { sfx.knock(); say('文昌帝君、關公、觀音、濟公……更多神明的殿正在準備中，敬請期待。'); return; }
+  if (b.dataset.god === hall) return;
+  ({ main: showHall, cai: showCai, yue: showYue })[b.dataset.god]();
+});
 function showHall() { switchHall('main'); greet(); }
 function showYue() { switchHall('yue'); yue.enter(charById(state.char)); }
 function showCai() { switchHall('cai'); cai.enter(charById(state.char)); }
@@ -807,7 +826,8 @@ const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, close
 SUB.cai = cai; SUB.yue = yue;
 buildMap();
 
-showMap();
+// 打開就直接進上次拜的那位神明；地圖是「逛逛全廟」
+({ main: showHall, cai: showCai, yue: showYue })[HALLS[state.home] ? state.home : 'main']();
 
 // PWA：只在正式網站（非內嵌預覽）註冊離線快取
 if (import.meta.env.PROD && 'serviceWorker' in navigator && window.top === window.self) {

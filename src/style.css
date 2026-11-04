@@ -290,3 +290,11 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .route-step.done { opacity: .75; }
 .route-step.next { border-color: var(--gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent); }
 .area.done::after { content: '✓'; position: absolute; top: -1.2cqw; right: -1.2cqw; width: 3.4cqw; height: 3.4cqw; display: grid; place-items: center; border-radius: 50%; background: #2E8B57; color: #fff; font-size: 2.2cqw; }
+
+/* ---------- 切換神明（場景右上） ---------- */
+.gods { position: absolute; top: 6px; right: 6px; z-index: 3; display: flex; gap: 4px; }
+.god { width: 44px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; border: 0; background: none; color: #FFF4E0; font: inherit; font-size: 11px; text-shadow: 0 1px 2px rgb(0 0 0 / .7); }
+.god img, .god b { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: #FFF4E0; border: 2px solid rgb(255 244 224 / .7); box-shadow: 0 2px 6px rgb(0 0 0 / .35); }
+.god b { display: grid; place-items: center; color: #A07A60; font-size: 20px; text-shadow: none; background: rgb(255 244 224 / .75); }
+.god.on img { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 2px 8px rgb(0 0 0 / .4); }
+.god.soon { opacity: .85; }
