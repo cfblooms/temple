@@ -8,6 +8,7 @@ import coinUrl from './assets/cai/coin.webp';
 import hongbaoUrl from './assets/cai/hongbao.webp';
 import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
+import { tossJiao } from './jiaotoss.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -248,11 +249,16 @@ export function initCaishen(api) {
     const out = body.querySelector('#cJiaoOut'), btn = body.querySelector('#cThrow'), tries = body.querySelector('#cTries');
     const paintTries = () => { tries.textContent = cai.jiaoTries >= 3 ? '今天已經擲了三次，明天再來請示吧。' : `今天還可以擲 ${3 - cai.jiaoTries} 次。`; btn.disabled = cai.jiaoTries >= 3; };
     paintTries();
-    btn.addEventListener('click', () => {
-      if (cai.jiaoTries >= 3) return;
-      cai.jiaoTries++; save(); sfx.knock(); sfx.knock(140);
+    btn.addEventListener('click', async () => {
+      if (cai.jiaoTries >= 3 || btn.disabled || cai.loan) return;
       const r = Math.random(), key = r < .5 ? 'sheng' : r < .75 ? 'xiao' : 'yin';
       const faces = key === 'sheng' ? ['flat', 'round'] : key === 'xiao' ? ['flat', 'flat'] : ['round', 'round'];
+      if (Math.random() < .5) faces.reverse();
+      btn.disabled = true;
+      const ok = await tossJiao({ tip: '跟財神爺說：你是誰、想借發財金做什麼', faces, key });
+      btn.disabled = false;
+      if (!ok) return;
+      cai.jiaoTries++; save();
       out.innerHTML = jiaoPair(...faces);
       if (key === 'sheng') {
         const [word, line] = BLESS[Math.floor(Math.random() * BLESS.length)];

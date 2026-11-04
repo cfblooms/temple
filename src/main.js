@@ -8,6 +8,7 @@ import { renderCard } from './card.js';
 import { FURNACE_SVG, bindJoss } from './joss.js';
 import { initCaishen } from './caishen.js';
 import { initYuelao } from './yuelao.js';
+import { tossJiao } from './jiaotoss.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
@@ -107,6 +108,22 @@ const tool = { kind: null, x: 0, y: 0, down: false, hold: 0, sticksLit: false, t
 const dist = (x, y, [tx, ty]) => Math.hypot(x - tx, y - ty);
 function svgPt(e) { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
 function placeTool(x, y) { tool.x = x; tool.y = y; S('tool').setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${tool.kind === 'sticks' ? -8 : 0})`); }
+// 手機上手指會擋住東西：工具浮在手指上方一段距離，靠近目標時自動吸過去
+const LIFT = 92;
+function magnetTarget() {
+  if (tool.kind === 'lighter') { const k = ['L', 'R'].find((id) => !lit[id]); return k ? WICK[k] : null; }
+  if (!tool.sticksLit) { const k = lit.L && lit.R ? (dist(tool.x, tool.y, FIRE.L) < dist(tool.x, tool.y, FIRE.R) ? 'L' : 'R') : lit.L ? 'L' : lit.R ? 'R' : null; return k ? FIRE[k] : null; }
+  return [BURNER[0], BURNER[1] - 58]; // 香腳對準香爐口
+}
+function follow(p) {
+  let x = p.x, y = p.y - LIFT;
+  const t = magnetTarget();
+  if (t) {
+    const d = Math.hypot(x - t[0], y - t[1]), R = 46;
+    if (d < R) { const k = 1 - d / R; x += (t[0] - x) * Math.min(1, k * 1.6); y += (t[1] - y) * Math.min(1, k * 1.6); }
+  }
+  placeTool(x, y);
+}
 function aimAt(p) {
   const a = S('aim');
   if (!p) { a.setAttribute('opacity', '0'); return; }
@@ -167,9 +184,9 @@ svg.addEventListener('pointerdown', (e) => {
   if (!tool.kind) return;
   e.preventDefault(); svg.setPointerCapture(e.pointerId);
   tool.down = true; if (tool.kind === 'lighter') sfx.knock();
-  const p = svgPt(e); placeTool(p.x, p.y - 46);
+  follow(svgPt(e));
 });
-svg.addEventListener('pointermove', (e) => { if (tool.kind && tool.down) { const p = svgPt(e); placeTool(p.x, p.y - 46); } });
+svg.addEventListener('pointermove', (e) => { if (tool.kind && tool.down) follow(svgPt(e)); });
 const lift = () => { tool.down = false; };
 svg.addEventListener('pointerup', lift); svg.addEventListener('pointercancel', lift);
 
@@ -285,7 +302,8 @@ function setFace(el, face) {
   el.querySelector('.face-flat').style.display = face === 'flat' ? '' : 'none';
   el.querySelector('.face-round').style.display = face === 'round' ? '' : 'none';
 }
-function throwJiao() {
+async function throwJiao(tip, cancel = true) {
+  if (!(await tossJiao({ tip, cancel }))) return null;
   return new Promise((resolve) => {
     const r = Math.random();
     const key = r < 0.5 ? 'sheng' : r < 0.75 ? 'xiao' : 'yin';
@@ -320,9 +338,10 @@ function throwJiao() {
 async function freeJiao() {
   if (session.busy) return;
   session.busy = true;
-  say('在心裡默念想問的事，一次只問一件，問成「是不是」的問題。筊杯擲出去囉……');
-  const key = await throwJiao();
+  say('在心裡默念想問的事，一次只問一件，問成「是不是」的問題。');
+  const key = await throwJiao('一次只問一件事，問成「是不是」的問題');
   session.busy = false;
+  if (!key) { say('想好要問什麼再來擲筊。'); return; }
   session.xiaoRun = key === 'xiao' ? session.xiaoRun + 1 : 0;
   if (session.xiaoRun >= 3) {
     session.xiaoRun = 0;
@@ -411,8 +430,8 @@ async function confirmStick() {
   closeSheet();
   session.busy = true;
   say(`請示神明：弟子${esc(state.name)}抽到第${cn(draft.no)}籤，是這一支嗎？`);
-  await sleep(500);
-  const key = await throwJiao();
+  await sleep(300);
+  const key = await throwJiao(`請示神明：抽到的是第${cn(draft.no)}籤嗎？`, false);
   session.busy = false;
   if (key === 'sheng') {
     sfx.chime();

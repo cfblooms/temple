@@ -8,6 +8,7 @@ import pouchUrl from './assets/yue/pouch.webp';
 import plaqueUrl from './assets/yue/plaque.webp';
 import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
+import { tossJiao } from './jiaotoss.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -131,11 +132,15 @@ export function initYuelao(api) {
       btn.disabled = yue.askTries >= 3;
     };
     paint();
-    btn.addEventListener('click', () => {
-      if (yue.askTries >= 3 || yue.thread) return;
-      sfx.knock(); sfx.knock(140);
+    btn.addEventListener('click', async () => {
+      if (yue.askTries >= 3 || yue.thread || btn.disabled) return;
       const r = Math.random(), key = r < .55 ? 'sheng' : r < .8 ? 'xiao' : 'yin';
       const faces = key === 'sheng' ? ['flat', 'round'] : key === 'xiao' ? ['flat', 'flat'] : ['round', 'round'];
+      if (Math.random() < .5) faces.reverse();
+      btn.disabled = true;
+      const ok = await tossJiao({ tip: run ? `已經 ${run} 個聖筊了，再跟月老說一次` : '跟月老稟報你的名字、生日、住哪裡，和想遇到的人', faces, key });
+      btn.disabled = false;
+      if (!ok) return;
       out.innerHTML = jiaoPair(...faces);
       if (key === 'sheng') {
         run++; paint();
