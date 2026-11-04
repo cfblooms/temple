@@ -54,7 +54,7 @@ export const YUE_SVG = (bg) => `
     <radialGradient id="yContact"><stop offset="0" stop-color="#2A0A08" stop-opacity=".55"/><stop offset="1" stop-color="#2A0A08" stop-opacity="0"/></radialGradient>
     <radialGradient id="yHalo"><stop offset="0" stop-color="#FFE6EE" stop-opacity=".95"/><stop offset=".6" stop-color="#FF9DB8" stop-opacity=".35"/><stop offset="1" stop-color="#FF9DB8" stop-opacity="0"/></radialGradient>
   </defs>
-  <image id="yBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
+  <image id="yBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
   <circle id="yHaloC" cx="180" cy="245" r="62" fill="url(#yHalo)" opacity=".2" style="mix-blend-mode:screen"/>
   <rect class="hit" data-yue="deity" role="button" tabindex="0" aria-label="向月老問安" x="132" y="200" width="112" height="140" rx="24" fill="transparent"/>
 
@@ -68,15 +68,14 @@ export const YUE_SVG = (bg) => `
   </g>
 
   <!-- 喜糖（供桌右側，獻了才出現） -->
-  <image id="yCandy" class="yue-candy" href="${candyUrl}" x="206" y="352" width="64" height="36" style="display:none" filter="url(#yLit)"/>
+  <image id="yCandy" class="yue-candy" href="${candyUrl}" x="197" y="361" width="48" height="27" style="display:none" filter="url(#yLit)"/>
 
   <!-- 紅線線軸（拜墊左邊） -->
   <ellipse cx="72" cy="611" rx="26" ry="5" fill="url(#yContact)"/>
   <image id="ySpool" class="yue-spool" data-yue="spool" href="${spoolUrl}" x="46" y="578" width="52" height="35" filter="url(#yLit)"/>
 
   <!-- 人偶 -->
-  <ellipse cx="184" cy="590" rx="46" ry="7" fill="url(#yContact)"/>
-  <image id="yAvatar" class="yue-avatar" data-yue="avatar" filter="url(#yLit)" x="117" y="452" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
+  <image opacity="0" id="yAvatar" class="yue-avatar" data-yue="avatar" filter="url(#yLit)" x="117" y="452" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
 
   <!-- 紅線 -->
   <path id="yThread" d="" fill="none" stroke="#E8262E" stroke-width="2.2" stroke-linecap="round" pointer-events="none"/>
@@ -250,7 +249,7 @@ export function initYuelao(api) {
     yue.candyDay = dayKey(); save(); paintCandy();
     candy.classList.remove('pop'); void candy.getBoundingClientRect(); candy.classList.add('pop');
     sfx.pop(); setTimeout(() => sfx.chime(), 300);
-    burst('heart', 238, 360, reduce ? 3 : 10);
+    burst('heart', 221, 368, reduce ? 3 : 10);
     say('喜糖擺上供桌了。月老笑瞇瞇：「甜甜的，緣分也會甜甜的。等你有好消息，再來請我吃一次。」', 'god');
   }
 
@@ -271,7 +270,7 @@ export function initYuelao(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，感情的事還是要靠兩個人好好溝通。</p>`);
   }
 
-  const ACTS = { ask: openAsk, tie: hintTie, plaque: openPlaque, candy: offerCandy, qian: openQian };
+  const ACTS = { thread: () => (!yue.thread || yue.tieDay === dayKey() ? openAsk() : hintTie()), ask: openAsk, tie: hintTie, plaque: openPlaque, candy: offerCandy, qian: openQian };
   svg.addEventListener('click', (e) => { if (e.target.closest('[data-yue="deity"]')) greetGod(); });
   svg.querySelector('[data-yue="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
   $('#yueBar').addEventListener('click', (e) => { const b = e.target.closest('button[data-yue]'); if (b) ACTS[b.dataset.yue](); });
@@ -284,10 +283,14 @@ export function initYuelao(api) {
       hands = [182, 593 - h * 0.52];
       paintCandy(); paintPlaques();
       const t = dayKey();
-      say(!yue.thread ? '歡迎來到月老閣！想求姻緣，先按下面的「求紅線」，連擲三個聖筊，月老就會給你紅線。'
+      say(!yue.thread ? '歡迎來到月老閣！先點燭、上香向月老問好，再按「紅線」求紅線：連擲三個聖筊，月老就會給你紅線。'
         : yue.tieDay !== t ? '歡迎回來。你已經有紅線了，按住你的手，把紅線拉到月老的姻緣簿上綁好。'
         : '又見面了。可以寫一塊愛心木牌、獻一盤喜糖，或抽一支清醒戀愛籤。', 'god');
     },
     setFestive(on) { S('yBg').setAttribute('href', on ? festUrl : bgUrl); },
+    god: '月老', qianName: '清醒戀愛籤', qianCount: LOVE_QIAN.length,
+    hasQianToday: () => !!yue.qian && yue.qian.date === dayKey(),
+    setQian(no) { yue.qian = { date: dayKey(), no }; save(); },
+    openQian,
   };
 }

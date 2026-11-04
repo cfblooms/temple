@@ -51,7 +51,7 @@ export const CAI_SVG = (bg) => `
     <radialGradient id="cContact"><stop offset="0" stop-color="#1A0A04" stop-opacity=".6"/><stop offset="1" stop-color="#1A0A04" stop-opacity="0"/></radialGradient>
     <radialGradient id="cHalo"><stop offset="0" stop-color="#FFF4C8" stop-opacity=".95"/><stop offset=".6" stop-color="#FFD36A" stop-opacity=".35"/><stop offset="1" stop-color="#FFD36A" stop-opacity="0"/></radialGradient>
   </defs>
-  <image id="cBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
+  <image id="cBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
   <circle id="cHaloC" cx="180" cy="300" r="58" fill="url(#cHalo)" opacity=".3" style="mix-blend-mode:screen"/>
   <rect class="hit" data-cai="deity" role="button" tabindex="0" aria-label="向財神爺問安" x="148" y="255" width="66" height="95" rx="20" fill="transparent"/>
 
@@ -72,8 +72,7 @@ export const CAI_SVG = (bg) => `
   </g>
 
   <!-- 人偶 -->
-  <ellipse cx="184" cy="533" rx="44" ry="7" fill="url(#cContact)"/>
-  <image id="cAvatar" filter="url(#cLit)" x="117" y="396" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
+  <image style="display:none" id="cAvatar" filter="url(#cLit)" x="117" y="396" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
 
   <!-- 金幣（下方，往聚寶盆甩） -->
   <circle id="cAim" cx="58" cy="528" r="30" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="5 5" opacity="0" pointer-events="none"/>
@@ -302,8 +301,12 @@ export function initCaishen(api) {
       el.setAttribute('href', char.kneel); el.setAttribute('width', w); el.setAttribute('height', h);
       el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h);
       paintWealth();
-      say(cai.rubDay === dayKey() ? '歡迎回到財神聚寶閣。今天元寶摸過了，可以丟金幣進聚寶盆、借發財金或抽財神籤。' : '歡迎來到財神聚寶閣！先摸摸右下角的大金元寶，今日財氣 +88。也可以把金幣甩進聚寶盆。', 'god');
+      say(cai.rubDay === dayKey() ? '歡迎回到財神聚寶閣。一樣先點燭、上香，再丟金幣進聚寶盆、借發財金或抽財神籤。' : '歡迎來到財神聚寶閣！先點燭、上香向財神爺問好，再摸摸右下角的大金元寶，今日財氣 +88。', 'god');
     },
     setFestive(on) { S('cBg').setAttribute('href', on ? festUrl : bgUrl); },
+    god: '財神爺', qianName: '財神籤', qianCount: CAI_QIAN.length,
+    hasQianToday: () => !!cai.qian && cai.qian.date === dayKey(),
+    setQian(no) { cai.qian = { date: dayKey(), no }; save(); },
+    openQian,
   };
 }

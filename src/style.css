@@ -221,7 +221,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 /* ---------- 財神聚寶閣 ---------- */
 #caiHost[hidden], #sceneHost[hidden], #yueHost[hidden] { display: none; }
 .cai-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
-.bar.cai-bar { grid-template-columns: repeat(4, 1fr); }
+.bar.cai-bar { grid-template-columns: repeat(7, 1fr); }
 .cai-ingot, .cai-bowl, .cai-coin { transform-box: fill-box; transform-origin: 50% 80%; cursor: pointer; }
 .cai-coin { cursor: grab; }
 .cai-ingot.rub { transform: scale(1.04, .97); }
@@ -239,7 +239,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* ---------- 月老閣 ---------- */
 .yue-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
-.bar.yue-bar { grid-template-columns: repeat(5, 1fr); }
+.bar.yue-bar { grid-template-columns: repeat(7, 1fr); }
 .yue-avatar, .yue-spool { cursor: grab; }
 .yue-plaque { cursor: pointer; transform-box: fill-box; transform-origin: 50% 0; animation: plaqueSway 3.2s ease-in-out infinite alternate; }
 .yue-plaque:nth-child(2n) { animation-delay: -1.4s; }
@@ -274,3 +274,19 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-row button { border: 1.5px solid rgb(255 230 190 / .5); background: rgb(0 0 0 / .25); color: #FFF1DA; border-radius: 999px; padding: 8px 18px; font: inherit; font-size: 14px; }
 .jt-row button[hidden] { display: none; }
 @media (prefers-reduced-motion: reduce) { .jt-pair.hold img { animation: none; } }
+
+/* 專科殿堂的道具層疊在正殿場景上面：只有道具本身可以點，其他地方穿透到下面（蠟燭、香爐、拿工具） */
+#caiHost, #yueHost, .cai-svg, .yue-svg { pointer-events: none; }
+.cai-svg [data-cai], .yue-svg [data-yue] { pointer-events: auto; }
+#sceneWrap.tooling .cai-svg [data-cai], #sceneWrap.tooling .yue-svg [data-yue] { pointer-events: none; }
+
+/* ---------- 今日參拜路線（地圖下方） ---------- */
+.route { display: flex; align-items: center; gap: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.route[hidden] { display: none; }
+.route-h { font-size: 12px; color: var(--muted); writing-mode: vertical-rl; letter-spacing: .1em; }
+.route-step { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); font: inherit; font-size: 12px; }
+.route-step b { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--chip, #F3E3CC); font-size: 12px; }
+.route-step.done b { background: var(--red); color: #FFF4E0; }
+.route-step.done { opacity: .75; }
+.route-step.next { border-color: var(--gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent); }
+.area.done::after { content: '✓'; position: absolute; top: -1.2cqw; right: -1.2cqw; width: 3.4cqw; height: 3.4cqw; display: grid; place-items: center; border-radius: 50%; background: #2E8B57; color: #fff; font-size: 2.2cqw; }

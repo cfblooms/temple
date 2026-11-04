@@ -100,12 +100,15 @@ export const SCENE_SVG = (bg) => `
   <image id="hallBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
 
   <!-- 神明光暈與點擊區 -->
+  <g id="mainOnlyA">
   <circle class="deity-halo" id="halo" cx="182" cy="300" r="58" fill="url(#haloG)" opacity=".35" style="mix-blend-mode:screen"/>
   <rect id="deity" class="hit" data-hit="deity" role="button" tabindex="0" aria-label="向神明問安" x="150" y="255" width="65" height="100" rx="20" fill="transparent"/>
+  </g>
 
   <!-- 供桌兩端的蠟燭 -->
   ${candle(106, 'L', candleUrl)}${candle(258, 'R', candleRUrl)}
 
+  <g id="mainOnlyB">
   <!-- 供品：後排鮮花，前排水果、糕餅、清茶 -->
   <g id="offerings" class="hit" data-hit="offer" role="button" tabindex="0" aria-label="獻供">
     <rect x="120" y="355" width="125" height="40" fill="transparent"/>
@@ -113,7 +116,9 @@ export const SCENE_SVG = (bg) => `
     ${offer('offFruit', fruitUrl, 124, 366, 28, 32)}${offer('offTea', teaUrl, 164, 379, 32, 23)}${offer('offCakes', cakesUrl, 205, 369, 34, 30)}
   </g>
 
+  </g>
   <!-- 香爐（背景圖裡的）與香 -->
+  <g id="burnerG">
   <g class="hit" data-hit="incense" role="button" tabindex="0" aria-label="上香">
     <rect x="160" y="335" width="45" height="45" fill="transparent"/>
     <g transform="translate(2 140)"><g id="incense" style="display:none">
@@ -124,6 +129,8 @@ export const SCENE_SVG = (bg) => `
     </g></g>
   </g>
 
+  </g>
+  <g id="mainOnlyC">
   <!-- 籤筒（放在左邊地上） -->
   <use href="#tubeScene" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 561) matrix(1 0 -1.3 .26 0 0) translate(0 -561)"/>
   <ellipse cx="46" cy="561" rx="18" ry="4" fill="url(#contact)"/>
@@ -148,10 +155,13 @@ export const SCENE_SVG = (bg) => `
     <g class="qing-bowl" id="qingBowl"><image id="qingImg" filter="url(#lit)" href="${qingUrl}" x="270" y="506" width="80" height="68"/></g>
   </g>
 
+  </g>
   <!-- 人偶跪在拜墊上 -->
+  <g id="avatarG">
   <use href="#avatarImg" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 534) matrix(1 0 -1.3 .26 0 0) translate(0 -534)"/>
   <ellipse cx="184" cy="533" rx="44" ry="7" fill="url(#contact)"/>
   <image id="avatarImg" filter="url(#lit)" x="117" y="396" width="130" height="142" preserveAspectRatio="xMidYMax meet"/>
+  </g>
 
   <!-- 筊杯 -->
   <g id="jiaoLayer" filter="url(#lit)">${jiaoBlock('jiaoA')}${jiaoBlock('jiaoB')}</g>

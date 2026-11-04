@@ -12,6 +12,10 @@ import { tossJiao } from './jiaotoss.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
+import caiBg from './assets/cai/cai-bg.webp';
+import caiFest from './assets/cai/cai-festival.webp';
+import yueBg from './assets/yue/yue-bg.webp';
+import yueFest from './assets/yue/yue-festival.webp';
 import tubeUrl from './assets/tube.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -51,7 +55,14 @@ const isYa = !!L && (L.day === 2 || L.day === 16); // 初二、十六做牙
 const FESTS = [[1, 1, 15, '春節'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕']];
 const fest = L && !L.leap ? FESTS.find(([m, a, b]) => L.mon === m && L.day >= a && L.day <= b) : null;
 let festive = !!fest;
-const hallImg = () => festive ? hallFest : hallBg;
+// 每座殿：背景、人偶跪的高度（拜墊）、香爐的上下位移。點燭、上香、擲筊、抽籤共用同一套。
+const HALLS = {
+  main: { name: '正殿', bg: hallBg, fest: hallFest, base: 536, burnerDy: 0 },
+  cai: { name: '財神聚寶閣', bg: caiBg, fest: caiFest, base: 536, burnerDy: 0 },
+  yue: { name: '月老閣', bg: yueBg, fest: yueFest, base: 593, burnerDy: 14 },
+};
+let hall = 'main';
+const hallImg = () => festive ? HALLS[hall].fest : HALLS[hall].bg;
 const today = new Date();
 const dateLine = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}${L ? '・' + L.text : ''}`;
 const lunarLine = () => { $('#lunar').innerHTML = L ? `${L.text}${fest ? `<br><b>${fest[3]}</b>` : isYa ? '<br><b>今日做牙</b>' : ''}` : ''; };
@@ -72,7 +83,6 @@ $('#sceneHost').innerHTML = SCENE_SVG(hallImg());
 $('#lunar').addEventListener('click', () => {
   festive = !festive;
   $('#hallBg').setAttribute('href', hallImg());
-  cai.setFestive(festive); yue.setFestive(festive);
   const inYue = !$('#yueHost').hidden;
   say(festive ? (inYue ? '這是七夕的月老閣：滿天蓮花燈、桃花瓣飄下來。再點一次農曆換回平日。' : '這是過年過節的廟：紅燈籠全掛上了。再點一次農曆換回平日。') : '換回平日的廟。');
 });
@@ -85,7 +95,7 @@ function paintAvatar() {
   const el = S('avatarImg'), h = 130 * c.scale, w = 120 * c.scale;
   el.setAttribute('href', c.kneel);
   el.setAttribute('width', w); el.setAttribute('height', h);
-  el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h);
+  el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h); // 其他殿用 #avatarG 整組往下移
   $('#meThumb').src = c.face;
   $('#meName').textContent = state.name;
 }
@@ -94,16 +104,19 @@ paintAvatar();
 function updateFish() { $('#fishCount').textContent = state.fish; }
 updateFish();
 
+const SUB = {}; // 專科殿堂模組（財神、月老），初始化後填入
+const drawnToday = () => (hall === 'main' ? !!state.fortune : SUB[hall].hasQianToday());
 function markNext() {
-  const next = !session.lit ? 'candle' : session.incenseUntil < Date.now() && !state.fortune ? 'incense' : !state.fortune ? 'draw' : 'card';
-  document.querySelectorAll('.bar button').forEach((b) => b.classList.toggle('next', b.dataset.act === next));
+  const d = drawnToday();
+  const next = !session.lit ? 'candle' : session.incenseUntil < Date.now() && !d ? 'incense' : !d ? 'draw' : hall === 'main' ? 'card' : '';
+  document.querySelectorAll('.bar button[data-act]').forEach((b) => b.classList.toggle('next', b.dataset.act === next));
 }
 
 /* ---------- 手上的工具：打火機、三炷香 ---------- */
 const WICK = { L: [106, 345], R: [258, 345] };   // 燭芯
 const FIRE = { L: [106, 335], R: [258, 335] };   // 燭火
-const BURNER = [182, 356];                       // 香爐口
-const lit = { L: false, R: false };
+let BURNER = [182, 356];                         // 香爐口（換殿時會變）
+let lit = { L: false, R: false };
 const tool = { kind: null, x: 0, y: 0, down: false, hold: 0, sticksLit: false, then: null, smoke: 0 };
 const dist = (x, y, [tx, ty]) => Math.hypot(x - tx, y - ty);
 function svgPt(e) { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
@@ -136,14 +149,14 @@ function equip(kind, then) {
   S('toolLighter').style.display = kind === 'lighter' ? '' : 'none';
   S('toolSticks').style.display = kind === 'sticks' ? '' : 'none';
   S('handTips').setAttribute('opacity', '0');
-  svg.style.touchAction = 'none';
+  svg.style.touchAction = 'none'; $('#sceneWrap').classList.add('tooling');
   placeTool(kind === 'lighter' ? 212 : 230, 470);
   onTick(toolTick);
 }
 function unequip() {
   tool.kind = null; tool.down = false;
   S('tool').style.display = 'none'; S('lighterFlame').style.display = 'none'; aimAt(null);
-  svg.style.touchAction = '';
+  svg.style.touchAction = ''; $('#sceneWrap').classList.remove('tooling');
 }
 function toolTick(t, dt) {
   if (!tool.kind) return false;
@@ -242,11 +255,20 @@ function bow() {
 }
 function plantIncense() {
   session.incenseUntil = Date.now() + BURN * 1000;
-  S('incense').style.display = '';
+  routeDone(hall);
   sfx.pop(); sfx.buzz(8); bow();
-  burst('spark', 182, 305, 10);
+  burst('spark', 182, 305 + HALLS[hall].burnerDy, 10);
+  runIncense();
+  say('三炷清香插進香爐，青煙裊裊往上飄。可以抽籤問事，拜完也可以去廟埕的金爐<b>燒金紙</b>。');
+  markNext();
+}
+let incenseRun = 0;
+function runIncense() {
+  S('incense').style.display = '';
+  const run = ++incenseRun, dy = HALLS[hall].burnerDy;
   let acc = 0;
   onTick((t, dt) => {
+    if (run !== incenseRun) return false;
     const left = (session.incenseUntil - Date.now()) / 1000;
     if (left <= 0) { S('incense').style.display = 'none'; markNext(); return false; }
     const k = 0.25 + 0.75 * (left / BURN); // 香越燒越短
@@ -260,11 +282,9 @@ function plantIncense() {
     if (acc > (REDUCED_MOTION ? 0.6 : 0.16)) {
       acc = 0;
       const i = Math.floor(Math.random() * 3), [x1, y1, x2, y2] = STICKS[i];
-      emit('smoke', 2 + x1 + (x2 - x1) * k, 140 + y1 + (y2 - y1) * k - 2);
+      emit('smoke', 2 + x1 + (x2 - x1) * k, 140 + dy + y1 + (y2 - y1) * k - 2);
     }
   });
-  say('三炷清香插進香爐，青煙裊裊往上飄。可以抽籤問事，拜完也可以去廟埕的金爐<b>燒金紙</b>。');
-  markNext();
 }
 function incenseNow() { if (session.incenseUntil > Date.now()) return startIncense(); lightCandlesNow(); plantIncense(); }
 
@@ -287,7 +307,7 @@ function openJoss() {
     onDone: () => {
       sfx.chime();
       $('#jossCount').insertAdjacentHTML('afterend', '<button class="btn" id="jossDone">化完了，回到大殿</button>');
-      $('#jossDone').addEventListener('click', () => { closeSheet(); say('金紙化成輕煙往上送，這份心意神明收到了。', 'god'); });
+      $('#jossDone').addEventListener('click', () => { closeSheet(); say('金紙化成輕煙往上送，這份心意神明收到了。', 'god'); routeDone('joss'); });
     },
   });
 }
@@ -308,9 +328,10 @@ async function throwJiao(tip, cancel = true) {
     const r = Math.random();
     const key = r < 0.5 ? 'sheng' : r < 0.75 ? 'xiao' : 'yin';
     const faces = [...JIAO[key].faces]; if (Math.random() < 0.5) faces.reverse();
+    const jdy = Math.min(26, HALLS[hall].base - 536);
     const blocks = [
-      { el: S('jiaoA'), x0: 172, y0: 480, x1: rand(132, 158), y1: rand(580, 596), spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
-      { el: S('jiaoB'), x0: 192, y0: 480, x1: rand(206, 232), y1: rand(584, 600), spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
+      { el: S('jiaoA'), x0: 172, y0: 480, x1: rand(132, 158), y1: rand(580, 596) + jdy, spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
+      { el: S('jiaoB'), x0: 192, y0: 480, x1: rand(206, 232), y1: rand(584, 600) + jdy, spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
     ];
     const dur = REDUCED_MOTION ? 0.2 : 0.95;
     let t0 = null, landed = false;
@@ -387,10 +408,10 @@ const draft = { cat: 'peace', wish: '', no: 0 };
 function openDraw() {
   if (session.busy) return;
   if (session.incenseUntil < Date.now() && !session.lit) say('通常會先點燭、上香再抽籤，不過心誠最重要，直接來也可以。');
-  const body = openSheet('向神明稟報', `
+  const body = openSheet(`向${hall === 'main' ? '神明' : SUB[hall].god}稟報`, `
     <p class="hint">抽籤前先報上自己是誰、想問什麼。一次問一件事，同一件事不要一直重抽。</p>
     <label class="field"><span>稱呼</span><input type="text" id="drawName" maxlength="12" value="${esc(state.name)}"></label>
-    <div class="field"><span>想問的方向</span>${chipGroup('cat', CATEGORIES, draft.cat)}</div>
+    ${hall === 'main' ? `<div class="field"><span>想問的方向</span>${chipGroup('cat', CATEGORIES, draft.cat)}</div>` : `<p class="hint">今天抽的是<b>${SUB[hall].qianName}</b>。</p>`}
     <label class="field"><span>心願（選填，會印在祈福卡上）</span><input type="text" id="drawWish" maxlength="30" placeholder="例：期末考順利歐趴" value="${esc(draft.wish)}"></label>
     <button class="btn" id="goShake">稟報完畢，搖籤筒</button>`);
   bindChips(body, (_, v) => { draft.cat = v; });
@@ -417,7 +438,7 @@ async function shake() {
   await sleep(REDUCED_MOTION ? 300 : 1500);
   if ($('#sheet').hidden) return;
   tube.classList.remove('shake');
-  draft.no = 1 + Math.floor(Math.random() * FORTUNES.length);
+  draft.no = 1 + Math.floor(Math.random() * (hall === 'main' ? FORTUNES.length : SUB[hall].qianCount));
   $('#outStick', body).style.display = '';
   $('#stickNo', body).textContent = `第${cn(draft.no)}籤`;
   $('#shakeHint', body).textContent = '要擲出聖筊，神明確認是這一支，才算數。';
@@ -436,6 +457,7 @@ async function confirmStick() {
   if (key === 'sheng') {
     sfx.chime();
     say(`聖筊！神明確認就是第${cn(draft.no)}籤，去看籤詩吧。`, 'god');
+    if (hall !== 'main') { SUB[hall].setQian(draft.no); markNext(); burst('spark', 182, 590, 18); await sleep(900); SUB[hall].openQian(); return; }
     state.fortune = { no: draft.no, cat: draft.cat, wish: draft.wish, date: dayKey() };
     save(); markNext();
     burst('spark', 182, 590, 18);
@@ -628,7 +650,8 @@ function openAvatar() {
 /* ---------- 綁定 ---------- */
 const ACTIONS = {
   candle: () => startLighter(), incense: startIncense, jiao: freeJiao, joss: openJoss,
-  draw: () => (state.fortune && state.fortune.date === dayKey() ? showFortune() : openDraw()),
+  draw: () => (hall !== 'main' ? (SUB[hall].hasQianToday() ? SUB[hall].openQian() : openDraw())
+    : state.fortune && state.fortune.date === dayKey() ? showFortune() : openDraw()),
   card: openCard, offer: offerGifts, deity: greetDeity, tiger: petTiger, qing: ringQing,
 };
 // 用鍵盤（沒有拖曳）時，點燭、上香直接完成
@@ -640,8 +663,8 @@ function act(name, keyboard) {
   if (tool.kind) { const same = (name === 'candle' && tool.kind === 'lighter') || (name === 'incense' && tool.kind === 'sticks'); unequip(); if (same) { say('先把手上的東西放下了。'); return; } }
   (keyboard && QUICK[name] ? QUICK[name] : ACTIONS[name])();
 }
-document.querySelector('.bar').addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-act]'); if (b) act(b.dataset.act, e.detail === 0);
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.bar button[data-act]'); if (b) act(b.dataset.act, e.detail === 0);
 });
 svg.addEventListener('click', (e) => {
   if (tool.kind) return; // 拿著工具時，點畫面是在移動工具
@@ -681,7 +704,7 @@ const AREAS = [
   { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, main: true, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
   { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
   { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, info: '流水席紅圓桌：全服一起湊菜，湊滿就開席。' },
-  { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
+  { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
   { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, info: '許願放生池：把蓮花水燈放進池裡，看它慢慢綻放。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, info: '青衣阿嬤收驚攤：寫下委屈字條化煙，阿嬤持香為你拂塵安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, info: '鵝頸橋打小人攤：寫下討厭的代號，婆婆用舊拖鞋幫你打走霉運。' },
@@ -701,45 +724,87 @@ function buildMap() {
     if (a.id === 'hall') { showHall(); return; }
     if (a.id === 'caishen') { showCai(); return; }
     if (a.id === 'yuelao') { showYue(); return; }
+    if (a.id === 'jinting') { openJoss(); return; }
     sfx.knock();
     say(`${a.info}這一區還在興建中，目前開放的是正殿、財神聚寶閣和月老閣。`);
   });
 }
 
-function showMap() {
-  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#mapView').hidden = false;
-  $('#btnMap').hidden = true;
-  say('這是心靈大廟全區。從山門走進來，正殿、財神聚寶閣和月老閣已經開放，其他殿堂陸續興建中。點紅色的標籤進去吧。');
+/* ---------- 今日參拜路線：像真的去廟裡，一殿一殿拜，最後到金亭化金紙 ---------- */
+const ROUTE = [
+  { id: 'main', name: '正殿', area: 'hall', how: '上香' },
+  { id: 'cai', name: '財神閣', area: 'caishen', how: '上香' },
+  { id: 'yue', name: '月老閣', area: 'yuelao', how: '上香' },
+  { id: 'joss', name: '金亭', area: 'jinting', how: '化金紙' },
+];
+function route() {
+  if (!state.route || state.route.date !== dayKey()) state.route = { date: dayKey(), done: [], bonus: false };
+  return state.route;
+}
+function paintRoute() {
+  const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
+  $('#routeBar').innerHTML = `<span class="route-h">今日參拜</span>${ROUTE.map((x, i) => `<button type="button" class="route-step${r.done.includes(x.id) ? ' done' : ''}${x === next ? ' next' : ''}" data-step="${x.id}" aria-label="${x.name}${r.done.includes(x.id) ? '，已完成' : ''}"><b>${r.done.includes(x.id) ? '✓' : i + 1}</b>${x.name}</button>`).join('')}`;
+  document.querySelectorAll('.area').forEach((el) => { const st = ROUTE.find((x) => x.area === el.dataset.area); el.classList.toggle('done', !!st && r.done.includes(st.id)); });
+}
+function routeDone(id) {
+  const r = route();
+  if (r.done.includes(id)) return;
+  r.done.push(id); save(); paintRoute();
+  if (r.bonus || !ROUTE.every((x) => r.done.includes(x.id))) return;
+  r.bonus = true; state.fish += 3; save(); updateFish();
+  setTimeout(() => {
+    sfx.chime(); sfx.buzz([20, 60, 20, 60, 40]);
+    say('今日參拜<b>圓滿</b>！正殿、財神、月老都拜過，金紙也化了。虎爺叼來開運小魚乾 ×3，明天再來走一趟吧。', 'cat');
+    if (!$('#sceneWrap').hidden) burst('spark', 182, 300, REDUCED_MOTION ? 6 : 30);
+  }, 1600);
+}
+function openStep(id) {
+  const st = ROUTE.find((x) => x.id === id);
+  if (id === 'main') showHall(); else if (id === 'cai') showCai(); else if (id === 'yue') showYue(); else openJoss();
+  return st;
 }
 
-function showHall() {
-  $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#bar').hidden = false;
-  $('#sceneHost').hidden = false; $('#caiHost').hidden = true; $('#caiBar').hidden = true; $('#yueHost').hidden = true; $('#yueBar').hidden = true;
-  $('#btnMap').hidden = false;
+function showMap() {
+  if (tool.kind) unequip();
+  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#mapView').hidden = false;
+  $('#btnMap').hidden = true; $('#routeBar').hidden = false; paintRoute();
+  const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
+  say(!r.done.length ? '這是心靈大廟全區。像真的去廟裡一樣，照下面的<b>今日參拜路線</b>走：先拜正殿，再到財神閣、月老閣，最後到金亭化金紙。'
+    : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
+    : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
+}
+
+// 每座殿各自記得蠟燭、香的狀態（這次參拜的，不存檔）
+const hallState = {};
+function switchHall(h) {
+  if (tool.kind) unequip();
+  hallState[hall] = { lit, sLit: session.lit, until: session.incenseUntil };
+  hall = h;
+  const st = hallState[h] || { lit: { L: false, R: false }, sLit: false, until: 0 };
+  lit = st.lit; session.lit = st.sLit; session.incenseUntil = st.until;
+  const H = HALLS[h], dy = H.base - 536;
+  BURNER = [182, 356 + H.burnerDy];
+  $('#hallBg').setAttribute('href', hallImg());
+  for (const id of ['mainOnlyA', 'mainOnlyB', 'mainOnlyC']) S(id).style.display = h === 'main' ? '' : 'none';
+  S('avatarG').setAttribute('transform', `translate(0 ${dy})`);
+  S('burnerG').setAttribute('transform', `translate(0 ${H.burnerDy})`);
+  for (const k of ['L', 'R']) { S('flame' + k).setAttribute('opacity', lit[k] ? '1' : '0'); if (!lit[k]) S('glow' + k).setAttribute('opacity', '0'); }
+  if (session.incenseUntil > Date.now()) runIncense(); else { incenseRun++; S('incense').style.display = 'none'; }
+  $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
+  $('#bar').hidden = h !== 'main';
+  for (const k of ['A', 'B']) S('jiao' + k).setAttribute('opacity', '0');
+  for (const k of ['cai', 'yue']) { $(`#${k}Host`).hidden = k !== h; $(`#${k}Bar`).hidden = k !== h; }
   sfx.bowl();
-  greet();
   markNext();
 }
-function showSub(id) { // 進入某一座專科殿堂
-  $('#mapView').hidden = true; $('#bar').hidden = true; $('#sceneHost').hidden = true; $('#sceneWrap').hidden = false;
-  for (const k of ['cai', 'yue']) { $(`#${k}Host`).hidden = k !== id; $(`#${k}Bar`).hidden = k !== id; }
-}
-function showYue() {
-  showSub('yue'); $('#btnMap').hidden = false;
-  sfx.bowl();
-  yue.enter(charById(state.char));
-}
-function showCai() {
-  showSub('cai');
-  $('#btnMap').hidden = false;
-  sfx.bowl();
-  cai.enter(charById(state.char));
-}
+function showHall() { switchHall('main'); greet(); }
+function showYue() { switchHall('yue'); yue.enter(charById(state.char)); }
+function showCai() { switchHall('cai'); cai.enter(charById(state.char)); }
 $('#btnMap').addEventListener('click', showMap);
+$('#routeBar').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) openStep(b.dataset.step); });
 const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-cai.setFestive(festive);
 const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-yue.setFestive(festive);
+SUB.cai = cai; SUB.yue = yue;
 buildMap();
 
 showMap();
