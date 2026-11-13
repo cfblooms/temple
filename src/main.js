@@ -133,7 +133,7 @@ function camera(to, ms = 650) {
   });
 }
 // 供桌特寫：兩支蠟燭、香爐、供品都在畫面裡，下面還看得到跪著的自己
-function altarView() { const w = 214, cy = 384 + (HALLS[hall] ? HALLS[hall].burnerDy : 0); return { x: 182 - w / 2, y: cy - (w * VH) / 2, w }; }
+function altarView(dy = 0) { const w = 214, cy = 384 + dy + (HALLS[hall] ? HALLS[hall].burnerDy : 0); return { x: 182 - w / 2, y: cy - (w * VH) / 2, w }; }
 const zoomIn = () => camera(altarView());
 function zoomOut(delay = 0) { clearTimeout(camTimer); camTimer = setTimeout(() => camera(FULL), delay); }
 
@@ -657,10 +657,10 @@ function ringQing() {
 /* ---------- 獻供：供桌拉近，自己把供品一樣一樣擺上去 ---------- */
 // slot = 擺在供桌上的位置（場景座標），els = 場景裡對應的圖
 const OFFERS = [
-  { id: 'flowers', name: '鮮花', mean: '表敬意', img: flowersUrl, els: ['offFlowerL', 'offFlowerR'], slots: [[131, 360], [233, 360]] },
-  { id: 'fruit', name: '水果', mean: '求平安', img: fruitUrl, els: ['offFruit'], slots: [[138, 382]] },
-  { id: 'tea', name: '清茶', mean: '清心', img: teaUrl, els: ['offTea'], slots: [[180, 390]] },
-  { id: 'cakes', name: '糕餅', mean: '圓圓滿滿', img: cakesUrl, els: ['offCakes'], slots: [[222, 384]] },
+  { id: 'flowers', name: '鮮花', mean: '表敬意', img: flowersUrl, els: ['offFlowerL', 'offFlowerR'], slots: [[131, 368], [233, 368]] },
+  { id: 'fruit', name: '水果', mean: '求平安', img: fruitUrl, els: ['offFruit'], slots: [[139, 373]] },
+  { id: 'tea', name: '清茶', mean: '清心', img: teaUrl, els: ['offTea'], slots: [[180, 378]] },
+  { id: 'cakes', name: '糕餅', mean: '圓滿', img: cakesUrl, els: ['offCakes'], slots: [[222, 374]] },
 ];
 const TABLE = { x0: 92, x1: 272, y0: 326, y1: 418 }; // 放在這個範圍內都算擺上供桌
 const offeredToday = () => (state.offer && state.offer.date === dayKey() ? state.offer.items : []);
@@ -682,10 +682,10 @@ function offerGifts() {
     say('今天的供品都擺好了：鮮花、水果、清茶、糕餅。神明收到你的心意。');
     zoomOut(2200); return;
   }
-  session.busy = true; zoomIn();
+  session.busy = true; camera(altarView(58)); // 下面有供品盤，鏡頭往下移一點，讓供桌在畫面上半部
   const tray = document.createElement('div');
   tray.className = 'offer-tray'; tray.id = 'offerTray';
-  tray.innerHTML = `<div class="offer-items">${OFFERS.map((o) => `<button type="button" class="offer-item${done.includes(o.id) ? ' done' : ''}" data-offer="${o.id}" aria-label="把${o.name}擺上供桌">
+  tray.innerHTML = `<p class="offer-tip">按住供品拖到供桌上，或點一下</p><div class="offer-items">${OFFERS.map((o) => `<button type="button" class="offer-item${done.includes(o.id) ? ' done' : ''}" data-offer="${o.id}" aria-label="把${o.name}擺上供桌">
       <img src="${o.img}" alt="" draggable="false"><b>${o.name}</b><small>${o.mean}</small></button>`).join('')}</div>
     <button type="button" class="offer-close" id="offerClose">先這樣</button>`;
   $('#sceneWrap').append(tray);
@@ -722,7 +722,7 @@ function offerDown(e) {
   onTick((t) => { if (d.run < 0) return false; aimAt(o.slots[Math.floor(t * 1.2) % o.slots.length]); });
 }
 // 供品浮在手指上方，跟工具一樣不會被手指擋住
-const GHOST_LIFT = 70;
+const GHOST_LIFT = 80;
 function ghostPt(e) { return svgPt({ clientX: e.clientX, clientY: e.clientY - GHOST_LIFT }); }
 function moveGhost(e) {
   const r = $('#sceneWrap').getBoundingClientRect(), g = offerUI.drag.ghost;
@@ -742,7 +742,7 @@ function placeOffer(id) {
   if (left.length) { say(`${o.name}擺好了，${o.mean}。還有${left.map((x) => x.name).join('、')}。`); return; }
   setTimeout(() => {
     endOffer(1800); bow(); sfx.chime(); S('halo').setAttribute('opacity', '.7'); burst('heart', 182, 340, 6);
-    say('供品都擺好了：鮮花表敬意、水果求平安、清茶清心、糕餅圓圓滿滿。雙手合十拜一拜。');
+    say('供品都擺好了：鮮花表敬意、水果求平安、清茶清心、糕餅圓滿。雙手合十拜一拜。');
   }, 500);
 }
 function endOffer(delay = 300) {

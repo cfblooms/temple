@@ -306,16 +306,17 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gods { transition: opacity .3s; }
 
 /* 獻供：供桌拉近時，下面出現一盤供品，拖到桌上 */
-.offer-tray { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 4; padding: 8px 8px 6px; border-radius: 18px; background: rgb(255 246 230 / .94); box-shadow: 0 4px 16px rgb(60 15 10 / .35); animation: trayUp .35s cubic-bezier(.3,1.4,.5,1); }
+.offer-tray { position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 4; padding: 10px 8px 4px; border-radius: 18px; background: rgb(255 246 230 / .94); box-shadow: 0 4px 16px rgb(60 15 10 / .35); animation: trayUp .35s cubic-bezier(.3,1.4,.5,1); }
 @keyframes trayUp { from { transform: translateY(110%); } }
 .offer-items { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.offer-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 2px 5px; border: 2px solid #E9CF96; border-radius: 14px; background: #FFFDF6; color: var(--ink); font: inherit; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-.offer-item img { width: 46px; height: 46px; object-fit: contain; pointer-events: none; }
-.offer-item b { font-size: 14px; }
-.offer-item small { font-size: 11px; color: #9A6A48; }
+.offer-tip { margin: 0 0 6px; text-align: center; font-size: 13px; color: #8A4A2A; }
+.offer-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 118px; justify-content: center; padding: 8px 2px; border: 2px solid #E9CF96; border-radius: 16px; background: #FFFDF6; color: var(--ink); font: inherit; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.offer-item img { width: 100%; max-width: 72px; aspect-ratio: 1; height: auto; object-fit: contain; pointer-events: none; }
+.offer-item b { font-size: 17px; }
+.offer-item small { font-size: 12px; color: #9A6A48; }
 .offer-item.lifting { opacity: .4; }
 .offer-item.done { opacity: .45; border-style: dashed; }
 .offer-item.done::after { content: '✓'; position: absolute; top: 2px; right: 6px; color: var(--jade); font-weight: 900; }
-.offer-close { display: block; margin: 6px auto 0; padding: 4px 14px; border: 0; border-radius: 99px; background: none; color: #9A6A48; font: inherit; font-size: 13px; }
-.offer-ghost { position: absolute; left: 0; top: 0; z-index: 5; width: 64px; height: 64px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 6px 6px rgb(40 10 0 / .35)); }
+.offer-close { display: block; margin: 4px auto 0; min-height: 40px; padding: 8px 22px; border: 0; border-radius: 99px; background: none; color: #9A6A48; font: inherit; font-size: 15px; }
+.offer-ghost { position: absolute; left: 0; top: 0; z-index: 5; width: 84px; height: 84px; object-fit: contain; pointer-events: none; filter: drop-shadow(0 6px 6px rgb(40 10 0 / .35)); }
 .offer-ghost.back { transition: opacity .25s; opacity: 0; }
