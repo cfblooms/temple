@@ -2,7 +2,9 @@
 const W = 360, H = 540;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-let cv, g, scale = 1, dpr = 1;
+let cv, g, scale = 1, dpr = 1, cssW = 360;
+// 鏡頭（供桌特寫時會放大）：畫面左上角的場景座標與看得到的寬度
+const view = { x: 0, y: 0, w: W };
 const parts = [];
 const tickers = new Set();
 let running = false, last = 0;
@@ -14,11 +16,14 @@ export function initFx(canvas) {
     const r = cv.getBoundingClientRect();
     cv.width = Math.max(1, Math.round(r.width * dpr));
     cv.height = Math.max(1, Math.round(r.height * dpr));
-    scale = r.width / W;
+    cssW = r.width; scale = cssW / view.w;
   };
   new ResizeObserver(fit).observe(cv);
   fit();
 }
+
+// 跟著 SVG 的 viewBox 一起移動，粒子才會黏在對的位置
+export function setFxView(x, y, w) { view.x = x; view.y = y; view.w = w; scale = cssW / w; kick(); }
 
 // 每幀都會呼叫的函式（例如燭光閃爍），回傳 false 就移除
 export function onTick(fn) { tickers.add(fn); kick(); }
@@ -59,7 +64,7 @@ function loop(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, cv.width, cv.height);
-  g.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+  g.setTransform(scale * dpr, 0, 0, scale * dpr, -view.x * scale * dpr, -view.y * scale * dpr);
 
   for (const fn of tickers) if (fn(now / 1000, dt) === false) tickers.delete(fn);
 
