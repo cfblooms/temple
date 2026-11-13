@@ -393,7 +393,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .zs-flower { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border: 2px solid #E8C48A; border-radius: 14px; background: #FFF9EE; font: inherit; color: var(--ink); cursor: pointer; }
 .zs-flower img { height: 72px; width: auto; }
 .zs-flower.on { border-color: var(--red); background: #FFEDE6; }
-.ts-cab-title { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 10px; fill: #FFD98A; letter-spacing: 2px; }
+.ts-cab-title { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 9px; fill: #FFE3A0; letter-spacing: 2px; pointer-events: none; }
 .ts-name { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 5.6px; fill: #FFE7A0; }
 .ts-zod { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 8px 0 4px; }
 .ts-zod .chip { padding: 6px 0; position: relative; }

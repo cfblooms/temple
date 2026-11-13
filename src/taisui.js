@@ -5,6 +5,7 @@ import festUrl from './assets/ts/ts-festival.webp';
 import talUrl from './assets/ts/talisman.webp';
 import offUrl from './assets/ts/lamp-off.webp';
 import onUrl from './assets/ts/lamp-on.webp';
+import cabUrl from './assets/ts/cabinet.webp';
 import { makeCarrier } from './carry.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -65,7 +66,7 @@ const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
 
 /* ---------- 場景 ---------- */
 // 參考點：太歲臉 (180,285)、供桌桌面 y≈378、拜墊中心 (184,525)
-const CAB = [278, 474, 26, 27]; // 光明燈櫃：左上 x、y、每格寬、高（3×3）
+const CAB = [272, 474, 26, 26]; // 光明燈櫃：左上 x、y、每格寬、高（3×3）
 const MINE = [1, 1]; // 你的燈：中間那格
 const NICHE = [CAB[0] + CAB[2] * (MINE[0] + .5), CAB[1] + CAB[3] * (MINE[1] + .5)];
 const TAL = [28, 54]; // 太歲符寬高（原點在底部中心）
@@ -86,13 +87,13 @@ export const TS_SVG = (bg) => `
   <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-ts="deity" role="button" tabindex="0" aria-label="向太歲星君問安" x="142" y="245" width="78" height="115" rx="22" fill="transparent"/>
 
   <!-- 光明燈櫃（拜墊右邊） -->
-  <ellipse cx="${CAB[0] + CAB[2] * 1.5}" cy="${CAB[1] + CAB[3] * 3 + 14}" rx="52" ry="6" fill="url(#vContact)"/>
+  <ellipse cx="${CAB[0] + CAB[2] * 1.5}" cy="${CAB[1] + CAB[3] * 3 + 14}" rx="46" ry="6" fill="url(#vContact)"/>
   <g class="hit" data-ts="cab" role="button" tabindex="0" aria-label="光明燈櫃">
-    <rect x="${CAB[0] - 6}" y="${CAB[1] - 20}" width="${CAB[2] * 3 + 12}" height="${CAB[3] * 3 + 34}" rx="6" fill="#3A1A22" stroke="#C8963E" stroke-width="2"/>
-    <text class="ts-cab-title" x="${CAB[0] + CAB[2] * 1.5}" y="${CAB[1] - 6}" text-anchor="middle">光明燈</text>
+    <image href="${cabUrl}" x="${CAB[0] + 13 - 18.3}" y="${CAB[1] + 13 - 43.2}" width="88.6" height="121.7" filter="url(#vLit)"/>
+    <text class="ts-cab-title" x="${CAB[0] + 13 - 18.3 + 44.3}" y="${CAB[1] + 13 - 43.2 + 21.5}" text-anchor="middle">光明燈</text>
     ${OTHERS.map((on, i) => {
       const c = i % 3, r = Math.floor(i / 3), mine = c === MINE[0] && r === MINE[1];
-      return `<image ${mine ? 'id="vMine"' : ''} href="${on && !mine ? onUrl : offUrl}" x="${CAB[0] + c * CAB[2]}" y="${CAB[1] + r * CAB[3]}" width="${CAB[2]}" height="${CAB[3]}"/>`;
+      return `<image ${mine ? 'id="vMine"' : ''} href="${on && !mine ? onUrl : offUrl}" x="${CAB[0] + c * CAB[2] + 2}" y="${CAB[1] + r * CAB[3] + 2}" width="${CAB[2] - 4}" height="${CAB[3] - 4}"/>`;
     }).join('')}
     <circle id="vMineGlow" cx="${NICHE[0]}" cy="${NICHE[1] + 2}" r="22" fill="url(#vGlow)" opacity="0" style="mix-blend-mode:screen"/>
     <rect id="vRing" x="${NICHE[0] - CAB[2] / 2 - 1}" y="${NICHE[1] - CAB[3] / 2 - 1}" width="${CAB[2] + 2}" height="${CAB[3] + 2}" rx="4" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
