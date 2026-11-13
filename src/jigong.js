@@ -89,7 +89,7 @@ export const JI_SVG = (bg) => `
 </svg>`;
 
 export function initJigong(api) {
-  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc } = api;
+  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam } = api;
   const host = $('#jiHost');
   host.innerHTML = JI_SVG(bgUrl);
   const svg = host.querySelector('svg');
@@ -110,7 +110,7 @@ export function initJigong(api) {
   const paintWine = () => wine.setAttribute('opacity', poured() ? '.95' : '0');
   paintWine();
   const gourd = makePourer({
-    svg, el: S('jGourd'), tilt: S('jGourdTilt'), shadow: S('jGourdShadow'), sfx, emit,
+    cam, svg, el: S('jGourd'), tilt: S('jGourdTilt'), shadow: S('jGourdShadow'), sfx, emit,
     rest: GOURD_REST, pourAt: GOURD_POUR, spout: GOURD_SPOUT, angle: GOURD_ANG, drop: { color: '#E8A23A' },
     isDone: poured,
     onDone() {
@@ -214,6 +214,7 @@ export function initJigong(api) {
     e.preventDefault(); fan.setPointerCapture(e.pointerId);
     const p = pt(e); fdrag = { moved: false, x0: p.x, y0: p.y, lx: p.x, ly: p.y, lt: performance.now() };
     fan.classList.add('held'); sfx.pop();
+    if (words.some((w) => !w.gone)) cam?.zoom(180, 330, 260); // 有字要搧就放大字那一塊
   });
   fan.addEventListener('pointermove', (e) => {
     if (!fdrag) return;
@@ -222,15 +223,16 @@ export function initJigong(api) {
     if (!fdrag.moved) return;
     const dt = Math.max(8, now - fdrag.lt) / 1000, vx = (p.x - fdrag.lx) / dt, vy = (p.y - fdrag.ly) / dt;
     fdrag.lx = p.x; fdrag.ly = p.y; fdrag.lt = now;
-    fanPos = [Math.max(26, Math.min(334, p.x)), Math.max(60, Math.min(610, p.y - 40))];
+    fanPos = [Math.max(26, Math.min(334, p.x)), Math.max(60, Math.min(610, p.y - 56))]; // 扇子在手指上方，手指不會蓋住字
     placeFan(Math.max(-35, Math.min(35, vx / 25)));
     if (Math.hypot(vx, vy) > 260) blow(fanPos[0], fanPos[1] - 10, vx, vy);
   });
-  const fanUp = () => { if (!fdrag) return; const moved = fdrag.moved; fdrag = null; fan.classList.remove('held'); if (!moved) fanHint(); fanHome(); };
+  const fanUp = () => { if (!fdrag) return; const moved = fdrag.moved; fdrag = null; fan.classList.remove('held'); cam?.reset(words.some((w) => !w.gone) ? 0 : 900); if (!moved) fanHint(); fanHome(); };
   fan.addEventListener('pointerup', fanUp);
   fan.addEventListener('pointercancel', fanUp);
   function autoFan() { // 按鈕／鍵盤：扇子自己飛過去左右搧
     if (!words.some((w) => !w.gone)) { openWorry(); return; }
+    cam?.zoom(180, 330, 260);
     const t0 = performance.now(), ys = [...new Set(words.filter((w) => !w.gone).map((w) => Math.round(w.y)))];
     let px = 60, py = ys[0];
     const step = (t) => {
@@ -238,7 +240,7 @@ export function initJigong(api) {
       const x = 60 + 240 * (i % 2 ? 1 - k : k), y = ys[i] + 10;
       fanPos = [x, y]; placeFan((i % 2 ? -1 : 1) * 25);
       blow(x, y - 10, (x - px) * 60, (y - py) * 60 - 1); px = x; py = y;
-      if (s < ys.length * .7 && words.some((w) => !w.gone)) requestAnimationFrame(step); else fanHome();
+      if (s < ys.length * .7 && words.some((w) => !w.gone)) requestAnimationFrame(step); else { fanHome(); cam?.reset(900); }
     };
     requestAnimationFrame(step);
   }

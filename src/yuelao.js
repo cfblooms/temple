@@ -175,14 +175,14 @@ export function initYuelao(api) {
   };
   const movePull = (e) => {
     if (!pull) return;
-    const p = pt(e); thread.setAttribute('d', curve(p.x, p.y));
-    if (Math.random() < .25) emit('spark', p.x, p.y);
+    const p = pt(e); thread.setAttribute('d', curve(p.x, p.y - 40)); // 線頭在手指上方
+    if (Math.random() < .25) emit('spark', p.x, p.y - 40);
   };
   const endPull = (e) => {
     if (!pull) return;
     pull = null; target.setAttribute('opacity', '0');
     const p = pt(e);
-    if (Math.hypot(p.x - BOOK[0], p.y - BOOK[1]) < 46) tieDone();
+    if (Math.hypot(p.x - BOOK[0], p.y - 40 - BOOK[1]) < 46) tieDone();
     else { thread.setAttribute('d', ''); say('紅線沒有搭到姻緣簿，再拉一次，拉到月老手上的書再放開。'); }
   };
   for (const id of ['yAvatar', 'ySpool']) {

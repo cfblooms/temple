@@ -11,6 +11,8 @@ import { initYuelao } from './yuelao.js';
 import { initTudigong } from './tudigong.js';
 import { initWenchang } from './wenchang.js';
 import { initJigong } from './jigong.js';
+import { initSantaizi } from './santaizi.js';
+import { initGuanyin } from './guanyin.js';
 import { tossJiao } from './jiaotoss.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
@@ -25,6 +27,10 @@ import wenBg from './assets/wen/wen-bg.webp';
 import wenFest from './assets/wen/wen-festival.webp';
 import jiBg from './assets/ji/ji-bg.webp';
 import jiFest from './assets/ji/ji-festival.webp';
+import sanBg from './assets/san/san-bg.webp';
+import sanFest from './assets/san/san-festival.webp';
+import gyBg from './assets/gy/gy-bg.webp';
+import gyFest from './assets/gy/gy-festival.webp';
 import tubeUrl from './assets/tube.webp';
 import godMazu from './assets/gods/mazu.webp';
 import godCai from './assets/gods/caishen.webp';
@@ -78,8 +84,8 @@ function lunar(d = new Date()) {
 }
 const L = lunar();
 const isYa = !!L && (L.day === 2 || L.day === 16); // 初二、十六做牙
-// 節慶廟（方案三）：春節 正月初一～十五、土地公與濟公生 二月初二（頭牙）、文昌生 二月初三、媽祖生 三月廿三、中秋 八月十五、三太子 九月初九。中元不換紅燈籠。
-const FESTS = [[1, 1, 15, '春節'], [2, 2, 2, '土地公・濟公聖誕'], [2, 3, 3, '文昌帝君聖誕'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕']];
+// 節慶廟（方案三）：春節 正月初一～十五、土地公與濟公生 二月初二（頭牙）、文昌生 二月初三、媽祖生 三月廿三、中秋 八月十五、三太子 九月初九、觀音 二月／六月／九月十九。中元不換紅燈籠。
+const FESTS = [[1, 1, 15, '春節'], [2, 2, 2, '土地公・濟公聖誕'], [2, 3, 3, '文昌帝君聖誕'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕'], [2, 19, 19, '觀音菩薩聖誕'], [6, 19, 19, '觀音菩薩成道日'], [9, 19, 19, '觀音菩薩出家日']];
 const fest = L && !L.leap ? FESTS.find(([m, a, b]) => L.mon === m && L.day >= a && L.day <= b) : null;
 let festive = !!fest;
 // 每座殿：背景、人偶跪的高度（拜墊）、香爐的上下位移。點燭、上香、擲筊、抽籤共用同一套。
@@ -90,6 +96,8 @@ const HALLS = {
   tudi: { name: '福德祠', god: '土地公', face: godTudi, bg: tudiBg, fest: tudiFest, base: 536, burnerDy: 0 },
   wen: { name: '文昌閣', god: '文昌', face: godWen, bg: wenBg, fest: wenFest, base: 536, burnerDy: 0 },
   ji: { name: '濟公堂', god: '濟公', face: godJi, bg: jiBg, fest: jiFest, base: 536, burnerDy: 0 },
+  san: { name: '三太子殿', god: '三太子', face: godSan, bg: sanBg, fest: sanFest, base: 536, burnerDy: 0 },
+  gy: { name: '觀音殿', god: '觀音', face: godGuanyin, bg: gyBg, fest: gyFest, base: 536, burnerDy: 0 },
 };
 let hall = 'main';
 const hallImg = () => festive ? HALLS[hall].fest : HALLS[hall].bg;
@@ -113,7 +121,7 @@ $('#sceneHost').innerHTML = SCENE_SVG(hallImg());
 $('#lunar').addEventListener('click', () => {
   festive = !festive;
   $('#hallBg').setAttribute('href', hallImg());
-  const FEST_SAY = { yue: '這是七夕的月老閣：滿天蓮花燈、桃花瓣飄下來。', tudi: '這是二月初二頭牙的福德祠：榕樹上掛滿紅燈籠和銅錢串。', wen: '這是文昌帝君聖誕和考季的文昌閣：紅燈籠和許願木牌掛滿書架。', ji: '這是濟公聖誕的濟公堂：橘色燈籠一串一串，紅葫蘆掛在柱子上。' };
+  const FEST_SAY = { yue: '這是七夕的月老閣：滿天蓮花燈、桃花瓣飄下來。', tudi: '這是二月初二頭牙的福德祠：榕樹上掛滿紅燈籠和銅錢串。', wen: '這是文昌帝君聖誕和考季的文昌閣：紅燈籠和許願木牌掛滿書架。', ji: '這是濟公聖誕的濟公堂：橘色燈籠一串一串，紅葫蘆掛在柱子上。', san: '這是九月初九三太子聖誕：紅燈籠、彩色氣球，供桌鋪上紅桌巾。', gy: '這是觀音菩薩紀念日的觀音殿：蓮花燈一盞一盞飄在空中。' };
   say(festive ? `${FEST_SAY[hall] || '這是過年過節的廟：紅燈籠全掛上了。'}再點一次農曆換回平日。` : '換回平日的廟。');
 });
 initFx($('#fx'));
@@ -126,7 +134,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -147,6 +155,11 @@ function camera(to, ms = 650) {
 // 供桌特寫：兩支蠟燭、香爐、供品都在畫面裡，下面還看得到跪著的自己
 function altarView(dy = 0) { const w = 214, cy = 384 + dy + (HALLS[hall] ? HALLS[hall].burnerDy : 0); return { x: 182 - w / 2, y: cy - (w * VH) / 2, w }; }
 const zoomIn = () => camera(altarView());
+// 給各殿用的鏡頭：做動作時把那一塊放大，放開再拉回全景
+const cam = {
+  zoom(cx, cy, w = 220, ms = 450) { const h = w * VH; camera({ x: Math.max(0, Math.min(360 - w, cx - w / 2)), y: Math.max(0, Math.min(645 - h, cy - h / 2)), w }, ms); },
+  reset(delay = 0) { zoomOut(delay); },
+};
 function zoomOut(delay = 0) { clearTimeout(camTimer); camTimer = setTimeout(() => camera(FULL), delay); }
 
 function paintAvatar() {
@@ -874,7 +887,7 @@ function buildMap() {
     if (a.id === 'jigong') { showJi(); return; }
     if (a.id === 'jinting') { openJoss(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中，目前開放的是正殿、財神聚寶閣、月老閣，還有上方神明列裡的土地公、文昌、濟公。`);
+    say(`${a.info}這一區還在興建中，目前開放的是正殿、財神聚寶閣、月老閣，還有上方神明列裡的土地公、文昌、濟公、三太子、觀音。`);
   });
 }
 
@@ -917,7 +930,7 @@ function openStep(id) {
 
 function showMap() {
   if (tool.kind) unequip(); endOffer(0); camera(FULL, 0);
-  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#mapView').hidden = false;
+  $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#sanBar').hidden = true; $('#gyBar').hidden = true; $('#mapView').hidden = false;
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
   if (!routeDay()) { say('這是心靈大廟全區，可以到處逛逛。紅色標籤的地方已經開放。每逢初一、十五和節日，會有<b>全廟巡禮</b>，一殿一殿拜完有加碼。'); return; }
@@ -945,7 +958,7 @@ function switchHall(h) {
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
   $('#bar').hidden = h !== 'main';
   for (const k of ['A', 'B']) S('jiao' + k).setAttribute('opacity', '0');
-  for (const k of ['cai', 'yue', 'tudi', 'wen', 'ji']) { $(`#${k}Host`).hidden = k !== h; $(`#${k}Bar`).hidden = k !== h; }
+  for (const k of ['cai', 'yue', 'tudi', 'wen', 'ji', 'san', 'gy']) { $(`#${k}Host`).hidden = k !== h; $(`#${k}Bar`).hidden = k !== h; }
   sfx.bowl();
   state.home = h; save(); paintGods();
   markNext();
@@ -953,9 +966,7 @@ function switchHall(h) {
 // 神明列：可以左右滑。已開放的殿在前面，其他是「籌備中」
 const SOON = [
   ['關公', godGuan, '關聖帝君管義氣與事業，做生意、上班族都可以來拜'],
-  ['觀音', godGuanyin, '觀世音菩薩聞聲救苦，心裡難過的時候來說說話'],
   ['註生娘娘', godZhu, '註生娘娘保佑求子、安胎、小孩平安長大'],
-  ['三太子', godSan, '中壇元帥三太子，最愛小朋友，也保佑開車平安'],
   ['太歲', godTai, '犯太歲的年份可以來安太歲、點光明燈'],
   ['天公', godTian, '玉皇大帝是最大的神，初九天公生要來拜'],
   ['母娘', godMu, '瑤池金母慈悲照顧眾生，心累的時候可以回來找母娘'],
@@ -986,15 +997,19 @@ function showCai() { switchHall('cai'); cai.enter(charById(state.char)); }
 function showTudi() { switchHall('tudi'); tudi.enter(); }
 function showWen() { switchHall('wen'); wen.enter(); }
 function showJi() { switchHall('ji'); ji.enter(); }
-const SHOW = { main: showHall, cai: showCai, yue: showYue, tudi: showTudi, wen: showWen, ji: showJi };
+function showSan() { switchHall('san'); san.enter(); }
+function showGy() { switchHall('gy'); gy.enter(); }
+const SHOW = { main: showHall, cai: showCai, yue: showYue, tudi: showTudi, wen: showWen, ji: showJi, san: showSan, gy: showGy };
 $('#btnMap').addEventListener('click', showMap);
 $('#routeBar').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) openStep(b.dataset.step); });
-const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-const tudi = initTudigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-const wen = initWenchang({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-const ji = initJigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc });
-SUB.cai = cai; SUB.yue = yue; SUB.tudi = tudi; SUB.wen = wen; SUB.ji = ji;
+const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const tudi = initTudigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const wen = initWenchang({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const ji = initJigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const san = initSantaizi({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const gy = initGuanyin({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+SUB.cai = cai; SUB.yue = yue; SUB.tudi = tudi; SUB.wen = wen; SUB.ji = ji; SUB.san = san; SUB.gy = gy;
 buildMap();
 
 // 打開就直接進上次拜的那位神明；地圖是「逛逛全廟」

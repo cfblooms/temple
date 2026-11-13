@@ -81,7 +81,7 @@ export const TUDI_SVG = (bg) => `
 </svg>`;
 
 export function initTudigong(api) {
-  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc } = api;
+  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam } = api;
   const host = $('#tudiHost');
   host.innerHTML = TUDI_SVG(bgUrl);
   const svg = host.querySelector('svg');
@@ -141,7 +141,7 @@ export function initTudigong(api) {
   /* ----- 澆水壺：拿起來移到盆子上，自己會倒水 ----- */
   const target = S('tTarget');
   const can = makePourer({
-    svg, el: S('tCan'), tilt: S('tCanTilt'), shadow: S('tCanShadow'), target, sfx, emit,
+    cam, svg, el: S('tCan'), tilt: S('tCanTilt'), shadow: S('tCanShadow'), target, sfx, emit,
     rest: CAN_REST, pourAt: CAN_POUR, spout: SPOUT, isDone: watered, onDone: grow, onTap: () => hintWater(),
   });
   const autoWater = () => can.auto();

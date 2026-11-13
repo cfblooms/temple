@@ -153,14 +153,14 @@ export function initWenchang(api) {
     if (mode === 'placed') { tapPlaced(); return; }
     if (mode !== 'write') return;
     e.preventDefault(); ticket.setPointerCapture(e.pointerId);
-    const p = pt(e), q = [p.x, p.y - 26]; // 筆尖在手指上方，看得到自己寫的字
+    const p = pt(e), q = [p.x, p.y - 50]; // 筆尖在手指上方，看得到自己寫的字
     placeBrush(...q);
     const l = local({ x: q[0], y: q[1] });
     cur = inTicket(l) ? [l] : []; strokes.push(cur);
   });
   ticket.addEventListener('pointermove', (e) => {
     if (mode !== 'write' || !cur) return;
-    const p = pt(e), q = [p.x, p.y - 26];
+    const p = pt(e), q = [p.x, p.y - 50];
     placeBrush(...q);
     const l = local({ x: q[0], y: q[1] });
     if (!inTicket(l)) return;
