@@ -65,7 +65,7 @@ const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
 
 /* ---------- 場景 ---------- */
 // 參考點：太歲臉 (180,285)、供桌桌面 y≈378、拜墊中心 (184,525)
-const CAB = [262, 474, 28, 29]; // 光明燈櫃：左上 x、y、每格寬、高（3×3）
+const CAB = [278, 474, 26, 27]; // 光明燈櫃：左上 x、y、每格寬、高（3×3）
 const MINE = [1, 1]; // 你的燈：中間那格
 const NICHE = [CAB[0] + CAB[2] * (MINE[0] + .5), CAB[1] + CAB[3] * (MINE[1] + .5)];
 const TAL = [28, 54]; // 太歲符寬高（原點在底部中心）
@@ -82,8 +82,8 @@ export const TS_SVG = (bg) => `
     <radialGradient id="vGlow"><stop offset="0" stop-color="#FFE6A0" stop-opacity=".95"/><stop offset="1" stop-color="#FFB050" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="vBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="vHaloC" cx="180" cy="285" r="58" fill="url(#vHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-ts="deity" role="button" tabindex="0" aria-label="向太歲星君問安" x="142" y="245" width="78" height="115" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="vHaloC" cx="180" cy="285" r="58" fill="url(#vHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-ts="deity" role="button" tabindex="0" aria-label="向太歲星君問安" x="142" y="245" width="78" height="115" rx="22" fill="transparent"/>
 
   <!-- 光明燈櫃（拜墊右邊） -->
   <ellipse cx="${CAB[0] + CAB[2] * 1.5}" cy="${CAB[1] + CAB[3] * 3 + 14}" rx="52" ry="6" fill="url(#vContact)"/>

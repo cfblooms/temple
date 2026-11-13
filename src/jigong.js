@@ -65,8 +65,8 @@ export const JI_SVG = (bg) => `
     <radialGradient id="jHalo"><stop offset="0" stop-color="#FFF3C8" stop-opacity=".95"/><stop offset=".6" stop-color="#FFC36B" stop-opacity=".35"/><stop offset="1" stop-color="#FFC36B" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="jBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="jHaloC" cx="180" cy="300" r="56" fill="url(#jHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-ji="deity" role="button" tabindex="0" aria-label="向濟公問安" x="142" y="255" width="78" height="105" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="jHaloC" cx="180" cy="300" r="56" fill="url(#jHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-ji="deity" role="button" tabindex="0" aria-label="向濟公問安" x="142" y="255" width="78" height="105" rx="22" fill="transparent"/>
 
   <!-- 酒杯（供桌右側，一直都在；敬了酒才有酒） -->
   <image href="${cupUrl}" x="${CUP[0]}" y="${CUP[1]}" width="${CUP[2]}" height="${CUP[2]}" filter="url(#jLit)"/>

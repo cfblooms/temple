@@ -52,8 +52,8 @@ export const CAI_SVG = (bg) => `
     <radialGradient id="cHalo"><stop offset="0" stop-color="#FFF4C8" stop-opacity=".95"/><stop offset=".6" stop-color="#FFD36A" stop-opacity=".35"/><stop offset="1" stop-color="#FFD36A" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="cBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="cHaloC" cx="180" cy="300" r="58" fill="url(#cHalo)" opacity=".3" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-cai="deity" role="button" tabindex="0" aria-label="向財神爺問安" x="148" y="255" width="66" height="95" rx="20" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="cHaloC" cx="180" cy="300" r="58" fill="url(#cHalo)" opacity=".3" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-cai="deity" role="button" tabindex="0" aria-label="向財神爺問安" x="148" y="255" width="66" height="95" rx="20" fill="transparent"/>
 
   <!-- 財氣 -->
   <g pointer-events="none">

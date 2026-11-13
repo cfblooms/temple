@@ -62,8 +62,8 @@ export const SAN_SVG = (bg) => `
     <radialGradient id="sFire"><stop offset=".55" stop-color="#FF8A2A" stop-opacity="0"/><stop offset=".8" stop-color="#FF8A2A" stop-opacity=".55"/><stop offset="1" stop-color="#FFD24A" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="sBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="sHaloC" cx="180" cy="290" r="56" fill="url(#sHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-san="deity" role="button" tabindex="0" aria-label="向三太子問安" x="145" y="250" width="72" height="110" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="sHaloC" cx="180" cy="290" r="56" fill="url(#sHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-san="deity" role="button" tabindex="0" aria-label="向三太子問安" x="145" y="250" width="72" height="110" rx="22" fill="transparent"/>
 
   <!-- 零食（獻了才出現） -->
   ${Object.entries(SNACKS).map(([k, o]) => `<image id="s_${k}" class="san-offer" href="${o.img}" x="${o.x}" y="${o.y}" width="${o.w}" height="${o.h}" style="display:none" filter="url(#sLit)"/>`).join('')}

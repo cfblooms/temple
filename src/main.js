@@ -111,6 +111,13 @@ const HALLS = {
   zs: { name: '註生娘娘殿', god: '註生娘娘', face: godZhu, bg: zsBg, fest: zsFest, base: 536, burnerDy: 0 },
   ts: { name: '太歲殿', god: '太歲', face: godTai, bg: tsBg, fest: tsFest, base: 536, burnerDy: 0 },
 };
+// 月老閣的鏡頭比較近（神像大、供桌大），其他殿的背景以供桌桌面 (182, 380) 為中心放大到同樣的比例
+const ZOOM = 1.38, ANCHOR = [182, 380];
+for (const [k, H] of Object.entries(HALLS)) {
+  if (k === 'yue') continue;
+  H.zoom = ZOOM; H.base = Math.round(ANCHOR[1] + (H.base - ANCHOR[1]) * ZOOM);
+}
+const bgTransform = (H) => (H.zoom ? `translate(${ANCHOR[0]} ${ANCHOR[1]}) scale(${H.zoom}) translate(${-ANCHOR[0]} ${-ANCHOR[1]})` : '');
 let hall = 'main';
 const hallImg = () => festive ? HALLS[hall].fest : HALLS[hall].bg;
 const today = new Date();
@@ -962,6 +969,8 @@ function switchHall(h) {
   const H = HALLS[h], dy = H.base - 536;
   BURNER = [182, 356 + H.burnerDy];
   $('#hallBg').setAttribute('href', hallImg());
+  $('#hallBg').setAttribute('transform', bgTransform(H));
+  for (const id of ['#halo', '#deity']) document.querySelector(id)?.setAttribute('transform', bgTransform(H));
   for (const id of ['mainOnlyA', 'mainOnlyB', 'mainOnlyC']) S(id).style.display = h === 'main' ? '' : 'none';
   S('avatarG').setAttribute('transform', `translate(0 ${dy})`);
   S('burnerG').setAttribute('transform', `translate(0 ${H.burnerDy})`);
