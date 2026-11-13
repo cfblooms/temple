@@ -402,3 +402,42 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .ts-list li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .zs-offer.pop, #zPlanted.pop, .zs-prop.pop image, .ts-prop.pop image { animation: none; } }
 .gg-book { cursor: pointer; }
+
+/* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden] { display: none; }
+.stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+#jgHost, .jg-svg { pointer-events: none; }
+.jg-svg [data-jg] { pointer-events: auto; }
+.stall-prop, .jg-doll, .jg-star { cursor: grab; }
+.stall-prop.held, .jg-doll.held { cursor: grabbing; }
+/* 有 transform 屬性的 <g> 不能直接套 CSS 動畫（會蓋掉位置），動畫放在子元素上 */
+.stall-prop.pop > *, .jg-doll.pop > *, .bz-guest.pop > *, #xTiger.pop > * { animation: jelly .45s ease; transform-box: view-box; transform-origin: 0 0; }
+.bar.ts-bar { grid-template-columns: repeat(7, 1fr); }
+.bar.bz-bar { grid-template-columns: repeat(6, 1fr); }
+.bar.xr-bar { grid-template-columns: repeat(5, 1fr); }
+.bar.sj-bar { grid-template-columns: repeat(4, 1fr); }
+.xr-red { font: 900 14px var(--font-serif); fill: #FFE08A; }
+.xr-tag, .bz-tag { font: 700 10px var(--font-ui); fill: #FFF4E0; paint-order: stroke; stroke: rgb(40 10 6 / .7); stroke-width: 3px; }
+.xr-name { font: 900 11px var(--font-serif); fill: #C8302A; }
+.xr-chant { font: 900 17px var(--font-serif); fill: #FFF4E0; letter-spacing: .04em; }
+.sj-banner { font: 900 20px var(--font-serif); fill: #FFE08A; letter-spacing: .12em; }
+.sj-cue { font: 900 16px var(--font-serif); fill: #FFFFFF; paint-order: stroke; stroke: rgb(20 40 70 / .6); stroke-width: 4px; letter-spacing: .1em; }
+.sj-bpm { font: 900 13px var(--font-ui); fill: #FFF4E0; }
+.jg-name { font: 900 8px var(--font-serif); fill: #C8302A; writing-mode: vertical-rl; }
+.jg-no { font: 900 8px var(--font-ui); fill: #3B1F17; pointer-events: none; }
+.jg-mark { font: 700 10px var(--font-ui); fill: #FFF4E0; paint-order: stroke; stroke: rgb(40 10 6 / .7); stroke-width: 3px; }
+.bz-bulb { animation: bulb 1.6s ease-in-out infinite alternate; }
+.bz-bulb:nth-of-type(2n) { animation-delay: -.8s; }
+@keyframes bulb { from { opacity: .45; } to { opacity: 1; } }
+.bz-menu { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.bz-menu li { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border: 1.5px solid var(--line); border-radius: 12px; color: var(--muted); text-align: center; font-size: 12px; }
+.bz-menu li.on { background: var(--chip); color: var(--ink); }
+.bz-menu svg { width: 56px; height: 36px; }
+.bz-menu b { font-size: 13px; }
+.god.stall i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #FFF4E0; border: 2px solid rgb(255 214 120 / .9); box-shadow: 0 2px 6px rgb(0 0 0 / .35); }
+.god.stall i svg { width: 26px; height: 26px; }
+.god.stall.on i { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 2px 6px rgb(0 0 0 / .35); }
+.god-sep { flex: 0 0 2px; align-self: center; height: 30px; margin: 0 2px; background: rgb(255 244 224 / .55); border-radius: 2px; }
+@media (prefers-reduced-motion: reduce) { .bz-bulb, .stall-prop.pop > *, .jg-doll.pop > *, .bz-guest.pop > *, #xTiger.pop > * { animation: none; } }
+.stall-svg [id$="Ring"], .stall-svg [id$="RingT"], .stall-svg [id$="Hint"], .jg-svg [id$="Ring"], .stall-svg text { pointer-events: none; }
