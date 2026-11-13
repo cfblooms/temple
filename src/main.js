@@ -2,7 +2,7 @@ import './style.css';
 import { SCENE_SVG } from './scene.js';
 import { CHARS, DEFAULT_CHAR, charById } from './chars.js';
 import { FORTUNES, CATEGORIES, DAILY, cn } from './fortunes.js';
-import { initFx, emit, burst, onTick, REDUCED_MOTION } from './fx.js';
+import { initFx, emit, burst, onTick, setFxView, REDUCED_MOTION } from './fx.js';
 import * as sfx from './audio.js';
 import { renderCard } from './card.js';
 import { FURNACE_SVG, bindJoss } from './joss.js';
@@ -20,6 +20,21 @@ import tubeUrl from './assets/tube.webp';
 import godMazu from './assets/gods/mazu.webp';
 import godCai from './assets/gods/caishen.webp';
 import godYue from './assets/gods/yuelao.webp';
+import godWen from './assets/gods/wenchang.webp';
+import godGuan from './assets/gods/guangong.webp';
+import godGuanyin from './assets/gods/guanyin.webp';
+import godJi from './assets/gods/jigong.webp';
+import godTudi from './assets/gods/tudigong.webp';
+import godZhu from './assets/gods/zhusheng.webp';
+import godSan from './assets/gods/santaizi.webp';
+import godTai from './assets/gods/taisui.webp';
+import godTian from './assets/gods/tiangong.webp';
+import godMu from './assets/gods/muniang.webp';
+import godMile from './assets/gods/mile.webp';
+import flowersUrl from './assets/offer/flowers.webp';
+import fruitUrl from './assets/offer/fruit.webp';
+import cakesUrl from './assets/offer/cakes.webp';
+import teaUrl from './assets/offer/tea.webp';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -93,6 +108,35 @@ initFx($('#fx'));
 const svg = $('#sceneHost svg');
 const S = (id) => svg.getElementById ? svg.getElementById(id) : svg.querySelector('#' + id);
 
+/* ---------- 鏡頭：點燭、上香、獻供時把供桌拉近 ---------- */
+const VH = 645 / 360, FULL = { x: 0, y: 0, w: 360 };
+let view = { ...FULL }, camRun = 0, camTimer = 0;
+const zoomed = () => view.w < 359;
+function applyView(v) {
+  const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  setFxView(v.x, v.y, v.w);
+}
+function camera(to, ms = 650) {
+  clearTimeout(camTimer);
+  const from = { ...view }, run = ++camRun;
+  $('#sceneWrap').classList.toggle('close-up', to.w < 359);
+  if (REDUCED_MOTION || !ms || (from.x === to.x && from.y === to.y && from.w === to.w)) { view = { ...to }; applyView(view); return; }
+  let t0 = null;
+  onTick((t) => {
+    if (run !== camRun) return false;
+    if (t0 === null) t0 = t;
+    const k = Math.min(1, (t - t0) / (ms / 1000)), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    view = { x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e, w: from.w + (to.w - from.w) * e };
+    applyView(view);
+    if (k >= 1) return false;
+  });
+}
+// 供桌特寫：兩支蠟燭、香爐、供品都在畫面裡，下面還看得到跪著的自己
+function altarView() { const w = 214, cy = 384 + (HALLS[hall] ? HALLS[hall].burnerDy : 0); return { x: 182 - w / 2, y: cy - (w * VH) / 2, w }; }
+const zoomIn = () => camera(altarView());
+function zoomOut(delay = 0) { clearTimeout(camTimer); camTimer = setTimeout(() => camera(FULL), delay); }
+
 function paintAvatar() {
   const c = charById(state.char);
   const el = S('avatarImg'), h = 130 * c.scale, w = 120 * c.scale;
@@ -132,7 +176,7 @@ function magnetTarget() {
   return [BURNER[0], BURNER[1] - 58]; // 香腳對準香爐口
 }
 function follow(p) {
-  let x = p.x, y = p.y - LIFT;
+  let x = p.x, y = p.y - LIFT * view.w / 360; // 拉近時抬高的距離跟著縮，手指和工具在螢幕上的距離不變
   const t = magnetTarget();
   if (t) {
     const d = Math.hypot(x - t[0], y - t[1]), R = 46;
@@ -155,9 +199,10 @@ function equip(kind, then) {
   svg.style.touchAction = 'none'; $('#sceneWrap').classList.add('tooling');
   placeTool(kind === 'lighter' ? 212 : 230, 470);
   onTick(toolTick);
+  zoomIn();
 }
-function unequip() {
-  tool.kind = null; tool.down = false;
+function unequip(outDelay = 500) {
+  tool.kind = null; tool.down = false; zoomOut(outDelay);
   S('tool').style.display = 'none'; S('lighterFlame').style.display = 'none'; aimAt(null);
   svg.style.touchAction = ''; $('#sceneWrap').classList.remove('tooling');
 }
@@ -192,7 +237,7 @@ function toolTick(t, dt) {
       tool.smoke += dt;
       if (tool.smoke > (REDUCED_MOTION ? .6 : .2)) { tool.smoke = 0; emit('smoke', tool.x + rand(-6, 6), tool.y - 2); }
       // 香腳碰到香爐口就插進去
-      if (dist(tool.x, tool.y + 58, BURNER) < 22) { unequip(); plantIncense(); return false; }
+      if (dist(tool.x, tool.y + 58, BURNER) < 22) { unequip(2200); plantIncense(); return false; }
     }
   }
 }
@@ -232,7 +277,7 @@ function lightOne(id) {
   if (lit.L && lit.R) {
     session.lit = true; markNext();
     const then = tool.then;
-    if (tool.kind === 'lighter') setTimeout(() => { unequip(); then && then(); }, 450);
+    if (tool.kind === 'lighter') setTimeout(() => { unequip(then ? 500 : 1300); then && then(); }, 450);
     if (!then && !tool.quiet) say('兩支蠟燭都點亮了，殿裡暖起來了。接著上香吧。');
   } else if (tool.kind === 'lighter') say('點著一支了！再把火移到另一支蠟燭芯上。');
 }
@@ -609,19 +654,102 @@ function ringQing() {
   emit('text', 309, 515, { text: CALM[Math.floor(Math.random() * CALM.length)] });
   say('噹——磬聲慢慢散開。跟著吸氣四秒，停兩秒，再吐氣四秒。');
 }
-const OFFER_IDS = ['offFlowerL', 'offFlowerR', 'offFruit', 'offCakes', 'offTea'];
+/* ---------- 獻供：供桌拉近，自己把供品一樣一樣擺上去 ---------- */
+// slot = 擺在供桌上的位置（場景座標），els = 場景裡對應的圖
+const OFFERS = [
+  { id: 'flowers', name: '鮮花', mean: '表敬意', img: flowersUrl, els: ['offFlowerL', 'offFlowerR'], slots: [[131, 360], [233, 360]] },
+  { id: 'fruit', name: '水果', mean: '求平安', img: fruitUrl, els: ['offFruit'], slots: [[138, 382]] },
+  { id: 'tea', name: '清茶', mean: '清心', img: teaUrl, els: ['offTea'], slots: [[180, 390]] },
+  { id: 'cakes', name: '糕餅', mean: '圓圓滿滿', img: cakesUrl, els: ['offCakes'], slots: [[222, 384]] },
+];
+const TABLE = { x0: 92, x1: 272, y0: 326, y1: 418 }; // 放在這個範圍內都算擺上供桌
+const offeredToday = () => (state.offer && state.offer.date === dayKey() ? state.offer.items : []);
+function showOffers(anim) {
+  const done = offeredToday();
+  OFFERS.forEach((o) => o.els.forEach((id) => {
+    const el = S(id), on = done.includes(o.id);
+    el.style.display = on ? '' : 'none';
+    if (on && anim === o.id) { el.classList.remove('pop'); void el.getBoundingClientRect(); el.classList.add('pop'); }
+  }));
+}
+showOffers();
+let offerUI = null;
 function offerGifts() {
-  if (session.offered) { burst('heart', 182, 370, 6); say('供品都擺好了，神明收到你的心意。'); return; }
-  session.offered = true; session.busy = true;
-  say('雙手捧著鮮花、水果、糕餅和清茶，一樣一樣擺上供桌……');
-  OFFER_IDS.forEach((id, i) => setTimeout(() => {
-    const el = S(id); el.style.display = ''; el.classList.remove('pop'); void el.getBoundingClientRect(); el.classList.add('pop');
-    sfx.pop(); const b = el.getBBox(); burst('spark', b.x + b.width / 2, b.y + 6, 5);
-    if (i === OFFER_IDS.length - 1) {
-      session.busy = false; bow(); sfx.chime(); S('halo').setAttribute('opacity', '.7');
-      say('供品擺好了。鮮花表敬意、水果求平安、糕餅圓滿、清茶清心。');
-    }
-  }, 380 * i));
+  if (offerUI) return;
+  const done = offeredToday();
+  if (done.length === OFFERS.length) {
+    zoomIn(); burst('heart', 182, 370, 6);
+    say('今天的供品都擺好了：鮮花、水果、清茶、糕餅。神明收到你的心意。');
+    zoomOut(2200); return;
+  }
+  session.busy = true; zoomIn();
+  const tray = document.createElement('div');
+  tray.className = 'offer-tray'; tray.id = 'offerTray';
+  tray.innerHTML = `<div class="offer-items">${OFFERS.map((o) => `<button type="button" class="offer-item${done.includes(o.id) ? ' done' : ''}" data-offer="${o.id}" aria-label="把${o.name}擺上供桌">
+      <img src="${o.img}" alt="" draggable="false"><b>${o.name}</b><small>${o.mean}</small></button>`).join('')}</div>
+    <button type="button" class="offer-close" id="offerClose">先這樣</button>`;
+  $('#sceneWrap').append(tray);
+  offerUI = { tray, drag: null };
+  say('供桌拉近了。把下面的供品<b>拖到供桌上</b>（點一下也會自己擺好）。鮮花放兩邊，水果、清茶、糕餅擺中間。');
+  tray.addEventListener('pointerdown', offerDown);
+  tray.addEventListener('click', (e) => {
+    if (e.target.closest('#offerClose')) { endOffer(); return; }
+    const b = e.target.closest('.offer-item'); if (!b || b.classList.contains('done')) return;
+    if (e.detail === 0) placeOffer(b.dataset.offer); // 鍵盤
+  });
+}
+function offerDown(e) {
+  const b = e.target.closest('.offer-item'); if (!b || b.classList.contains('done') || offerUI.drag) return;
+  e.preventDefault(); b.setPointerCapture(e.pointerId);
+  const o = OFFERS.find((x) => x.id === b.dataset.offer);
+  const ghost = document.createElement('img');
+  ghost.src = o.img; ghost.className = 'offer-ghost'; ghost.alt = '';
+  $('#sceneWrap').append(ghost);
+  const d = offerUI.drag = { o, b, ghost, sx: e.clientX, sy: e.clientY, moved: false, run: 0 };
+  sfx.knock(); b.classList.add('lifting');
+  moveGhost(e);
+  const move = (ev) => { if (Math.hypot(ev.clientX - d.sx, ev.clientY - d.sy) > 8) d.moved = true; moveGhost(ev); };
+  const up = (ev) => {
+    b.removeEventListener('pointermove', move); b.removeEventListener('pointerup', up); b.removeEventListener('pointercancel', up);
+    offerUI.drag = null; b.classList.remove('lifting'); aimAt(null); d.run = -1;
+    const p = ghostPt(ev);
+    const onTable = p.x > TABLE.x0 && p.x < TABLE.x1 && p.y > TABLE.y0 && p.y < TABLE.y1;
+    if (!d.moved || onTable) { ghost.remove(); placeOffer(o.id); return; }
+    ghost.classList.add('back'); setTimeout(() => ghost.remove(), 250);
+    say(`再往上一點，把${o.name}放到<b>供桌</b>上（金色虛線圈的位置）。`);
+  };
+  b.addEventListener('pointermove', move); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
+  onTick((t) => { if (d.run < 0) return false; aimAt(o.slots[Math.floor(t * 1.2) % o.slots.length]); });
+}
+// 供品浮在手指上方，跟工具一樣不會被手指擋住
+const GHOST_LIFT = 70;
+function ghostPt(e) { return svgPt({ clientX: e.clientX, clientY: e.clientY - GHOST_LIFT }); }
+function moveGhost(e) {
+  const r = $('#sceneWrap').getBoundingClientRect(), g = offerUI.drag.ghost;
+  g.style.transform = `translate(${(e.clientX - r.left).toFixed(1)}px, ${(e.clientY - r.top - GHOST_LIFT).toFixed(1)}px) translate(-50%, -50%)`;
+}
+function placeOffer(id) {
+  const o = OFFERS.find((x) => x.id === id);
+  if (!state.offer || state.offer.date !== dayKey()) state.offer = { date: dayKey(), items: [] };
+  if (state.offer.items.includes(id)) return;
+  state.offer.items.push(id); save();
+  showOffers(id);
+  sfx.pop(); sfx.buzz(10);
+  o.slots.forEach(([x, y]) => burst('spark', x, y - 8, 6));
+  emit('text', 182, 412, { text: `${o.name}・${o.mean}`, size: 12 });
+  const b = offerUI && offerUI.tray.querySelector(`[data-offer="${id}"]`); if (b) b.classList.add('done');
+  const left = OFFERS.filter((x) => !state.offer.items.includes(x.id));
+  if (left.length) { say(`${o.name}擺好了，${o.mean}。還有${left.map((x) => x.name).join('、')}。`); return; }
+  setTimeout(() => {
+    endOffer(1800); bow(); sfx.chime(); S('halo').setAttribute('opacity', '.7'); burst('heart', 182, 340, 6);
+    say('供品都擺好了：鮮花表敬意、水果求平安、清茶清心、糕餅圓圓滿滿。雙手合十拜一拜。');
+  }, 500);
+}
+function endOffer(delay = 300) {
+  if (!offerUI) return;
+  if (offerUI.drag) { offerUI.drag.run = -1; offerUI.drag.ghost.remove(); aimAt(null); }
+  offerUI.tray.remove(); offerUI = null; session.busy = false;
+  zoomOut(delay);
 }
 function greetDeity() {
   const h = S('halo'); h.setAttribute('opacity', '.75');
@@ -665,6 +793,7 @@ const QUICK = {
   incense: incenseNow,
 };
 function act(name, keyboard) {
+  if (offerUI) { endOffer(name === 'offer' ? 300 : 0); if (name === 'offer') return; }
   if (tool.kind) { const same = (name === 'candle' && tool.kind === 'lighter') || (name === 'incense' && tool.kind === 'sticks'); unequip(); if (same) { say('先把手上的東西放下了。'); return; } }
   (keyboard && QUICK[name] ? QUICK[name] : ACTIONS[name])();
 }
@@ -772,7 +901,7 @@ function openStep(id) {
 }
 
 function showMap() {
-  if (tool.kind) unequip();
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0);
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#mapView').hidden = false;
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
@@ -785,7 +914,7 @@ function showMap() {
 // 每座殿各自記得蠟燭、香的狀態（這次參拜的，不存檔）
 const hallState = {};
 function switchHall(h) {
-  if (tool.kind) unequip();
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0);
   hallState[hall] = { lit, sLit: session.lit, until: session.incenseUntil };
   hall = h;
   const st = hallState[h] || { lit: { L: false, R: false }, sLit: false, until: 0 };
@@ -806,16 +935,39 @@ function switchHall(h) {
   state.home = h; save(); paintGods();
   markNext();
 }
+// 神明列：可以左右滑。已開放的殿在前面，其他是「籌備中」
+const SOON = [
+  ['文昌', godWen, '文昌帝君保佑考運，之後可以拿准考證過香爐'],
+  ['關公', godGuan, '關聖帝君管義氣與事業，做生意、上班族都可以來拜'],
+  ['觀音', godGuanyin, '觀世音菩薩聞聲救苦，心裡難過的時候來說說話'],
+  ['濟公', godJi, '濟公師父會用破扇子幫你拍散煩惱'],
+  ['土地公', godTudi, '福德正神顧家顧店，求平安、求財都很親切'],
+  ['註生娘娘', godZhu, '註生娘娘保佑求子、安胎、小孩平安長大'],
+  ['三太子', godSan, '中壇元帥三太子，最愛小朋友，也保佑開車平安'],
+  ['太歲', godTai, '犯太歲的年份可以來安太歲、點光明燈'],
+  ['天公', godTian, '玉皇大帝是最大的神，初九天公生要來拜'],
+  ['母娘', godMu, '瑤池金母慈悲照顧眾生，心累的時候可以回來找母娘'],
+  ['彌勒', godMile, '彌勒佛笑口常開，拜完心情會變好'],
+];
 function paintGods() {
-  $('#godBar').innerHTML = Object.entries(HALLS).map(([id, H]) => `<button type="button" class="god${id === hall ? ' on' : ''}" data-god="${id}" role="tab" aria-selected="${id === hall}"><img src="${H.face}" alt=""><span>${H.god}</span></button>`).join('')
-    + '<button type="button" class="god soon" data-god="soon" aria-label="更多神明"><b>＋</b><span>更多</span></button>';
+  const bar = $('#godBar');
+  bar.innerHTML = Object.entries(HALLS).map(([id, H]) => `<button type="button" class="god${id === hall ? ' on' : ''}" data-god="${id}" role="tab" aria-selected="${id === hall}"><img src="${H.face}" alt=""><span>${H.god}</span></button>`).join('')
+    + SOON.map(([name, face], i) => `<button type="button" class="god soon" data-soon="${i}" aria-label="${name}（籌備中）"><img src="${face}" alt=""><span>${name}</span></button>`).join('');
+  const on = bar.querySelector('.god.on');
+  if (on) bar.scrollLeft = Math.max(0, on.offsetLeft - 12);
 }
 $('#godBar').addEventListener('click', (e) => {
+  const s = e.target.closest('[data-soon]');
+  if (s) { const [name, , text] = SOON[+s.dataset.soon]; sfx.knock(); say(`${text}。${name}的殿正在準備中，敬請期待。`); return; }
   const b = e.target.closest('[data-god]'); if (!b) return;
-  if (b.dataset.god === 'soon') { sfx.knock(); say('文昌帝君、關公、觀音、濟公……更多神明的殿正在準備中，敬請期待。'); return; }
   if (b.dataset.god === hall) return;
   ({ main: showHall, cai: showCai, yue: showYue })[b.dataset.god]();
 });
+// 電腦上用滑鼠滾輪也能左右捲
+$('#godBar').addEventListener('wheel', (e) => {
+  if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  e.preventDefault(); $('#godBar').scrollLeft += e.deltaY;
+}, { passive: false });
 function showHall() { switchHall('main'); greet(); }
 function showYue() { switchHall('yue'); yue.enter(charById(state.char)); }
 function showCai() { switchHall('cai'); cai.enter(charById(state.char)); }
