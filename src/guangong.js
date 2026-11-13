@@ -4,6 +4,7 @@ import bgUrl from './assets/gg/gg-bg.webp';
 import festUrl from './assets/gg/gg-festival.webp';
 import bladeUrl from './assets/gg/blade.webp';
 import stripUrl from './assets/gg/strip.webp';
+import bookUrl from './assets/gg/book.webp';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -74,6 +75,9 @@ export const GG_SVG = (bg) => `
   <g id="qStrip" class="gg-strip" pointer-events="none" style="display:none"><use href="#qStripArt"/></g>
   <g id="qHalfA" style="display:none"><use href="#qStripArt" clip-path="url(#qCutA)"/></g>
   <g id="qHalfB" style="display:none"><use href="#qStripArt" clip-path="url(#qCutB)"/></g>
+
+  <!-- 春秋（供桌左邊，點一下翻開） -->
+  <image class="hit gg-book" data-gg="book" role="button" tabindex="0" aria-label="春秋，翻開看一句" href="${bookUrl}" x="122" y="348" width="40" height="37" filter="url(#qLit)"/>
 
   <!-- 青龍刀（拜墊右前方，拿起來往下一揮） -->
   <ellipse id="qBladeShadow" cx="${BLADE_REST[0]}" cy="${BLADE_REST[1] + 30}" rx="26" ry="4" fill="url(#qContact)"/>
@@ -240,7 +244,8 @@ export function initGuangong(api) {
   }
 
   const ACTS = { cut: () => (pending ? autoCut() : openVow()), book: openBook, qian: openQian };
-  svg.addEventListener('click', (e) => { if (e.target.closest('[data-gg="deity"]')) greetGod(); });
+  svg.addEventListener('click', (e) => { if (e.target.closest('[data-gg="deity"]')) greetGod(); else if (e.target.closest('[data-gg="book"]')) openBook(); });
+  svg.querySelector('[data-gg="book"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') openBook(); });
   svg.querySelector('[data-gg="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
   $('#ggBar').addEventListener('click', (e) => { const b = e.target.closest('button[data-gg]'); if (b) ACTS[b.dataset.gg](); });
 

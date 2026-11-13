@@ -401,3 +401,4 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .ts-list { list-style: none; padding: 0; margin: 6px 0 10px; display: grid; gap: 6px; }
 .ts-list li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .zs-offer.pop, #zPlanted.pop, .zs-prop.pop image, .ts-prop.pop image { animation: none; } }
+.gg-book { cursor: pointer; }
