@@ -39,6 +39,7 @@ export function emit(type, x, y, o = {}) {
     case 'heart': Object.assign(p, { vx: (Math.random() - .5) * 30, vy: -40 - Math.random() * 20, life: 1.4, size: 6 + Math.random() * 3 }); break;
     case 'fish': Object.assign(p, { vx: (Math.random() - .5) * 40, vy: -70, life: 1.3, size: 9 }); break;
     case 'text': Object.assign(p, { vy: -22, life: 1.8, size: 15, ...o }); break;
+    case 'drop': Object.assign(p, { vx: -8 - Math.random() * 14, vy: 10 + Math.random() * 20, life: .7, size: 1.6 + Math.random() * 1.2 }); break;
   }
   parts.push(p);
   kick();
@@ -83,6 +84,7 @@ function loop(now) {
       }
       case 'spark': p.vy += 60 * dt; g.globalAlpha = 1 - k; g.fillStyle = '#FFD86B'; g.beginPath(); g.arc(0, 0, p.size, 0, Math.PI * 2); g.fill(); break;
       case 'heart': g.globalAlpha = 1 - k * k; g.fillStyle = '#FF7FA0'; heart(p.size); break;
+      case 'drop': p.vy += 260 * dt; g.globalAlpha = .9 * (1 - k * k); g.fillStyle = p.color || '#9FD8FF'; g.beginPath(); g.ellipse(0, 0, p.size * .75, p.size * 1.3, 0, 0, Math.PI * 2); g.fill(); break;
       case 'fish': p.vy += 120 * dt; g.globalAlpha = 1 - k * k; g.rotate(Math.sin(p.age * 8) * .3); g.fillStyle = '#E6B85C'; fish(p.size); break;
       case 'text': {
         g.globalAlpha = k < .15 ? k / .15 : 1 - Math.max(0, (k - .6) / .4);
