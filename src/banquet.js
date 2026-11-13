@@ -17,7 +17,7 @@ export const DISHES = [
   { id: 'bihun', name: '炒米粉', luck: '長長久久', kind: 'noodle', c: '#E8C88A' },
   { id: 'roll', name: '炸蝦捲', luck: '金條滿桌', kind: 'roll' },
   { id: 'mianxian', name: '豬腳麵線', luck: '去霉添壽', kind: 'noodle', c: '#F3E2C0', pork: true },
-  { id: 'tangyuan', name: '湯圓甜湯', luck: '圓圓滿滿', kind: 'balls', last: true },
+  { id: 'tangyuan', name: '炸湯圓', luck: '圓圓滿滿', kind: 'fried', last: true },
   { id: 'fruit', name: '水果拼盤', luck: '甜甜蜜蜜', kind: 'fruit', last: true },
 ];
 const CAIWEI = { id: 'caiwei', name: '菜尾湯', luck: '惜福，隔天更入味', kind: 'soup', c: '#B8783A', bonus: true };
@@ -46,6 +46,7 @@ function dishArt(d) {
     case 'pork': return plate + '<rect x="-16" y="-9" width="14" height="10" rx="2" fill="#8A4A2A"/><rect x="2" y="-9" width="14" height="10" rx="2" fill="#9A5A32"/><path d="M-16 -7h14M2 -7h14" stroke="#F7E6DA" stroke-width="2"/><path d="M-18 0q18 -6 36 0" stroke="#D8B86A" stroke-width="3" fill="none"/>';
     case 'noodle': return plate + `<path d="M-16 -2c4-6 8 2 12-4s8 2 12-4 6 4 8 2" stroke="${d.c}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M-12 -6c4-4 8 2 12-2s8 2 10-2" stroke="${d.c}" stroke-width="3" fill="none" stroke-linecap="round"/>` + (d.pork ? '<ellipse cx="8" cy="-8" rx="7" ry="5" fill="#8A4A2A"/>' : '<path d="M-6 -4h4M6 -6h4" stroke="#6BAE5A" stroke-width="2"/>');
     case 'roll': return plate + [-12, 0, 12].map((x) => `<rect x="${x - 5}" y="-12" width="10" height="12" rx="4" fill="#E8A83A" stroke="#B8782A"/>`).join('') + '<path d="M-20 0h40" stroke="#6BAE5A" stroke-width="2"/>';
+    case 'fried': return plate + [[-10, -4], [0, -7], [10, -4], [-5, -1], [5, -1]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="5" fill="#E8A83A" stroke="#B8782A"/><circle cx="${x - 1.5}" cy="${y - 1.5}" r="1.4" fill="#FFE08A"/>`).join('') + '<path d="M-16 2c6 2 26 2 32 0" stroke="#F7F1E6" stroke-width="2" opacity=".8"/>';
     case 'balls': return bowl('#E8C8A0') + '<circle cx="-7" cy="-7" r="3.4" fill="#FFF"/><circle cx="2" cy="-6" r="3.4" fill="#F7B8C8"/><circle cx="9" cy="-8" r="3" fill="#FFF"/>';
     case 'fruit': return plate + '<circle cx="-10" cy="-4" r="5" fill="#F28A1E"/><circle cx="0" cy="-6" r="5" fill="#E8402A"/><circle cx="10" cy="-4" r="5" fill="#8AC85A"/><path d="M-4 0l8 0" stroke="#F7E06A" stroke-width="4" stroke-linecap="round"/>';
   }
@@ -272,7 +273,7 @@ export function initBanquet(api) {
   function showMenu() {
     openSheet(`辦桌菜單 ${bz.seen.length}/${DISHES.length}`, `
       <ul class="bz-menu">${DISHES.map((d) => { const on = bz.seen.includes(d.id) || d.first; return `<li class="${on ? 'on' : ''}"><svg viewBox="-32 -26 64 40" aria-hidden="true">${on ? dishArt(d) : '<ellipse cx="0" cy="2" rx="27" ry="10" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>'}</svg><b>${on ? d.name : '？？？'}</b><span>${on ? d.luck : '還沒吃過'}</span></li>`; }).join('')}</ul>
-      <p class="hint">辦桌是冷盤先上、甜湯或水果最後。每天一桌，${bz.streak > 1 ? `已經連續 ${bz.streak} 天來吃。` : '明天的菜會不一樣。'}</p>`);
+      <p class="hint">辦桌是冷盤先上、甜點（炸湯圓）或水果最後。每天一桌，${bz.streak > 1 ? `已經連續 ${bz.streak} 天來吃。` : '明天的菜會不一樣。'}</p>`);
   }
 
   $('#bzBar').addEventListener('click', (e) => {
