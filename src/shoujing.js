@@ -3,7 +3,11 @@
 // → 米卦：把包著紅布的米杯往下一翻，掀開看米面 → 收驚符＋平安茶。
 // 場景 360 × 645；SVG 裡的 id 都加 sj 前綴。
 import { makeCarrier } from './carry.js';
-import { reduce, sleep, tween, pick, grannySVG, daily, yesterdayKey, onSwipe } from './stall.js';
+import bgUrl from './assets/sj/bg.webp';
+import grannyUrl from './assets/sj/granny.webp';
+import cupUrl from './assets/sj/cup.webp';
+import shirtUrl from './assets/sj/shirt.webp';
+import { reduce, sleep, tween, pick, daily, yesterdayKey, onSwipe } from './stall.js';
 
 const WHO = [['me', '我自己'], ['kid', '小孩'], ['family', '家人'], ['pet', '毛小孩']];
 const WHAT = [['scare', '被嚇到'], ['sleep', '睡不好、做惡夢'], ['stress', '壓力好大'], ['exam', '考前緊張'], ['sad', '剛經歷難過的事'], ['uneasy', '心神不寧']];
@@ -33,34 +37,18 @@ const CUP = [180, 364];
 const svgOf = () => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="青衣阿嬤收驚攤" class="stall-svg sj-svg">
   <defs>
-    <linearGradient id="sjWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A2A22"/><stop offset=".5" stop-color="#B8563A"/><stop offset="1" stop-color="#E8B886"/></linearGradient>
-    <linearGradient id="sjFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C89A6A"/><stop offset="1" stop-color="#8A5E3A"/></linearGradient>
-    <radialGradient id="sjSun"><stop offset="0" stop-color="#FFF1C8" stop-opacity=".6"/><stop offset="1" stop-color="#FFF1C8" stop-opacity="0"/></radialGradient>
     <radialGradient id="sjShadow"><stop offset="0" stop-color="#2A0E06" stop-opacity=".5"/><stop offset="1" stop-color="#2A0E06" stop-opacity="0"/></radialGradient>
     <radialGradient id="sjCalm"><stop offset="0" stop-color="#BFE6FF" stop-opacity="0"/><stop offset=".75" stop-color="#BFE6FF" stop-opacity=".18"/><stop offset="1" stop-color="#E8F6FF" stop-opacity=".55"/></radialGradient>
   </defs>
-  <rect width="360" height="645" fill="url(#sjWall)"/>
-  <rect y="410" width="360" height="235" fill="url(#sjFloor)"/>
-  <circle cx="180" cy="230" r="170" fill="url(#sjSun)"/>
-  <!-- 紅布條、神明畫像 -->
-  <rect x="96" y="76" width="168" height="40" rx="6" fill="#C8302A" stroke="#E8B84A" stroke-width="2"/>
-  <text x="180" y="104" text-anchor="middle" class="sj-banner">收驚・安神</text>
-  <rect x="34" y="130" width="54" height="84" rx="4" fill="#F3E2B8" stroke="#8A6234" stroke-width="2"/><circle cx="61" cy="160" r="14" fill="#F6CFAE"/><path d="M47 196c0-14 6-22 14-22s14 8 14 22z" fill="#3E6FA8"/>
-  <rect x="272" y="130" width="54" height="84" rx="4" fill="#F3E2B8" stroke="#8A6234" stroke-width="2"/><circle cx="299" cy="160" r="14" fill="#F6CFAE"/><path d="M285 196c0-14 6-22 14-22s14 8 14 22z" fill="#C8302A"/>
-  ${grannySVG({ x: 180, y: 262, robe: '#3E6FA8', s: 1.2, id: 'sjGranny' })}
-  <text x="180" y="200" text-anchor="middle" class="xr-tag" style="fill:#FFF4E0">青衣阿嬤</text>
-  <!-- 桌子 -->
-  <path d="M30 340h300v12H30z" fill="#A0643A"/><path d="M36 352h288v58H36z" fill="#7A4A2A"/>
-  <path d="M30 340h300l-12-12H42z" fill="#C8884E"/>
-  <g transform="translate(92 336)"><path d="M-16 0h32l-4-14h-24z" fill="#C8963E"/><path d="M-6 -14v-26M0 -14v-28M6 -14v-26" stroke="#B0603A" stroke-width="1.6"/><circle cx="0" cy="-42" r="1.6" fill="#FF7A3A"/></g>
-  <g transform="translate(268 336)"><ellipse cx="0" cy="0" rx="16" ry="4" fill="#E8D8C0"/><path d="M-12 0c0-10 4-14 12-14s12 4 12 14z" fill="#F7F1E6" stroke="#C9B9A0"/><text x="0" y="-3" text-anchor="middle" style="font-size:7px;fill:#8A6234">平安茶</text></g>
+  <image href="${bgUrl}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
+  <clipPath id="sjCounter"><rect width="360" height="350"/></clipPath>
+  <image id="sjGranny" href="${grannyUrl}" x="120" y="196" width="120" height="288" clip-path="url(#sjCounter)"/>
+  <text x="180" y="186" text-anchor="middle" class="xr-tag" style="fill:#FFF4E0">青衣阿嬤</text>
   <!-- 米卦杯 -->
   <g id="sjCup" class="stall-prop" data-sj="cup" role="button" tabindex="0" aria-label="米卦杯，往下滑翻過來" transform="translate(${CUP[0]} ${CUP[1]})" style="display:none">
     <ellipse cx="0" cy="4" rx="26" ry="5" fill="url(#sjShadow)"/>
     <g id="sjCupBody">
-      <path d="M-18 0l-4 -34h44l-4 34z" fill="#F7F1E6" stroke="#C9B9A0" stroke-width="1.2"/>
-      <path d="M-26 -38c8 -6 44 -6 52 0l-6 10h-40z" fill="#D8352A"/><path d="M-4 -40l4 -10 4 10" fill="#D8352A"/>
-      <ellipse cx="0" cy="-34" rx="22" ry="4" fill="#F7EBD2"/>
+      <image href="${cupUrl}" x="-26" y="-55" width="52" height="57"/>
     </g>
     <g id="sjRice" style="display:none">
       <ellipse cx="0" cy="-3" rx="24" ry="8" fill="#F7EBD2" stroke="#D9C49A" stroke-width="1.2"/>
@@ -71,10 +59,9 @@ const svgOf = () => `
   <!-- 家人的衣服 -->
   <g id="sjShirt" class="stall-prop" data-sj="shirt" role="button" tabindex="0" aria-label="家人的衣服，放到桌上" transform="translate(${SHIRT_REST[0]} ${SHIRT_REST[1]})" style="display:none">
     <ellipse cx="0" cy="2" rx="26" ry="5" fill="url(#sjShadow)"/>
-    <path d="M-12 0v-30l-12 6-6-12 18-10h24l18 10-6 12-12-6v30z" fill="#7FB2E0" stroke="#3E6FA8" stroke-width="1.4"/>
-    <path d="M-6 -46q6 6 12 0" stroke="#3E6FA8" stroke-width="1.4" fill="none"/>
+    <image href="${shirtUrl}" x="-25" y="-55" width="50" height="57"/>
   </g>
-  <rect id="sjShirtRing" x="${SHIRT_AT[0] - 32}" y="${SHIRT_AT[1] - 38}" width="64" height="44" rx="8" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
+  <rect id="sjShirtRing" x="${SHIRT_AT[0] - 32}" y="${SHIRT_AT[1] - 60}" width="64" height="66" rx="8" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <!-- 你 -->
   <ellipse cx="${AV.x}" cy="${AV.base}" rx="60" ry="9" fill="url(#sjShadow)"/>
   <image id="sjMe" x="${AV.x - AV.w / 2}" y="${AV.base - AV.h}" width="${AV.w}" height="${AV.h}"/>

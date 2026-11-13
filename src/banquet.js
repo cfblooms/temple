@@ -4,6 +4,13 @@
 // 場景 360 × 645；SVG 裡的 id 都加 bz 前綴。
 import { makeCarrier } from './carry.js';
 import { reduce, sleep, tween, pick, daily, yesterdayKey, onSwipe } from './stall.js';
+import bgUrl from './assets/bz/bg.webp';
+import tableUrl from './assets/bz/table.webp';
+import chefUrl from './assets/bz/chef.webp';
+import bagUrl from './assets/bz/bag.webp';
+import cupUrl from './assets/bz/cup.webp';
+const DISH_IMG = import.meta.glob('./assets/bz/*.webp', { eager: true, import: 'default' });
+const DISH_AR = {cold: 0.561, geng: 0.75, crab: 0.558, fotiao: 0.742, chicken: 0.586, fish: 0.497, kong: 0.547, bihun: 0.564, roll: 0.572, mianxian: 0.672, tangyuan: 0.5, fruit: 0.567, caiwei: 0.697}; // 高 / 寬
 
 // kind 決定暫代美術怎麼畫；c 是主色
 export const DISHES = [
@@ -32,8 +39,11 @@ const ME = [180, 540];
 function seeded(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; }; }
 function shuffle(a, rnd) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 
-// 暫代美術：向量畫的菜（等 Gemini 生的菜圖到了換成 <image>）
+// 菜：有 Gemini 圖就用圖（寬 56，底部對齊盤子底 y=12），沒有就畫向量
+const DW = 56;
 function dishArt(d) {
+  const url = DISH_IMG[`./assets/bz/${d.id}.webp`];
+  if (url && DISH_AR[d.id]) { const h = DW * DISH_AR[d.id]; return `<ellipse cx="0" cy="10" rx="26" ry="5" fill="#2A0E06" opacity=".25"/><image href="${url}" x="${-DW / 2}" y="${(12 - h).toFixed(1)}" width="${DW}" height="${h.toFixed(1)}"/>`; }
   const plate = '<ellipse cx="0" cy="2" rx="27" ry="10" fill="#F7F4EE" stroke="#7FA6D8" stroke-width="1.6"/><ellipse cx="0" cy="1" rx="20" ry="6.5" fill="#FFFFFF"/>';
   const bowl = (fill) => `<path d="M-22 -6c0 12 10 18 22 18s22-6 22-18z" fill="#F7F4EE" stroke="#7FA6D8" stroke-width="1.6"/><ellipse cx="0" cy="-6" rx="22" ry="6" fill="${fill}"/>`;
   switch (d.kind) {
@@ -56,42 +66,23 @@ function dishArt(d) {
 const svgOf = () => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="廟口流水席辦桌" class="stall-svg bz-svg">
   <defs>
-    <linearGradient id="bzSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A2A5A"/><stop offset=".5" stop-color="#C8664A"/><stop offset="1" stop-color="#F2B07A"/></linearGradient>
-    <linearGradient id="bzGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B8987A"/><stop offset="1" stop-color="#8A6A52"/></linearGradient>
-    <linearGradient id="bzCloth" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8402A"/><stop offset="1" stop-color="#B82A1E"/></linearGradient>
-    <radialGradient id="bzBulb"><stop offset="0" stop-color="#FFF1B0"/><stop offset="1" stop-color="#FFD06A" stop-opacity="0"/></radialGradient>
     <radialGradient id="bzShadow"><stop offset="0" stop-color="#2A0E06" stop-opacity=".45"/><stop offset="1" stop-color="#2A0E06" stop-opacity="0"/></radialGradient>
     <clipPath id="bzFaceClip"><circle cx="0" cy="0" r="21"/></clipPath>
     <clipPath id="bzMeClip"><circle cx="0" cy="0" r="28"/></clipPath>
   </defs>
-  <rect width="360" height="645" fill="url(#bzSky)"/>
-  <!-- 遠景廟頂 -->
-  <path d="M60 250l40-26h160l40 26z" fill="#7A2A22" opacity=".55"/><path d="M90 250h180v40H90z" fill="#6A2A22" opacity=".45"/>
-  <rect y="290" width="360" height="355" fill="url(#bzGround)"/>
-  <!-- 紅白帆布棚 -->
-  <path d="M0 60h360v64H0z" fill="#E8402A"/>
-  ${Array.from({ length: 9 }, (_, i) => `<path d="M${i * 40 + 20} 60h20v64h-20z" fill="#FFF4E8"/>`).join('')}
-  <path d="M0 124${Array.from({ length: 9 }, (_, i) => `q20 18 40 0`).join('')}V124z" fill="#E8402A"/>
-  <path d="M0 124${Array.from({ length: 9 }, (_, i) => `q20 18 40 0`).join('')}" fill="none" stroke="#B82A1E" stroke-width="2"/>
-  <rect x="10" y="124" width="6" height="180" fill="#8A8A92"/><rect x="344" y="124" width="6" height="180" fill="#8A8A92"/>
-  <path d="M0 150q90 30 180 0t180 0" stroke="#3A2A2A" stroke-width="1.2" fill="none"/>
-  ${Array.from({ length: 9 }, (_, i) => { const x = 20 + i * 40, y = 150 + Math.sin((x / 360) * Math.PI * 2) * -12 + 10; return `<circle class="bz-bulb" cx="${x}" cy="${y.toFixed(1)}" r="9" fill="url(#bzBulb)"/><circle cx="${x}" cy="${y.toFixed(1)}" r="3" fill="#FFF1B0"/>`; }).join('')}
+  <image href="${bgUrl}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
+  <!-- 九位香客（桌子後面一圈） -->
+  <g id="bzGuests"></g>
+  <!-- 紅圓桌 -->
+  <ellipse cx="180" cy="640" rx="150" ry="10" fill="url(#bzShadow)"/>
+  <image href="${tableUrl}" x="30" y="375" width="300" height="270" preserveAspectRatio="none"/>
   <!-- 出菜口 -->
   <g transform="translate(${TRAY[0]} ${TRAY[1]})">
     <ellipse cx="0" cy="6" rx="40" ry="7" fill="url(#bzShadow)"/>
     <rect x="-38" y="-6" width="76" height="12" rx="3" fill="#C0C0C8" stroke="#8A8A92"/>
   </g>
-  <g transform="translate(${TRAY[0]} ${TRAY[1] - 58})"><path d="M-14 0c-8 0-10-12-2-14 2-8 14-8 16 0 8 2 6 14-2 14z" fill="#FFF"/><rect x="-11" y="0" width="22" height="7" fill="#FFF" stroke="#D8D0C0"/></g>
-  <text x="${TRAY[0]}" y="${TRAY[1] - 34}" text-anchor="middle" class="bz-tag">總舖師出菜</text>
-  <!-- 九位香客（桌子後面一圈） -->
-  <g id="bzGuests"></g>
-  <!-- 紅圓桌 -->
-  <ellipse cx="180" cy="478" rx="140" ry="16" fill="url(#bzShadow)"/>
-  <path d="M42 420c0 30 4 52 6 56 40 12 224 12 264 0 2-4 6-26 6-56z" fill="url(#bzCloth)"/>
-  <path d="M48 476c40 12 224 12 264 0" stroke="#8A1A14" stroke-width="2" fill="none"/>
-  <ellipse cx="180" cy="420" rx="138" ry="62" fill="#E8402A"/>
-  <ellipse cx="180" cy="416" rx="130" ry="56" fill="#F05A40"/>
-  <ellipse cx="180" cy="416" rx="130" ry="56" fill="none" stroke="#FFB07A" stroke-width="1" opacity=".6"/>
+  <image href="${chefUrl}" x="${TRAY[0] - 34}" y="${TRAY[1] - 150}" width="68" height="137"/>
+  <text x="${TRAY[0]}" y="${TRAY[1] - 154}" text-anchor="middle" class="bz-tag">總舖師出菜</text>
   <circle id="bzSlotRing" cx="180" cy="420" r="26" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <g id="bzTable"></g>
   <!-- 你 -->
@@ -102,22 +93,19 @@ const svgOf = () => `
   </g>
   <!-- 打包袋 -->
   <g id="bzBag" transform="translate(${BAG[0]} ${BAG[1]})" style="display:none">
-    <ellipse cx="0" cy="4" rx="26" ry="5" fill="url(#bzShadow)"/>
-    <path d="M-22 2l4-34h36l4 34z" fill="#F4F0E6" stroke="#C9C0B0" opacity=".95"/>
-    <path d="M-12 -32c0-12 8-12 8 0M4 -32c0-12 8-12 8 0" stroke="#E8402A" stroke-width="2.6" fill="none"/>
-    <text x="0" y="-10" text-anchor="middle" style="font-size:9px;fill:#E8402A;font-weight:900">打包</text>
+    <ellipse cx="0" cy="2" rx="26" ry="5" fill="url(#bzShadow)"/>
+    <image href="${bagUrl}" x="-26" y="-60" width="52" height="62"/>
   </g>
-  <circle id="bzBagRing" cx="${BAG[0]}" cy="${BAG[1] - 16}" r="26" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
+  <circle id="bzBagRing" cx="${BAG[0]}" cy="${BAG[1] - 28}" r="30" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <!-- 今天的菜（出菜口上） -->
   <g id="bzDish" class="stall-prop" data-bz="dish" role="button" tabindex="0" aria-label="這道菜，端上桌" style="display:none"><g id="bzDishArt"></g></g>
   <text id="bzDishName" x="${TRAY[0]}" y="${TRAY[1] + 26}" text-anchor="middle" class="bz-tag"></text>
   <!-- 剩菜（菜尾） -->
-  <g id="bzLeft" class="stall-prop" data-bz="left" role="button" tabindex="0" aria-label="剩菜，打包帶回家" style="display:none"><g transform="scale(1.3)">${dishArt({ kind: 'soup', c: '#B8783A' })}</g></g>
+  <g id="bzLeft" class="stall-prop" data-bz="left" role="button" tabindex="0" aria-label="剩菜，打包帶回家" style="display:none"><g transform="scale(1.3)">${dishArt(CAIWEI)}</g></g>
   <!-- 酒杯 -->
   <g id="bzCup" class="stall-prop" data-bz="cup" role="button" tabindex="0" aria-label="酒杯，往上滑乾杯" transform="translate(${CUP[0]} ${CUP[1]})" style="display:none">
-    <ellipse cx="0" cy="3" rx="16" ry="4" fill="url(#bzShadow)"/>
-    <path d="M-10 0l-3 -26h26l-3 26z" fill="#E8F4FF" stroke="#9AB8D8" stroke-width="1.2" opacity=".95"/>
-    <path d="M-11 -12h22l-1.5 12h-19z" fill="#E8A83A" opacity=".85"/><ellipse cx="0" cy="-13" rx="11" ry="2" fill="#FFF4C0"/>
+    <ellipse cx="0" cy="2" rx="14" ry="3.5" fill="url(#bzShadow)"/>
+    <image href="${cupUrl}" x="-14" y="-38" width="28" height="40"/>
   </g>
   <path id="bzCupHint" d="M${CUP[0] + 26} ${CUP[1] - 12}v-30l-6 6M${CUP[0] + 26} ${CUP[1] - 42}l6 6" stroke="#FFE08A" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0"/>
 </svg>`;
@@ -151,7 +139,7 @@ export function initBanquet(api) {
     S('bzMeImg').setAttribute('href', me().face);
   }
   function paintTable(list) {
-    S('bzTable').innerHTML = list.map((d, i) => `<g transform="translate(${SLOTS[i][0]} ${SLOTS[i][1]}) scale(1.3)">${dishArt(d)}</g>`).join('');
+    S('bzTable').innerHTML = list.map((d, i) => `<g transform="translate(${SLOTS[i][0]} ${SLOTS[i][1]}) scale(1.05)">${dishArt(d)}</g>`).join('');
   }
   function guestsCheer(n = 3) {
     const picks = shuffle([...Array(9).keys()], Math.random).slice(0, n);
@@ -272,7 +260,7 @@ export function initBanquet(api) {
 
   function showMenu() {
     openSheet(`辦桌菜單 ${bz.seen.length}/${DISHES.length}`, `
-      <ul class="bz-menu">${DISHES.map((d) => { const on = bz.seen.includes(d.id) || d.first; return `<li class="${on ? 'on' : ''}"><svg viewBox="-32 -26 64 40" aria-hidden="true">${on ? dishArt(d) : '<ellipse cx="0" cy="2" rx="27" ry="10" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>'}</svg><b>${on ? d.name : '？？？'}</b><span>${on ? d.luck : '還沒吃過'}</span></li>`; }).join('')}</ul>
+      <ul class="bz-menu">${DISHES.map((d) => { const on = bz.seen.includes(d.id) || d.first; return `<li class="${on ? 'on' : ''}"><svg viewBox="-32 -36 64 50" aria-hidden="true">${on ? dishArt(d) : '<ellipse cx="0" cy="2" rx="27" ry="10" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>'}</svg><b>${on ? d.name : '？？？'}</b><span>${on ? d.luck : '還沒吃過'}</span></li>`; }).join('')}</ul>
       <p class="hint">辦桌是冷盤先上、甜點（炸湯圓）或水果最後。每天一桌，${bz.streak > 1 ? `已經連續 ${bz.streak} 天來吃。` : '明天的菜會不一樣。'}</p>`);
   }
 

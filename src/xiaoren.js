@@ -3,7 +3,16 @@
 // 只寫代號、不寫真名：打的是霉運和是非，不是要傷害誰。驚蟄（國曆 3/5、3/6 前後）是打小人的日子。
 // 場景 360 × 645；SVG 裡的 id 都加 x 前綴。
 import { makeCarrier } from './carry.js';
-import { reduce, sleep, tween, shake, pick, grannySVG, daily, yesterdayKey } from './stall.js';
+import bgUrl from './assets/xr/bg.webp';
+import popoUrl from './assets/xr/popo.webp';
+import brickUrl from './assets/xr/brick.webp';
+import paperUrl from './assets/xr/paper.webp';
+import tigerUrl from './assets/xr/tiger.webp';
+import tigerFullUrl from './assets/xr/tiger-full.webp';
+import porkUrl from './assets/xr/pork.webp';
+import potUrl from './assets/xr/pot.webp';
+import slipUrl from './assets/xr/slipper.webp';
+import { reduce, sleep, tween, shake, pick, daily, yesterdayKey } from './stall.js';
 
 const KINDS = [
   ['work', '職場小人'], ['gossip', '背後說閒話的'], ['peach', '爛桃花'], ['friend', '損友'],
@@ -32,46 +41,26 @@ const POPA = [
 
 const PAPER = [180, 492]; // 小人紙底部中心
 const SLIP_REST = [214, 352], SLIP_HIT = [180, 440];
-const TIGER = [292, 486], MOUTH = [292, 452];
-const PORK_REST = [304, 606];
-const POT = [62, 604];
+const TIGER = [278, 486], MOUTH = [278, 403];
+const PORK_REST = [290, 606];
+const POT = [74, 598];
 const SCRAP = [180, 494];
 
 const svgOf = () => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="鵝頸橋打小人攤" class="stall-svg xr-svg">
   <defs>
-    <linearGradient id="xSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1C1730"/><stop offset=".55" stop-color="#3A2440"/><stop offset="1" stop-color="#5A3428"/></linearGradient>
-    <linearGradient id="xGround" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6A4A3A"/><stop offset="1" stop-color="#3A261E"/></linearGradient>
-    <radialGradient id="xLamp"><stop offset="0" stop-color="#FFD58A" stop-opacity=".75"/><stop offset="1" stop-color="#FFD58A" stop-opacity="0"/></radialGradient>
     <radialGradient id="xFire"><stop offset="0" stop-color="#FFF2B0"/><stop offset=".5" stop-color="#FF9A3A"/><stop offset="1" stop-color="#E2402A" stop-opacity="0"/></radialGradient>
     <radialGradient id="xShadow"><stop offset="0" stop-color="#120604" stop-opacity=".55"/><stop offset="1" stop-color="#120604" stop-opacity="0"/></radialGradient>
   </defs>
-  <rect width="360" height="645" fill="url(#xSky)"/>
-  <!-- 高架橋（鵝頸橋底） -->
-  <path d="M0 70h360v58H0z" fill="#2A2232"/><path d="M0 128h360v10H0z" fill="#191420"/>
-  <rect x="26" y="138" width="34" height="250" fill="#2E2736"/><rect x="300" y="138" width="34" height="250" fill="#2E2736"/>
-  <path d="M0 96h360" stroke="#4A3E52" stroke-width="2"/>
-  <circle cx="180" cy="150" r="120" fill="url(#xLamp)"/>
-  <path d="M168 128h24l-4 14h-16z" fill="#C8963E"/><circle cx="180" cy="146" r="6" fill="#FFF1C0"/>
-  <path d="M0 388h360v257H0z" fill="url(#xGround)"/>
-  <path d="M0 388h360" stroke="#8A6A52" stroke-width="2" opacity=".6"/>
-  <!-- 紅紙神位、香 -->
-  <rect x="44" y="300" width="40" height="70" rx="3" fill="#C8302A" stroke="#E8B84A" stroke-width="1.5"/>
-  <text x="64" y="322" text-anchor="middle" class="xr-red">白</text><text x="64" y="342" text-anchor="middle" class="xr-red">虎</text><text x="64" y="362" text-anchor="middle" class="xr-red">爺</text>
-  <path d="M100 386v-40M106 386v-44M112 386v-40" stroke="#B0603A" stroke-width="2"/><circle cx="100" cy="346" r="2" fill="#FF7A3A"/><circle cx="106" cy="342" r="2" fill="#FF7A3A"/><circle cx="112" cy="346" r="2" fill="#FF7A3A"/>
-  ${grannySVG({ x: 70, y: 448, robe: '#5A3E5E', s: .95 })}
-  <text x="70" y="540" text-anchor="middle" class="xr-tag">打小人婆婆</text>
+  <image href="${bgUrl}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
+  <image href="${popoUrl}" x="14" y="379" width="100" height="161"/>
+  <text x="64" y="554" text-anchor="middle" class="xr-tag">打小人婆婆</text>
   <!-- 磚頭和小人紙 -->
   <ellipse cx="180" cy="530" rx="78" ry="12" fill="url(#xShadow)"/>
-  <g id="xCandles"><rect x="112" y="492" width="10" height="26" rx="3" fill="#D8352A"/><rect x="238" y="492" width="10" height="26" rx="3" fill="#D8352A"/>
-    <path d="M117 480c4 5 4 9 0 11-4-2-4-6 0-11zM243 480c4 5 4 9 0 11-4-2-4-6 0-11z" fill="#FFC24A"/></g>
-  <path d="M128 500h104l8 24H120z" fill="#A9472F"/><path d="M128 500h104l-6-10h-92z" fill="#C8644A"/>
+  <image href="${brickUrl}" x="105" y="474" width="150" height="78"/>
   <g id="xPaper" transform="translate(${PAPER[0]} ${PAPER[1]})">
     <g id="xPaperArt">
-      <rect x="-32" y="-96" width="64" height="94" rx="2" fill="#FFF6E2" stroke="#C8302A" stroke-width="2"/>
-      <circle cx="0" cy="-74" r="10" fill="none" stroke="#3B1F17" stroke-width="2.4"/>
-      <path d="M0 -64v28M-16 -54h32M0 -36l-12 20M0 -36l12 20" stroke="#3B1F17" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-      <path d="M-5 -77l3 2M5 -77l-3 2M-4 -70q4 -3 8 0" stroke="#3B1F17" stroke-width="1.4" fill="none"/>
+      <image href="${paperUrl}" x="-33" y="-97" width="66" height="95"/>
       <text id="xName" x="0" y="-8" text-anchor="middle" class="xr-name"></text>
       <path id="xC1" d="M-30 -84l18 8 10 -6 20 10 14 -4" stroke="#B89A7A" stroke-width="1.4" fill="none" opacity="0"/>
       <path id="xC2" d="M-30 -50l14 -6 16 8 12 -4 18 6" stroke="#B89A7A" stroke-width="1.4" fill="none" opacity="0"/>
@@ -85,33 +74,24 @@ const svgOf = () => `
   <!-- 紙老虎（祭白虎） -->
   <g id="xTiger" transform="translate(${TIGER[0]} ${TIGER[1]})" style="display:none">
     <ellipse cx="0" cy="4" rx="40" ry="7" fill="url(#xShadow)"/>
-    <path d="M-34 0l4-56h60l4 56z" fill="#F6D24A" stroke="#3B1F17" stroke-width="1.6"/>
-    <path d="M-24 -50l8 10M-6 -54l4 12M10 -54l-2 12M26 -50l-8 10M-30 -20l12 4M30 -20l-12 4" stroke="#3B1F17" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="-12" cy="-44" r="5" fill="#FFF"/><circle cx="12" cy="-44" r="5" fill="#FFF"/>
-    <circle id="xEyeL" cx="-12" cy="-44" r="2.6" fill="#3B1F17"/><circle id="xEyeR" cx="12" cy="-44" r="2.6" fill="#3B1F17"/>
-    <path d="M-20 -58l-6 -10 12 4zM20 -58l6 -10 -12 4z" fill="#F6D24A" stroke="#3B1F17" stroke-width="1.4"/>
-    <text x="0" y="-60" text-anchor="middle" class="xr-red" style="font-size:9px">王</text>
-    <ellipse id="xMouth" cx="0" cy="-30" rx="11" ry="8" fill="#9A2A2A" stroke="#3B1F17" stroke-width="1.4"/>
-    <path d="M-8 -36l3 5 3 -5M2 -36l3 5 3 -5" fill="#FFF"/>
-    <g id="xFull" opacity="0"><path d="M-6 -32q6 4 12 0" stroke="#3B1F17" stroke-width="2" fill="none"/></g>
+    <image id="xTigerOpen" href="${tigerUrl}" x="-40" y="-128" width="80" height="127"/>
+    <g id="xFull" opacity="0"><image href="${tigerFullUrl}" x="-40" y="-128" width="80" height="127"/></g>
   </g>
   <circle id="xTigerRing" cx="${MOUTH[0]}" cy="${MOUTH[1]}" r="16" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <!-- 肥豬肉 -->
   <g id="xPork" class="stall-prop" data-xr="pork" role="button" tabindex="0" aria-label="肥豬肉，拿去餵紙老虎" transform="translate(${PORK_REST[0]} ${PORK_REST[1]})" style="display:none">
     <ellipse cx="0" cy="2" rx="24" ry="5" fill="url(#xShadow)"/>
-    <path d="M-22 0c0-10 6-16 22-16s22 6 22 16z" fill="#F7E6DA" stroke="#C99A86" stroke-width="1.2"/>
-    <path d="M-20 -4c8-4 32-4 40 0" stroke="#E88E86" stroke-width="5" fill="none"/>
+    <image href="${porkUrl}" x="-28" y="-26" width="56" height="29"/>
   </g>
   <!-- 火盆 -->
   <g id="xPot" transform="translate(${POT[0]} ${POT[1]})">
     <ellipse cx="0" cy="8" rx="34" ry="7" fill="url(#xShadow)"/>
-    <circle id="xFlameGlow" cx="0" cy="-16" r="34" fill="url(#xFire)" opacity="0" style="mix-blend-mode:screen"/>
-    <path d="M-30 -12h60l-8 22h-44z" fill="#6A6A72" stroke="#3A3A42" stroke-width="1.4"/>
-    <ellipse cx="0" cy="-12" rx="30" ry="6" fill="#2A2A30"/>
-    <g id="xFlame" opacity="0"><path d="M-14 -12c-4-14 6-18 4-30 10 8 12 18 8 30zM2 -12c0-12 10-14 10-26 8 10 6 20 2 26z" fill="#FF9A3A"/><path d="M-6 -12c-2-8 4-10 4-16 6 6 4 12 2 16z" fill="#FFF2B0"/></g>
+    <circle id="xFlameGlow" cx="0" cy="-30" r="34" fill="url(#xFire)" opacity="0" style="mix-blend-mode:screen"/>
+    <image href="${potUrl}" x="-40" y="-30" width="80" height="61"/>
+    <g id="xFlame" opacity="0" transform="translate(0 -12)"><path d="M-14 -12c-4-14 6-18 4-30 10 8 12 18 8 30zM2 -12c0-12 10-14 10-26 8 10 6 20 2 26z" fill="#FF9A3A"/><path d="M-6 -12c-2-8 4-10 4-16 6 6 4 12 2 16z" fill="#FFF2B0"/></g>
   </g>
   <text x="${POT[0]}" y="${POT[1] + 28}" text-anchor="middle" class="xr-tag">火盆</text>
-  <circle id="xPotRing" cx="${POT[0]}" cy="${POT[1] - 14}" r="24" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
+  <circle id="xPotRing" cx="${POT[0]}" cy="${POT[1] - 22}" r="28" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <!-- 打爛的小人紙（揉成一團） -->
   <g id="xScrap" class="stall-prop" data-xr="scrap" role="button" tabindex="0" aria-label="打爛的小人紙，放進火盆化掉" transform="translate(${SCRAP[0]} ${SCRAP[1]})" style="display:none">
     <path d="M-16 0c-6-10 0-22 10-22 4-6 16-4 18 4 8 2 8 14 2 18z" fill="#F3E6CC" stroke="#B89A7A" stroke-width="1.4"/>
@@ -125,9 +105,7 @@ const svgOf = () => `
   </g>
   <!-- 拖鞋（浮在小人紙上方，手指不會擋到） -->
   <g id="xSlip" transform="translate(${SLIP_REST[0]} ${SLIP_REST[1]}) rotate(-28)" style="display:none" pointer-events="none">
-    <ellipse cx="0" cy="0" rx="17" ry="40" fill="#3E6FD8" stroke="#1E3F8A" stroke-width="2"/>
-    <ellipse cx="0" cy="2" rx="12" ry="33" fill="#7FA6F0"/>
-    <path d="M-15 -14c10 10 20 10 30 0" stroke="#FFFFFF" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <image href="${slipUrl}" x="-32" y="-35" width="63" height="70" transform="rotate(-40)"/>
   </g>
   <rect id="xTap" x="0" y="150" width="360" height="495" fill="transparent" style="display:none" data-xr="tap"/>
 </svg>`;
@@ -249,8 +227,7 @@ export function initXiaoren(api) {
     async onDrop() {
       if (phase !== 'tiger') return;
       S('xPork').style.display = 'none';
-      S('xMouth').setAttribute('ry', '3'); S('xFull').setAttribute('opacity', '1');
-      for (const id of ['xEyeL', 'xEyeR']) S(id).setAttribute('r', '1.2');
+      S('xTigerOpen').setAttribute('opacity', '0'); S('xFull').setAttribute('opacity', '1');
       sfx.purr(); sfx.buzz([10, 30, 10]);
       const t = S('xTiger');
       await tween(500, (k) => t.setAttribute('transform', `translate(${TIGER[0]} ${TIGER[1]}) rotate(${Math.sin(k * Math.PI * 4) * 4})`));
@@ -263,7 +240,7 @@ export function initXiaoren(api) {
   /* ----- 4. 化解：小人紙進火盆 ----- */
   const scrap = makeCarrier({
     svg, el: S('xScrap'), sfx, cam, ring: S('xPotRing'), lift: 64, radius: 28,
-    rest: () => SCRAP, target: () => [POT[0], POT[1] - 12], zoom: () => [POT[0] + 50, POT[1] - 60, 240],
+    rest: () => SCRAP, target: () => [POT[0], POT[1] - 22], zoom: () => [POT[0] + 50, POT[1] - 60, 240],
     onTap: () => say(phase === 'burn' ? '按住<b>小人紙</b>，拖到左下角的<b>火盆</b>。' : '先餵紙老虎吃<b>肥豬肉</b>。'),
     async onDrop() {
       if (phase !== 'burn') { say('先祭白虎：把<b>肥豬肉</b>塞進紙老虎嘴裡。'); scrap.home(); cam?.reset(200); return; }
@@ -293,8 +270,7 @@ export function initXiaoren(api) {
       sfx.chime(); burst('spark', 180, 300, reduce ? 6 : 26);
       for (let i = 0; i < 6; i++) setTimeout(() => emit('heart', 140 + Math.random() * 80, 420), i * 90);
       say(`貴人符燒給白虎爺了：願<b>${g[1]}</b>出現，${g[2]}。<br>${pick(POPA)}${first ? `<br>今天第一次打小人，虎爺叼來小魚乾 ×1（已經連續 ${xr.streak} 天來出氣）。` : ''}`);
-      S('xTiger').style.display = 'none'; S('xMouth').setAttribute('ry', '8'); S('xFull').setAttribute('opacity', '0');
-      for (const id of ['xEyeL', 'xEyeR']) S(id).setAttribute('r', '2.6');
+      S('xTiger').style.display = 'none'; S('xTigerOpen').setAttribute('opacity', '1'); S('xFull').setAttribute('opacity', '0');
       resetPaper(); S('xName').textContent = '';
     });
   }

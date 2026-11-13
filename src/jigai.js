@@ -2,6 +2,8 @@
 // → 拿替身從頭順到腳，把霉氣帶走 → 撒鹽米「一撒天清、二撒地靈、三撒人長生」→ 替身放進金爐化掉 → 過七星橋。
 // 疊在太歲殿上面的透明圖層（跟其他殿一樣 viewBox 0 0 360 645），只有道具可以點。SVG 裡的 id 都加 jg 前綴。
 import furnaceUrl from './assets/furnace.webp';
+import dollUrl from './assets/jg/doll.webp';
+import dollGreyUrl from './assets/jg/doll-grey.webp';
 import { makeCarrier } from './carry.js';
 import { reduce, sleep, tween, pick, svgPt, daily, yesterdayKey, onSwipe } from './stall.js';
 
@@ -15,7 +17,7 @@ const AFTER = [
   '把今天當成新的開始，做一件你拖了很久的小事。',
 ];
 const KNEEL_BASE = 595; // 太歲殿拜墊（放大後）
-const DOLL = [26, 44]; // 替身寬高，原點在底部中心
+const DOLL = [30, 44]; // 替身寬高，原點在底部中心
 const FURN = [56, 548]; // 金爐口
 const STARS = Array.from({ length: 7 }, (_, i) => { const t = i / 6; return [40 + t * 280, 626 - Math.sin(t * Math.PI) * 56]; });
 
@@ -43,8 +45,8 @@ const svgOf = () => `
   </g>
   <g id="jgDoll" class="jg-doll" data-jg="doll" role="button" tabindex="0" aria-label="替身" style="display:none">
     <g id="jgDollArt">
-      <path d="M0 ${-DOLL[1]}c6 0 8 4 8 8s-2 6-4 7h10l-2 8h-7l3 21h-6l-2-12-2 12h-6l3-21h-7l-2-8h10c-2-1-4-3-4-7s2-8 8-8z" fill="#FFF6E2" stroke="#C8302A" stroke-width="1.6"/>
-      <path id="jgDirt" d="M0 ${-DOLL[1]}c6 0 8 4 8 8s-2 6-4 7h10l-2 8h-7l3 21h-6l-2-12-2 12h-6l3-21h-7l-2-8h10c-2-1-4-3-4-7s2-8 8-8z" fill="#5A5048" opacity="0"/>
+      <image href="${dollUrl}" x="${-DOLL[0] / 2}" y="${-DOLL[1]}" width="${DOLL[0]}" height="${DOLL[1]}"/>
+      <image id="jgDirt" href="${dollGreyUrl}" x="${-DOLL[0] / 2}" y="${-DOLL[1]}" width="${DOLL[0]}" height="${DOLL[1]}" opacity="0"/>
       <text id="jgDollName" x="0" y="${-DOLL[1] + 24}" text-anchor="middle" class="jg-name"></text>
     </g>
   </g>
@@ -162,7 +164,7 @@ export function initJigai(api) {
       for (let i = 0; i < 6; i++) emit('smoke', m[1] + (Math.random() - .5) * 40, m[2] + (Math.random() - .5) * 12, { color: '#6A5E58', alpha: .5, vx: (cx - m[1]) * .4, vy: -10, life: .9 });
       sfx.knock(); sfx.buzz([12]);
       next++;
-      S('jgDirt').setAttribute('opacity', (next / marks.length * .55).toFixed(2));
+      S('jgDirt').setAttribute('opacity', (next / marks.length).toFixed(2));
       emit('text', m[1] - 50, m[2], { text: m[0], color: '#FFE08A', size: 12, life: .8 });
       if (next >= marks.length) { drag = false; S('jgDoll').classList.remove('held'); saltStep(); }
     }
