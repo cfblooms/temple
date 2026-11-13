@@ -879,7 +879,7 @@ const AREAS = [
   { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, title: true, info: '後院長效靜心閣：點一支 25 分鐘會慢慢融化的蠟燭，配著古寺夜雨聲專心讀書。' },
   { id: 'study', name: '伴讀自習室', x: 70, y: 7.1, w: 19.5, info: '伴讀自習室：番茄鐘燃燭計時，手機橫放就是開運桌面擺飾。' },
   { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
-  { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, title: true, info: '兩廂專科殿堂：文昌、財神、濟公、月老、觀音、天公、母娘、彌勒、太歲九座殿。' },
+  { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, main: true, info: '兩廂專科殿堂：十多位神明各有一座殿。' },
   { id: 'jigong', name: '濟公解憂林', x: 25.3, y: 20.5, w: 12.5, main: true, info: '濟公解憂林：讓濟公師父用破芭蕉扇拍散執念，跳出看破人生的語錄。' },
   { id: 'yuelao', name: '月老閣', x: 79.1, y: 20.5, w: 11, main: true, info: '月老閣：抽清醒戀愛籤，和另一半一起綁定連理紅燭。' },
   { id: 'wenchang', name: '文昌閣', x: 14.4, y: 31.3, w: 9, main: true, info: '文昌閣：求考運，准考證順時針過香爐三圈。' },
@@ -912,8 +912,22 @@ function buildMap() {
     if (a.id === 'banquet') { showStall('bz'); return; }
     if (a.id === 'xiaoren') { showStall('xr'); return; }
     if (a.id === 'shoujing') { showStall('sj'); return; }
+    if (a.id === 'wings') { pickHall(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中，目前開放的是正殿、財神聚寶閣、月老閣，還有上方神明列裡的土地公、文昌、濟公、三太子、觀音、關公、註生娘娘、太歲，以及廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人（太歲殿可以祭改）。`);
+    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十一位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人也開張了。`);
+  });
+}
+
+// 兩廂專科殿堂：一次列出所有殿，點了就進去
+function pickHall() {
+  sfx.knock();
+  const body = openSheet('兩廂專科殿堂', `<p style="margin:0 0 8px;color:#7A5A48;font-size:13px">想拜哪一位？點了就進殿。</p><div class="hall-pick">`
+    + Object.entries(HALLS).map(([id, H]) => `<button type="button" data-pick="${id}"${id === state.home ? ' class="on"' : ''}><img src="${H.face}" alt=""><span>${H.god}</span><small>${H.name}</small></button>`).join('')
+    + SOON.map(([name, face]) => `<button type="button" class="soon" disabled><img src="${face}" alt=""><span>${name}</span><small>籌備中</small></button>`).join('')
+    + '</div>');
+  body.querySelector('.hall-pick').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pick]'); if (!b) return;
+    closeSheet(); SHOW[b.dataset.pick]();
   });
 }
 

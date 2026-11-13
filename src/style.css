@@ -59,7 +59,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* speech strip */
 .say {
-  display: flex; align-items: flex-start; gap: 8px; min-height: 3.4em;
+  display: flex; align-items: flex-start; gap: 8px; min-height: calc(3 * 1.45em + 17px); /* 固定三行高，換句話時下面的場景不會跳 */
   background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 7px 12px;
   font-size: 14px; line-height: 1.45;
 }
@@ -441,3 +441,10 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .god-sep { flex: 0 0 2px; align-self: center; height: 30px; margin: 0 2px; background: rgb(255 244 224 / .55); border-radius: 2px; }
 @media (prefers-reduced-motion: reduce) { .bz-bulb, .stall-prop.pop > *, .jg-doll.pop > *, .bz-guest.pop > *, #xTiger.pop > * { animation: none; } }
 .stall-svg [id$="Ring"], .stall-svg [id$="RingT"], .stall-svg [id$="Hint"], .jg-svg [id$="Ring"], .stall-svg text { pointer-events: none; }
+/* 地圖「兩廂專科殿堂」：選一座殿 */
+.hall-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 6px; padding: 4px 0 8px; }
+.hall-pick button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; font-size: 12px; color: #4A2A1E; line-height: 1.2; text-align: center; }
+.hall-pick img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: #FFF4E0; border: 2px solid var(--line); }
+.hall-pick button.on img { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+.hall-pick .soon img { filter: grayscale(1); opacity: .55; }
+.hall-pick small { color: #A07A60; font-size: 10.5px; }
