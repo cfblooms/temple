@@ -34,7 +34,7 @@ export function emit(type, x, y, o = {}) {
   if (reduce && type !== 'text' && Math.random() < 0.6) return;
   const p = { type, x, y, vx: 0, vy: 0, age: 0, life: 1.5, size: 6, rot: 0, ...o };
   switch (type) {
-    case 'smoke': Object.assign(p, { vx: (Math.random() - .5) * 6, vy: -18 - Math.random() * 8, life: 3.2, size: 2.5 }); break;
+    case 'smoke': Object.assign(p, { vx: (Math.random() - .5) * 6, vy: -18 - Math.random() * 8, life: 3.2, size: 2.5, ...o }); break;
     case 'spark': { const a = Math.random() * Math.PI * 2, s = 30 + Math.random() * 60; Object.assign(p, { vx: Math.cos(a) * s, vy: Math.sin(a) * s - 20, life: .9 + Math.random() * .5, size: 1.5 + Math.random() * 2 }); break; }
     case 'heart': Object.assign(p, { vx: (Math.random() - .5) * 30, vy: -40 - Math.random() * 20, life: 1.4, size: 6 + Math.random() * 3 }); break;
     case 'fish': Object.assign(p, { vx: (Math.random() - .5) * 40, vy: -70, life: 1.3, size: 9 }); break;
@@ -79,7 +79,7 @@ function loop(now) {
     switch (p.type) {
       case 'smoke': {
         p.vx += Math.sin(now / 400 + p.y / 20) * 8 * dt;
-        g.globalAlpha = .35 * (1 - k); g.fillStyle = '#EDE6DA';
+        g.globalAlpha = (p.alpha || .35) * (1 - k); g.fillStyle = p.color || '#EDE6DA';
         g.beginPath(); g.arc(0, 0, p.size + k * 9, 0, Math.PI * 2); g.fill(); break;
       }
       case 'spark': p.vy += 60 * dt; g.globalAlpha = 1 - k; g.fillStyle = '#FFD86B'; g.beginPath(); g.arc(0, 0, p.size, 0, Math.PI * 2); g.fill(); break;

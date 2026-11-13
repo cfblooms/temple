@@ -1,0 +1,309 @@
+// 青衣阿嬤收驚：照廟裡的做法——先稟報姓名和受驚的事（幫家人收驚就帶他的衣服）→ 阿嬤拿三炷香在頭頂、前胸、後背繞，
+// 一邊喊名字「回來喔」；玩家要做的是跟著光圈慢慢深呼吸（按住吸氣、放開吐氣），心跳一下一下慢下來
+// → 米卦：把包著紅布的米杯往下一翻，掀開看米面 → 收驚符＋平安茶。
+// 場景 360 × 645；SVG 裡的 id 都加 sj 前綴。
+import { makeCarrier } from './carry.js';
+import { reduce, sleep, tween, pick, grannySVG, daily, yesterdayKey, onSwipe } from './stall.js';
+
+const WHO = [['me', '我自己'], ['kid', '小孩'], ['family', '家人'], ['pet', '毛小孩']];
+const WHAT = [['scare', '被嚇到'], ['sleep', '睡不好、做惡夢'], ['stress', '壓力好大'], ['exam', '考前緊張'], ['sad', '剛經歷難過的事'], ['uneasy', '心神不寧']];
+const ZONES = [
+  { name: '頭頂', at: [180, 462], r: 26 }, { name: '頭頂', at: [180, 462], r: 26 },
+  { name: '前胸', at: [180, 528], r: 34 }, { name: '前胸', at: [180, 528], r: 34 },
+  { name: '後背', at: [180, 510], r: 64 }, { name: '後背', at: [180, 510], r: 64 },
+];
+const RICE = {
+  flat: ['米面平平的', '心已經定下來了，今晚會好睡。'],
+  dent: ['中間凹了一個小窩', '是真的被嚇到了，阿嬤已經幫你收回來，不用怕了。'],
+  stand: ['有一粒米站了起來', '你身邊有貴人在照顧你，難過的時候記得開口。'],
+  scatter: ['米粒有點散', '最近太累了，今天早點睡，別再滑手機了。'],
+};
+const TIPS = [
+  '睡前把手機放遠一點，關燈後慢慢吸氣四秒、吐氣六秒，做五次。',
+  '回家喝一杯溫溫的平安茶（溫開水也可以），跟自己說：「我很安全，我回來了。」',
+  '洗個熱水澡，從頭沖到腳，想像今天的驚嚇都被沖走。',
+  '寫下今天讓你害怕的事，寫完把紙摺起來，明天再看，通常就沒那麼可怕了。',
+];
+const INHALE = 3200, EXHALE = 4200;
+
+const AV = { x: 180, base: 604, w: 150, h: 162 }; // 跪著的你
+const SHIRT_REST = [302, 610], SHIRT_AT = [104, 352];
+const CUP = [180, 364];
+
+const svgOf = () => `
+<svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="青衣阿嬤收驚攤" class="stall-svg sj-svg">
+  <defs>
+    <linearGradient id="sjWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7A2A22"/><stop offset=".5" stop-color="#B8563A"/><stop offset="1" stop-color="#E8B886"/></linearGradient>
+    <linearGradient id="sjFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C89A6A"/><stop offset="1" stop-color="#8A5E3A"/></linearGradient>
+    <radialGradient id="sjSun"><stop offset="0" stop-color="#FFF1C8" stop-opacity=".6"/><stop offset="1" stop-color="#FFF1C8" stop-opacity="0"/></radialGradient>
+    <radialGradient id="sjShadow"><stop offset="0" stop-color="#2A0E06" stop-opacity=".5"/><stop offset="1" stop-color="#2A0E06" stop-opacity="0"/></radialGradient>
+    <radialGradient id="sjCalm"><stop offset="0" stop-color="#BFE6FF" stop-opacity="0"/><stop offset=".75" stop-color="#BFE6FF" stop-opacity=".18"/><stop offset="1" stop-color="#E8F6FF" stop-opacity=".55"/></radialGradient>
+  </defs>
+  <rect width="360" height="645" fill="url(#sjWall)"/>
+  <rect y="410" width="360" height="235" fill="url(#sjFloor)"/>
+  <circle cx="180" cy="230" r="170" fill="url(#sjSun)"/>
+  <!-- 紅布條、神明畫像 -->
+  <rect x="96" y="76" width="168" height="40" rx="6" fill="#C8302A" stroke="#E8B84A" stroke-width="2"/>
+  <text x="180" y="104" text-anchor="middle" class="sj-banner">收驚・安神</text>
+  <rect x="34" y="130" width="54" height="84" rx="4" fill="#F3E2B8" stroke="#8A6234" stroke-width="2"/><circle cx="61" cy="160" r="14" fill="#F6CFAE"/><path d="M47 196c0-14 6-22 14-22s14 8 14 22z" fill="#3E6FA8"/>
+  <rect x="272" y="130" width="54" height="84" rx="4" fill="#F3E2B8" stroke="#8A6234" stroke-width="2"/><circle cx="299" cy="160" r="14" fill="#F6CFAE"/><path d="M285 196c0-14 6-22 14-22s14 8 14 22z" fill="#C8302A"/>
+  ${grannySVG({ x: 180, y: 262, robe: '#3E6FA8', s: 1.2, id: 'sjGranny' })}
+  <text x="180" y="200" text-anchor="middle" class="xr-tag" style="fill:#FFF4E0">青衣阿嬤</text>
+  <!-- 桌子 -->
+  <path d="M30 340h300v12H30z" fill="#A0643A"/><path d="M36 352h288v58H36z" fill="#7A4A2A"/>
+  <path d="M30 340h300l-12-12H42z" fill="#C8884E"/>
+  <g transform="translate(92 336)"><path d="M-16 0h32l-4-14h-24z" fill="#C8963E"/><path d="M-6 -14v-26M0 -14v-28M6 -14v-26" stroke="#B0603A" stroke-width="1.6"/><circle cx="0" cy="-42" r="1.6" fill="#FF7A3A"/></g>
+  <g transform="translate(268 336)"><ellipse cx="0" cy="0" rx="16" ry="4" fill="#E8D8C0"/><path d="M-12 0c0-10 4-14 12-14s12 4 12 14z" fill="#F7F1E6" stroke="#C9B9A0"/><text x="0" y="-3" text-anchor="middle" style="font-size:7px;fill:#8A6234">平安茶</text></g>
+  <!-- 米卦杯 -->
+  <g id="sjCup" class="stall-prop" data-sj="cup" role="button" tabindex="0" aria-label="米卦杯，往下滑翻過來" transform="translate(${CUP[0]} ${CUP[1]})" style="display:none">
+    <ellipse cx="0" cy="4" rx="26" ry="5" fill="url(#sjShadow)"/>
+    <g id="sjCupBody">
+      <path d="M-18 0l-4 -34h44l-4 34z" fill="#F7F1E6" stroke="#C9B9A0" stroke-width="1.2"/>
+      <path d="M-26 -38c8 -6 44 -6 52 0l-6 10h-40z" fill="#D8352A"/><path d="M-4 -40l4 -10 4 10" fill="#D8352A"/>
+      <ellipse cx="0" cy="-34" rx="22" ry="4" fill="#F7EBD2"/>
+    </g>
+    <g id="sjRice" style="display:none">
+      <ellipse cx="0" cy="-3" rx="24" ry="8" fill="#F7EBD2" stroke="#D9C49A" stroke-width="1.2"/>
+      <g id="sjRiceMark"></g>
+    </g>
+  </g>
+  <path id="sjSwipeHint" d="M${CUP[0] + 40} ${CUP[1] - 46}v28l-6 -6M${CUP[0] + 40} ${CUP[1] - 18}l6 -6" stroke="#FFE08A" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0"/>
+  <!-- 家人的衣服 -->
+  <g id="sjShirt" class="stall-prop" data-sj="shirt" role="button" tabindex="0" aria-label="家人的衣服，放到桌上" transform="translate(${SHIRT_REST[0]} ${SHIRT_REST[1]})" style="display:none">
+    <ellipse cx="0" cy="2" rx="26" ry="5" fill="url(#sjShadow)"/>
+    <path d="M-12 0v-30l-12 6-6-12 18-10h24l18 10-6 12-12-6v30z" fill="#7FB2E0" stroke="#3E6FA8" stroke-width="1.4"/>
+    <path d="M-6 -46q6 6 12 0" stroke="#3E6FA8" stroke-width="1.4" fill="none"/>
+  </g>
+  <rect id="sjShirtRing" x="${SHIRT_AT[0] - 32}" y="${SHIRT_AT[1] - 38}" width="64" height="44" rx="8" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
+  <!-- 你 -->
+  <ellipse cx="${AV.x}" cy="${AV.base}" rx="60" ry="9" fill="url(#sjShadow)"/>
+  <image id="sjMe" x="${AV.x - AV.w / 2}" y="${AV.base - AV.h}" width="${AV.w}" height="${AV.h}"/>
+  <!-- 呼吸光圈 -->
+  <g id="sjBreath" opacity="0" pointer-events="none">
+    <circle id="sjRingMax" cx="180" cy="520" r="96" fill="none" stroke="#E8F6FF" stroke-width="1.6" stroke-dasharray="3 5"/>
+    <circle id="sjRing" cx="180" cy="520" r="40" fill="url(#sjCalm)" stroke="#E8F6FF" stroke-width="3"/>
+    <text id="sjCue" x="180" y="420" text-anchor="middle" class="sj-cue">按住・吸氣</text>
+  </g>
+  <!-- 三炷香 -->
+  <g id="sjInc" style="display:none" pointer-events="none">
+    <path d="M-4 0l-3 -40M0 0v-42M4 0l3 -40" stroke="#B0603A" stroke-width="2"/>
+    <circle cx="-7" cy="-40" r="2.4" fill="#FF7A3A"/><circle cx="0" cy="-42" r="2.4" fill="#FF7A3A"/><circle cx="7" cy="-40" r="2.4" fill="#FF7A3A"/>
+    <rect x="-5" y="0" width="10" height="12" rx="3" fill="#F6CFAE"/>
+  </g>
+  <g id="sjHeartG" opacity="0">
+    <rect x="262" y="236" width="86" height="30" rx="15" fill="#1A0A08" opacity=".45"/>
+    <path id="sjHeart" d="M280 247c-3-4-9-2-9 2 0 4 9 9 9 9s9-5 9-9c0-4-6-6-9-2z" fill="#FF7F8A"/>
+    <text id="sjBpm" x="296" y="256" class="sj-bpm">110</text>
+  </g>
+  <rect id="sjTap" x="0" y="150" width="360" height="495" fill="transparent" style="display:none"/>
+</svg>`;
+
+export function initShoujing(api) {
+  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, addFish, me } = api;
+  const host = $('#sjHost');
+  host.innerHTML = svgOf();
+  const svg = host.querySelector('svg');
+  const S = (id) => svg.querySelector('#' + id);
+  const sj = state.sj || (state.sj = { last: '', streak: 0, total: 0 });
+  let phase = 'idle', draft = null, run = 0;
+
+  function paintMe() {
+    const c = me(); const w = AV.w * c.scale, h = AV.h * c.scale;
+    const el = S('sjMe'); el.setAttribute('href', c.kneel);
+    el.setAttribute('width', w); el.setAttribute('height', h); el.setAttribute('x', AV.x - w / 2); el.setAttribute('y', AV.base - h);
+  }
+
+  /* ----- 1. 稟報 ----- */
+  function openStart() {
+    if (phase !== 'idle' && phase !== 'done') { say('收驚還沒做完，照阿嬤說的下一步。'); return; }
+    const body = openSheet('收驚：跟阿嬤說說', `
+      <p>阿嬤會喊名字，把被嚇走的魂收回來。幫家人收驚的話，帶他的衣服來就可以。</p>
+      <div class="field"><span>幫誰收驚</span><div class="chips" id="sjWho">${WHO.map(([id, n], i) => `<button type="button" class="chip" data-w="${id}" aria-pressed="${i === 0}">${n}</button>`).join('')}</div></div>
+      <div class="field"><span>最近怎麼了</span><div class="chips" id="sjWhat">${WHAT.map(([id, n], i) => `<button type="button" class="chip" data-t="${id}" aria-pressed="${i === 0}">${n}</button>`).join('')}</div></div>
+      <input id="sjName" class="yue-wish" maxlength="5" placeholder="名字或小名（阿嬤會喊）" value="${esc(state.name !== '香客' ? state.name : '')}">
+      <div class="row"><button class="btn" id="sjGo">請阿嬤收驚</button></div>`);
+    let who = 'me', what = 'scare';
+    body.addEventListener('click', (e) => {
+      const w = e.target.closest('[data-w]'), t = e.target.closest('[data-t]');
+      if (w) { who = w.dataset.w; body.querySelectorAll('[data-w]').forEach((x) => x.setAttribute('aria-pressed', String(x === w))); }
+      if (t) { what = t.dataset.t; body.querySelectorAll('[data-t]').forEach((x) => x.setAttribute('aria-pressed', String(x === t))); }
+    });
+    body.querySelector('#sjGo').addEventListener('click', () => {
+      const name = body.querySelector('#sjName').value.trim() || (who === 'me' ? '乖孫' : who === 'pet' ? '毛寶貝' : '寶貝');
+      draft = { who, what, name }; closeSheet();
+      if (who === 'me') startBreath();
+      else {
+        phase = 'shirt'; S('sjShirt').style.display = ''; shirt.home();
+        say(`幫${WHO.find((x) => x[0] === who)[1]}收驚，要用他的衣服代替本人。按住右下角的<b>衣服</b>，攤到阿嬤的桌上。`);
+      }
+    });
+  }
+  const shirt = makeCarrier({
+    svg, el: S('sjShirt'), sfx, cam, ring: S('sjShirtRing'), lift: 64, radius: 34,
+    rest: () => SHIRT_REST, target: () => SHIRT_AT, zoom: () => [170, 440, 280],
+    onTap: () => say('按住<b>衣服</b>拿起來，放到阿嬤前面的桌上。'),
+    onDrop() { sfx.pop(); cam?.reset(200); startBreath(); },
+  });
+
+  /* ----- 2. 阿嬤持香，你深呼吸 ----- */
+  let breath = 0, bpm = 110, holdAt = 0, exhaling = false;
+  const forOther = () => draft && draft.who !== 'me';
+  function startBreath() {
+    const r = ++run; phase = 'breath'; breath = 0; bpm = 110 - (forOther() ? 0 : 0);
+    S('sjBreath').setAttribute('opacity', '1'); S('sjHeartG').setAttribute('opacity', '1'); S('sjBpm').textContent = bpm;
+    S('sjInc').style.display = ''; placeInc(212, 300, 0);
+    S('sjTap').style.display = '';
+    cam?.zoom(180, 470, 300);
+    say(`阿嬤點起三炷香：「<b>${esc(draft.name)}</b>，阿嬤幫你收驚喔。」<br>${forOther() ? '你幫他深呼吸：' : ''}<b>按住畫面吸氣</b>，光圈變大；<b>放開吐氣</b>，慢慢的就好。`);
+    heartLoop(r);
+  }
+  function placeInc(x, y, rot) { S('sjInc').setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)})`); }
+  function heartLoop(r) {
+    let t0 = performance.now();
+    const step = (now) => {
+      if (r !== run || phase !== 'breath') return;
+      const per = 60000 / bpm, k = ((now - t0) % per) / per;
+      S('sjHeart').setAttribute('transform', `translate(280 251) scale(${(1 + (k < .15 ? (.15 - k) * 1.6 : 0)).toFixed(3)}) translate(-280 -251)`);
+      if (!holdAt && !exhaling) S('sjRing').setAttribute('r', (40 + Math.sin(now / 500) * 2).toFixed(1));
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  function inhale() {
+    if (phase !== 'breath' || exhaling || holdAt) return;
+    holdAt = performance.now(); const r = run;
+    S('sjCue').textContent = '吸～'; sfx.bowl();
+    const step = (now) => {
+      if (!holdAt || r !== run) return;
+      const k = Math.min(1, (now - holdAt) / INHALE);
+      S('sjRing').setAttribute('r', (40 + 56 * k).toFixed(1));
+      if (k >= 1) { S('sjCue').textContent = '可以放開，吐氣'; S('sjRingMax').setAttribute('stroke', '#FFE08A'); }
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  async function exhale() {
+    if (!holdAt) return;
+    const held = performance.now() - holdAt; holdAt = 0;
+    S('sjRingMax').setAttribute('stroke', '#E8F6FF');
+    if (held < INHALE * .6) { S('sjCue').textContent = '按住・吸氣'; S('sjRing').setAttribute('r', '40'); say('再慢一點，吸久一點點，等光圈碰到外面那一圈再放開。'); return; }
+    exhaling = true; const r = run;
+    const z = ZONES[breath];
+    S('sjCue').textContent = '吐～';
+    // 阿嬤拿香繞
+    const r0 = +S('sjRing').getAttribute('r');
+    const lines = [`${esc(draft.name)}，回來喔～`, '三魂七魄，回來喔～', '不驚不驚，阿嬤在這裡', '嚇到的，通通收回來', `${esc(draft.name)}，好好吃飯好好睡`, '平平安安，回來喔～'];
+    say(`阿嬤拿香在你的<b>${z.name}</b>繞圈：「${lines[breath]}」`, 'temple');
+    await tween(EXHALE, (k, raw) => {
+      if (r !== run) return;
+      S('sjRing').setAttribute('r', (r0 - (r0 - 40) * k).toFixed(1));
+      const a = raw * Math.PI * 2 * 2 - Math.PI / 2;
+      const x = z.at[0] + Math.cos(a) * z.r, y = z.at[1] + Math.sin(a) * z.r * .55 - 30;
+      placeInc(x, y, Math.cos(a) * 12);
+      if (Math.random() < .35) emit('smoke', x, y - 42, { color: '#F4F1EA', alpha: .45 });
+    }, (k) => k);
+    if (r !== run) return;
+    bpm = Math.max(68, bpm - 7); S('sjBpm').textContent = bpm;
+    sfx.buzz([8]);
+    emit('text', 300, 230, { text: `心跳 ${bpm}`, color: '#BFE6FF', size: 12, life: 1.2 });
+    breath++; exhaling = false; S('sjCue').textContent = '按住・吸氣';
+    if (breath < ZONES.length) return;
+    finishBreath();
+  }
+  async function finishBreath() {
+    phase = 'cup'; S('sjTap').style.display = 'none'; S('sjBreath').setAttribute('opacity', '0');
+    S('sjInc').style.display = 'none';
+    burst('spark', 180, 500, reduce ? 3 : 14); sfx.chime();
+    await sleep(500);
+    S('sjCup').style.display = ''; S('sjCupBody').setAttribute('transform', ''); S('sjRice').style.display = 'none';
+    S('sjSwipeHint').setAttribute('opacity', '1');
+    cam?.zoom(180, 360, 220);
+    say('心跳慢下來了。阿嬤拿出包著紅布的<b>米卦杯</b>：「來，看看米怎麼說。」<br>在杯子上<b>往下滑</b>，把杯子翻過來。');
+  }
+
+  /* ----- 3. 米卦 ----- */
+  let riceKey = 'flat';
+  onSwipe(S('sjCup'), svg, {
+    dir: 'down', dist: 34,
+    onMove(p, k) { if (phase === 'cup') S('sjCupBody').setAttribute('transform', `rotate(${(Math.min(1, k) * 40).toFixed(1)} 0 -16)`); },
+    async onDone() {
+      if (phase === 'reveal') { reveal(); return; }
+      if (phase !== 'cup') return;
+      phase = 'flipping'; S('sjSwipeHint').setAttribute('opacity', '0');
+      await tween(320, (k) => S('sjCupBody').setAttribute('transform', `rotate(${40 + 140 * k} 0 -16)`));
+      sfx.knock(); sfx.buzz([16]);
+      S('sjCupBody').setAttribute('transform', 'rotate(180 0 -16)');
+      riceKey = pick(Object.keys(RICE));
+      phase = 'reveal';
+      say('杯子倒扣在桌上了。阿嬤唸了幾句，<b>點一下杯子</b>，掀開來看米。');
+    },
+  });
+  S('sjCup').addEventListener('click', () => { if (phase === 'reveal') reveal(); else if (phase === 'cup') flipAuto(); });
+  async function flipAuto() {
+    if (phase !== 'cup') return;
+    phase = 'flipping'; S('sjSwipeHint').setAttribute('opacity', '0');
+    await tween(420, (k) => S('sjCupBody').setAttribute('transform', `rotate(${180 * k} 0 -16)`));
+    sfx.knock(); riceKey = pick(Object.keys(RICE)); phase = 'reveal';
+    say('杯子倒扣在桌上了。<b>點一下杯子</b>，掀開來看米。');
+  }
+  function riceMark(k) {
+    if (k === 'dent') return '<ellipse cx="2" cy="-3" rx="6" ry="2.4" fill="#C9B48A"/>';
+    if (k === 'stand') return '<rect x="-1" y="-12" width="2.4" height="8" rx="1.2" fill="#FFFDF4" stroke="#C9B48A" stroke-width=".6"/>';
+    if (k === 'scatter') return Array.from({ length: 9 }, (_, i) => `<ellipse cx="${-18 + i * 4.5}" cy="${-3 + (i % 3) * 2 - 2}" rx="1.6" ry=".9" fill="#E0CC9E"/>`).join('');
+    return '';
+  }
+  async function reveal() {
+    if (phase !== 'reveal') return;
+    phase = 'read';
+    await tween(300, (k) => S('sjCupBody').setAttribute('transform', `translate(${k * 40} ${-k * 30}) rotate(${180 - 40 * k} 0 -16)`));
+    S('sjCupBody').style.opacity = '0'; S('sjRice').style.display = ''; S('sjRiceMark').innerHTML = riceMark(riceKey);
+    burst('spark', CUP[0], CUP[1] - 8, reduce ? 2 : 8); sfx.chime();
+    const [look, mean] = RICE[riceKey];
+    say(`米卦：<b>${look}</b>。<br>阿嬤：「${mean}」`);
+    await sleep(2200);
+    finish(look, mean);
+  }
+
+  /* ----- 4. 收驚符、平安茶 ----- */
+  function finish(look, mean) {
+    const first = daily(sj, dayKey(), yesterdayKey()); save();
+    if (first) addFish(1);
+    phase = 'done'; cam?.reset();
+    const tip = pick(TIPS);
+    openSheet('收驚好了', `
+      <div class="slip"><div class="slip-side"><span>收驚符</span><span class="lv">安</span></div>
+        <p class="poem"><span>驚魂收回心安定</span><span>${esc(draft.name).slice(0, 5)}平安好眠</span></p></div>
+      <div class="explain">
+        <h3>米卦</h3><p>${look}：${mean}</p>
+        <h3>阿嬤交代</h3><p>${tip}</p>
+      </div>
+      <p class="hint">${first ? `今天安神了，虎爺叼來小魚乾 ×1。已經連續 ${sj.streak} 天來安神。` : '今天已經安過神了，想再來隨時都可以。'}</p>
+      <p class="hint">如果一直睡不好、心慌好幾週，記得看醫生或打 1925 安心專線。</p>`);
+    sfx.bowl();
+    S('sjShirt').style.display = 'none';
+  }
+
+  S('sjTap').addEventListener('pointerdown', (e) => { e.preventDefault(); S('sjTap').setPointerCapture(e.pointerId); inhale(); });
+  S('sjTap').addEventListener('pointerup', exhale);
+  S('sjTap').addEventListener('pointercancel', exhale);
+  svg.addEventListener('keydown', (e) => { if (e.key === ' ' && phase === 'breath' && !e.repeat) { e.preventDefault(); inhale(); } });
+  svg.addEventListener('keyup', (e) => { if (e.key === ' ' && phase === 'breath') { e.preventDefault(); exhale(); } });
+  $('#sjBar').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-sj]'); if (!b) return;
+    const a = b.dataset.sj;
+    if (a === 'start') openStart();
+    else if (a === 'cup') { if (phase === 'cup') flipAuto(); else if (phase === 'reveal') reveal(); else say('收完驚，阿嬤才會拿米卦杯出來。'); }
+    else if (a === 'log') openSheet('安神紀錄', `<p>一共收驚 <b>${sj.total || 0}</b> 次${sj.streak > 1 ? `，連續 ${sj.streak} 天` : ''}。</p><p>${pick(TIPS)}</p><p class="hint">收驚是讓心安定下來的老習俗。身體不舒服還是要看醫生。</p>`);
+  });
+
+  return {
+    enter() {
+      run++; phase = 'idle'; holdAt = 0; exhaling = false; paintMe();
+      for (const id of ['sjCup', 'sjShirt', 'sjInc', 'sjTap']) S(id).style.display = 'none';
+      S('sjCupBody').style.opacity = ''; S('sjBreath').setAttribute('opacity', '0'); S('sjHeartG').setAttribute('opacity', '0'); S('sjSwipeHint').setAttribute('opacity', '0');
+      say(sj.last === dayKey() ? '阿嬤：「今天又來啦？心還慌慌的嗎？再收一次也可以。」'
+        : '青衣阿嬤拍拍椅子：「來，坐。最近有沒有被什麼嚇到、睡不好？阿嬤幫你收驚。」<br>按「<b>收驚</b>」開始。');
+    },
+    leave() { run++; phase = 'idle'; holdAt = 0; },
+  };
+}
