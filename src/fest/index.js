@@ -3,8 +3,9 @@
 import { FESTIVALS, festById, todayFest, nextDates, makeStage, lunarOf } from './core.js';
 import { GAMES as G1 } from './games-1.js';
 import { GAMES as G2 } from './games-2.js';
+import { GAMES as G3 } from './games-3.js';
 
-const GAMES = { ...G1, ...G2 };
+const GAMES = { ...G1, ...G2, ...G3 };
 const STAMP_DAYS = 330; // 一年內蓋過的章算「今年已蓋」
 
 export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars, goHall }) {
