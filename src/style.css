@@ -91,7 +91,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .hall-hit { position: absolute; left: 33%; top: 33%; width: 36%; height: 17%; background: transparent; border: 0; border-radius: 12px; }
 .plaque { position: absolute; left: 51.1%; top: 85.3%; transform: translate(-50%, -50%); width: 14%; padding: .25cqw 0; background: #5A2318; color: #FFE29A; border: .3cqw solid #E6B85C; border-radius: .6cqw; font-size: 1.9cqw; letter-spacing: .4cqw; text-align: center; pointer-events: none; }
 .scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.5581); aspect-ratio: 360 / 645; max-width: 100%; border-radius: 26px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
-#sceneHost, #sceneHost svg, #caiHost, #caiHost svg, #yueHost, #yueHost svg, #tudiHost, #tudiHost svg, #wenHost, #wenHost svg, #jiHost, #jiHost svg, #sanHost, #sanHost svg, #gyHost, #gyHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#sceneHost, #sceneHost svg, #caiHost, #caiHost svg, #yueHost, #yueHost svg, #tudiHost, #tudiHost svg, #wenHost, #wenHost svg, #jiHost, #jiHost svg, #sanHost, #sanHost svg, #gyHost, #gyHost svg, #ggHost, #ggHost svg, #zsHost, #zsHost svg, #tsHost, #tsHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hit { cursor: pointer; outline: none; }
 .hit:focus-visible { filter: drop-shadow(0 0 4px #FFE08A) drop-shadow(0 0 2px #FFE08A); }
@@ -219,7 +219,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @media (prefers-reduced-motion: reduce) { .offer.pop { animation: none; } }
 
 /* ---------- 財神聚寶閣 ---------- */
-#caiHost[hidden], #sceneHost[hidden], #yueHost[hidden], #tudiHost[hidden], #wenHost[hidden], #jiHost[hidden], #sanHost[hidden], #gyHost[hidden] { display: none; }
+#caiHost[hidden], #sceneHost[hidden], #yueHost[hidden], #tudiHost[hidden], #wenHost[hidden], #jiHost[hidden], #sanHost[hidden], #gyHost[hidden], #ggHost[hidden], #zsHost[hidden], #tsHost[hidden] { display: none; }
 .cai-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 .bar.cai-bar { grid-template-columns: repeat(7, 1fr); }
 .cai-ingot, .cai-bowl, .cai-coin { transform-box: fill-box; transform-origin: 50% 80%; cursor: pointer; }
@@ -276,9 +276,9 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @media (prefers-reduced-motion: reduce) { .jt-pair.hold img { animation: none; } }
 
 /* 專科殿堂的道具層疊在正殿場景上面：只有道具本身可以點，其他地方穿透到下面（蠟燭、香爐、拿工具） */
-#caiHost, #yueHost, #tudiHost, #wenHost, #jiHost, #sanHost, #gyHost, .cai-svg, .yue-svg, .tudi-svg, .wen-svg, .ji-svg, .san-svg, .gy-svg { pointer-events: none; }
-.cai-svg [data-cai], .yue-svg [data-yue], .tudi-svg [data-tudi], .wen-svg [data-wen], .ji-svg [data-ji], .san-svg [data-san], .gy-svg [data-gy] { pointer-events: auto; }
-#sceneWrap.tooling .cai-svg [data-cai], #sceneWrap.tooling .yue-svg [data-yue], #sceneWrap.tooling .tudi-svg [data-tudi], #sceneWrap.tooling .wen-svg [data-wen], #sceneWrap.tooling .ji-svg [data-ji], #sceneWrap.tooling .san-svg [data-san], #sceneWrap.tooling .gy-svg [data-gy] { pointer-events: none; }
+#caiHost, #yueHost, #tudiHost, #wenHost, #jiHost, #sanHost, #gyHost, .cai-svg, .yue-svg, .tudi-svg, .wen-svg, .ji-svg, .san-svg, .gy-svg, #ggHost, #zsHost, #tsHost, .gg-svg, .zs-svg, .ts-svg { pointer-events: none; }
+.cai-svg [data-cai], .yue-svg [data-yue], .tudi-svg [data-tudi], .wen-svg [data-wen], .ji-svg [data-ji], .san-svg [data-san], .gy-svg [data-gy], .gg-svg [data-gg], .zs-svg [data-zs], .ts-svg [data-ts] { pointer-events: auto; }
+#sceneWrap.tooling .cai-svg [data-cai], #sceneWrap.tooling .yue-svg [data-yue], #sceneWrap.tooling .tudi-svg [data-tudi], #sceneWrap.tooling .wen-svg [data-wen], #sceneWrap.tooling .ji-svg [data-ji], #sceneWrap.tooling .san-svg [data-san], #sceneWrap.tooling .gy-svg [data-gy], #sceneWrap.tooling .gg-svg [data-gg], #sceneWrap.tooling .zs-svg [data-zs], #sceneWrap.tooling .ts-svg [data-ts] { pointer-events: none; }
 
 /* ---------- 今日參拜路線（地圖下方） ---------- */
 .route { display: flex; align-items: center; gap: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -377,3 +377,27 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gy-puff { fill: #8E94A3; }
 .gy-word { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 15px; fill: #FFFFFF; stroke: #4A4F5E; stroke-width: 3px; paint-order: stroke; }
 @media (prefers-reduced-motion: reduce) { .san-offer.pop, .gy-lamp.pop { animation: none; } }
+
+/* 關帝殿、註生娘娘殿、太歲殿 */
+.gg-svg, .zs-svg, .ts-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+.bar.gg-bar, .bar.zs-bar, .bar.ts-bar { grid-template-columns: repeat(6, 1fr); }
+.gg-blade, .zs-prop, .ts-prop { cursor: grab; }
+.gg-blade.held, .zs-prop.held, .ts-prop.held { cursor: grabbing; filter: drop-shadow(0 6px 4px rgb(40 15 5 / .35)); }
+.gg-blade:focus:not(:focus-visible), .zs-prop:focus:not(:focus-visible), .ts-prop:focus:not(:focus-visible) { outline: none; }
+.gg-word { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 12px; fill: #2A1A12; }
+.gg-quote { margin: 8px 0 12px; padding: 14px 16px; border-left: 4px solid var(--red); background: #FFF6E4; font-family: 'Noto Serif TC', serif; font-size: 18px; line-height: 1.6; }
+.zs-offer, #zPlanted, .zs-prop, .ts-prop { transform-box: fill-box; transform-origin: 50% 100%; }
+.zs-offer.pop, #zPlanted.pop { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
+.zs-prop.pop image, .ts-prop.pop image { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); transform-box: fill-box; transform-origin: 50% 100%; }
+.zs-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 10px; }
+.zs-flower { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border: 2px solid #E8C48A; border-radius: 14px; background: #FFF9EE; font: inherit; color: var(--ink); cursor: pointer; }
+.zs-flower img { height: 72px; width: auto; }
+.zs-flower.on { border-color: var(--red); background: #FFEDE6; }
+.ts-cab-title { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 10px; fill: #FFD98A; letter-spacing: 2px; }
+.ts-name { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 5.6px; fill: #FFE7A0; }
+.ts-zod { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin: 8px 0 4px; }
+.ts-zod .chip { padding: 6px 0; position: relative; }
+.ts-zod .chip i { position: absolute; top: -6px; right: -4px; font-style: normal; font-size: 10px; background: var(--red); color: #FFF; border-radius: 999px; padding: 0 4px; }
+.ts-list { list-style: none; padding: 0; margin: 6px 0 10px; display: grid; gap: 6px; }
+.ts-list li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) { .zs-offer.pop, #zPlanted.pop, .zs-prop.pop image, .ts-prop.pop image { animation: none; } }
