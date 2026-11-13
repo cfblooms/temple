@@ -17,6 +17,8 @@ import { initGuangong } from './guangong.js';
 import { initZhusheng } from './zhusheng.js';
 import { initTaisui } from './taisui.js';
 import { tossJiao } from './jiaotoss.js';
+import { initFest } from './fest/index.js';
+import { lunarFix } from './fest/core.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
@@ -83,6 +85,7 @@ const LM = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十'
 const LD = (n) => n === 10 ? '初十' : n === 20 ? '二十' : n === 30 ? '三十'
   : (n < 10 ? '初' : n < 20 ? '十' : n < 30 ? '廿' : '三十') + '一二三四五六七八九'[(n % 10) - 1];
 function lunar(d = new Date()) {
+  const fx = lunarFix(d); if (fx) return { text: `農曆${LM[fx.mon - 1]}月${LD(fx.day)}`, ...fx };
   try {
     const parts = new Intl.DateTimeFormat('zh-TW-u-ca-chinese', { month: 'numeric', day: 'numeric' }).formatToParts(d);
     const m = parts.find((p) => p.type === 'month').value, day = +parts.find((p) => p.type === 'day').value;
@@ -866,6 +869,7 @@ if (state.fortune && state.fortune.date !== dayKey()) state.fortune = null;
 function greet() {
 if (state.lastCheckin !== dayKey()) say(`歡迎來參拜${state.name !== '香客' ? '，' + esc(state.name) : ''}。先拿打火機點燭、點香，再抽籤，拜完可以去燒金紙。供桌下的橘貓虎爺也在等你摸摸祂。${isYa ? '今天是做牙日，虎爺的小魚乾雙倍。' : ''}`);
 else say('又見面了。今天想問什麼？擲筊可以隨時問神明。');
+const fl = festMod.greetLine(); if (fl) say(`${$('#sayText').innerHTML}<br>${fl}`);
 }
 
 /* ---------- 全廟地圖 ---------- */
@@ -1047,6 +1051,7 @@ const gy = initGuanyin({ $, state, save, say, sfx, burst, emit, openSheet, close
 const gg = initGuangong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const zs = initZhusheng({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const ts = initTaisui({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const festMod = initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars: { byId: charById, me: () => charById(state.char) }, goHall: (h) => (SHOW[h] || showHall)() });
 SUB.cai = cai; SUB.yue = yue; SUB.tudi = tudi; SUB.wen = wen; SUB.ji = ji; SUB.san = san; SUB.gy = gy; SUB.gg = gg; SUB.zs = zs; SUB.ts = ts;
 buildMap();
 
