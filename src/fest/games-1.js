@@ -159,8 +159,8 @@ const jar = (w, h) => `<ellipse cy="${h * .38}" rx="${w * .42}" ry="${h * .08}" 
   <path d="M${-w * .38} ${-h * .18}Q${-w * .5} ${h * .4} 0 ${h * .4}Q${w * .5} ${h * .4} ${w * .38} ${-h * .18}Z" fill="#C88A4A" stroke="#8A5A2E" stroke-width="2"/>
   <ellipse cy="${-h * .2}" rx="${w * .34}" ry="${h * .08}" fill="#E8A030" stroke="#8A5A2E" stroke-width="2"/>
   <rect x="${-w * .18}" y="${-h * .02}" width="${w * .36}" height="${h * .22}" fill="#E0443E"/><text y="${h * .16}" text-anchor="middle" class="fest-small" fill="#FFE29A">糖</text>`;
-const brush = () => `<path d="M0 0 L-5 -2 L-4 10 L4 10 L5 -2Z" fill="#F3E2C0" stroke="#8A6234" stroke-width="1"/><circle id="brushTip" cy="-1" r="4.4" fill="#E8A030" opacity="0"/><rect x="-3" y="10" width="6" height="58" rx="3" fill="#B0703E"/>`;
-const duster = () => `<g><ellipse cy="-6" rx="20" ry="13" fill="#E07A3A"/><ellipse cx="-8" cy="-10" rx="12" ry="9" fill="#F2A04A"/><ellipse cx="9" cy="-8" rx="12" ry="9" fill="#C9572C"/><ellipse cy="-14" rx="10" ry="7" fill="#F7C25A"/></g><rect x="-3" y="4" width="6" height="66" rx="3" fill="#8A5A2E"/>`;
+const brush = () => `<rect x="-20" y="-10" width="40" height="80" fill="#000" opacity="0"/><path d="M0 0 L-5 -2 L-4 10 L4 10 L5 -2Z" fill="#F3E2C0" stroke="#8A6234" stroke-width="1"/><circle id="brushTip" cy="-1" r="4.4" fill="#E8A030" opacity="0"/><rect x="-3" y="10" width="6" height="58" rx="3" fill="#B0703E"/>`;
+const duster = () => `<rect x="-24" y="-22" width="48" height="94" fill="#000" opacity="0"/><g><ellipse cy="-6" rx="20" ry="13" fill="#E07A3A"/><ellipse cx="-8" cy="-10" rx="12" ry="9" fill="#F2A04A"/><ellipse cx="9" cy="-8" rx="12" ry="9" fill="#C9572C"/><ellipse cy="-14" rx="10" ry="7" fill="#F7C25A"/></g><rect x="-3" y="4" width="6" height="66" rx="3" fill="#8A5A2E"/>`;
 
 const songshen = {
   play(st, o) {
@@ -378,7 +378,7 @@ const chuxi = {
 };
 
 /* ================= 春節：初一～初五 ================= */
-const sticks = () => `<path d="M-5 0 L-9 -70 M0 0 L0 -74 M5 0 L9 -70" stroke="#9A4A2E" stroke-width="2.6" stroke-linecap="round"/><path d="M-5 0 L-6 -16 M0 0 L0 -16 M5 0 L6 -16" stroke="#E0443E" stroke-width="3.2" stroke-linecap="round"/><circle cx="-9" cy="-70" r="2.6" fill="#FF6A3A"/><circle cy="-74" r="2.6" fill="#FF6A3A"/><circle cx="9" cy="-70" r="2.6" fill="#FF6A3A"/>`;
+const sticks = () => `<rect x="-22" y="-80" width="44" height="86" fill="#000" opacity="0"/><path d="M-5 0 L-9 -70 M0 0 L0 -74 M5 0 L9 -70" stroke="#9A4A2E" stroke-width="2.6" stroke-linecap="round"/><path d="M-5 0 L-6 -16 M0 0 L0 -16 M5 0 L6 -16" stroke="#E0443E" stroke-width="3.2" stroke-linecap="round"/><circle cx="-9" cy="-70" r="2.6" fill="#FF6A3A"/><circle cy="-74" r="2.6" fill="#FF6A3A"/><circle cx="9" cy="-70" r="2.6" fill="#FF6A3A"/>`;
 const img = (url, w, h) => `<image href="${url}" x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}"/>`;
 
 const chunjie = {
