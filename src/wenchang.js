@@ -50,8 +50,8 @@ export const WEN_SVG = (bg) => `
     <radialGradient id="wHalo"><stop offset="0" stop-color="#F2FFF6" stop-opacity=".95"/><stop offset=".6" stop-color="#9FE3C8" stop-opacity=".35"/><stop offset="1" stop-color="#9FE3C8" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="wBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="wHaloC" cx="180" cy="300" r="58" fill="url(#wHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-wen="deity" role="button" tabindex="0" aria-label="向文昌帝君問安" x="140" y="250" width="80" height="110" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="wHaloC" cx="180" cy="300" r="58" fill="url(#wHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-wen="deity" role="button" tabindex="0" aria-label="向文昌帝君問安" x="140" y="250" width="80" height="110" rx="22" fill="transparent"/>
 
   <!-- 供品：聰明菜（左）、包子粽子（右）；獻了才出現 -->
   <image id="wVeg" class="wen-offer" href="${vegUrl}" x="117" y="341" width="38" height="40" style="display:none" filter="url(#wLit)"/>

@@ -68,8 +68,8 @@ export const GG_SVG = (bg) => `
   </g>
   </defs>
   <image id="qBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="qHaloC" cx="180" cy="290" r="58" fill="url(#qHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-gg="deity" role="button" tabindex="0" aria-label="向關公問安" x="142" y="250" width="78" height="110" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="qHaloC" cx="180" cy="290" r="58" fill="url(#qHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-gg="deity" role="button" tabindex="0" aria-label="向關公問安" x="142" y="250" width="78" height="110" rx="22" fill="transparent"/>
 
   <!-- 紙條（寫了才出現）：整張、斬開後的上下兩半 -->
   <g id="qStrip" class="gg-strip" pointer-events="none" style="display:none"><use href="#qStripArt"/></g>

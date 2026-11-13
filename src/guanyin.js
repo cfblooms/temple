@@ -67,8 +67,8 @@ export const GY_SVG = (bg) => `
     <radialGradient id="gLampGlow"><stop offset="0" stop-color="#FFE6A0" stop-opacity=".9"/><stop offset="1" stop-color="#FFB86B" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="gBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="gHaloC" cx="180" cy="295" r="58" fill="url(#gHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-gy="deity" role="button" tabindex="0" aria-label="向觀音菩薩問安" x="145" y="255" width="72" height="105" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="gHaloC" cx="180" cy="295" r="58" fill="url(#gHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-gy="deity" role="button" tabindex="0" aria-label="向觀音菩薩問安" x="145" y="255" width="72" height="105" rx="22" fill="transparent"/>
 
   <!-- 蓮花燈（點了才出現） -->
   <circle id="gLampGlow" cx="${LAMP[0] + LAMP[2] / 2}" cy="${LAMP[1] + 10}" r="34" fill="url(#gLampGlow)" opacity="0" style="mix-blend-mode:screen"/>

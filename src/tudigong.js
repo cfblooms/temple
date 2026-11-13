@@ -62,8 +62,8 @@ export const TUDI_SVG = (bg) => `
     <radialGradient id="tHalo"><stop offset="0" stop-color="#FFF3C8" stop-opacity=".95"/><stop offset=".6" stop-color="#FFD36B" stop-opacity=".35"/><stop offset="1" stop-color="#FFD36B" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="tBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="tHaloC" cx="182" cy="290" r="58" fill="url(#tHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-tudi="deity" role="button" tabindex="0" aria-label="向土地公問安" x="146" y="252" width="72" height="108" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="tHaloC" cx="182" cy="290" r="58" fill="url(#tHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-tudi="deity" role="button" tabindex="0" aria-label="向土地公問安" x="146" y="252" width="72" height="108" rx="22" fill="transparent"/>
 
   <!-- 麻糬花生（供桌右側，獻了才出現） -->
   <image id="tMochi" class="tudi-mochi" href="${mochiUrl}" x="199" y="356" width="46" height="34" style="display:none" filter="url(#tLit)"/>

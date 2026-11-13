@@ -55,8 +55,8 @@ export const ZS_SVG = (bg) => `
     <radialGradient id="zHalo"><stop offset="0" stop-color="#FFF6E0" stop-opacity=".95"/><stop offset=".6" stop-color="#FFC3C8" stop-opacity=".35"/><stop offset="1" stop-color="#FFC3C8" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="zBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="zHaloC" cx="180" cy="285" r="58" fill="url(#zHalo)" opacity=".15" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-zs="deity" role="button" tabindex="0" aria-label="向註生娘娘問安" x="145" y="245" width="72" height="115" rx="22" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="zHaloC" cx="180" cy="285" r="58" fill="url(#zHalo)" opacity=".15" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-zs="deity" role="button" tabindex="0" aria-label="向註生娘娘問安" x="145" y="245" width="72" height="115" rx="22" fill="transparent"/>
 
   <!-- 花盆（一直在供桌左邊）＋栽好的花 -->
   <image id="zPlanted" href="${redUrl}" x="${SOIL[0] - FLOWER[0] * .65}" y="${SOIL[1] - FLOWER[1] * 1.3 + 8}" width="${FLOWER[0] * 1.3}" height="${FLOWER[1] * 1.3}" style="display:none" filter="url(#zLit)"/>
