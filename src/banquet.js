@@ -30,10 +30,11 @@ export const DISHES = [
 const CAIWEI = { id: 'caiwei', name: '菜尾湯', luck: '惜福，隔天更入味', kind: 'soup', c: '#B8783A', bonus: true };
 const MAINS = DISHES.filter((d) => !d.first && !d.last);
 const CHEER = ['好彩頭！', '讚啦！', '來來來，呷！', '總舖師好手藝！', '香喔～'];
-const SEATS = Array.from({ length: 9 }, (_, i) => { const a = Math.PI * (.9 + i / 8 * 1.2); return [180 + Math.cos(a) * 150, 404 + Math.sin(a) * 78]; });
+// 十個座位圍著圓桌後半圈（你坐正中間），人畫在桌子後面，桌面擋住下半身＝坐著
+const SEATS = Array.from({ length: 10 }, (_, i) => { const a = Math.PI * (.92 + i / 9 * 1.16); return [180 + Math.cos(a) * 150, 404 + Math.sin(a) * 74]; });
+const ME_SEAT = 5;
 const SLOTS = [[180, 420], [124, 408], [236, 408], [148, 444], [212, 444], [180, 392], [100, 434], [260, 434]];
 const TRAY = [306, 610], BAG = [52, 612], CUP = [244, 616];
-const ME = [180, 540];
 
 // 依日期固定的亂數（同一天進來看到同一桌人、同一份菜單）
 function seeded(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; }; }
@@ -67,11 +68,9 @@ const svgOf = () => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="廟口流水席辦桌" class="stall-svg bz-svg">
   <defs>
     <radialGradient id="bzShadow"><stop offset="0" stop-color="#2A0E06" stop-opacity=".45"/><stop offset="1" stop-color="#2A0E06" stop-opacity="0"/></radialGradient>
-    <clipPath id="bzFaceClip"><circle cx="0" cy="0" r="21"/></clipPath>
-    <clipPath id="bzMeClip"><circle cx="0" cy="0" r="28"/></clipPath>
   </defs>
   <image href="${bgUrl}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
-  <!-- 九位香客（桌子後面一圈） -->
+  <!-- 十個座位（桌子後面一圈，你在正中間） -->
   <g id="bzGuests"></g>
   <!-- 紅圓桌 -->
   <ellipse cx="180" cy="640" rx="150" ry="10" fill="url(#bzShadow)"/>
@@ -86,11 +85,6 @@ const svgOf = () => `
   <circle id="bzSlotRing" cx="180" cy="420" r="26" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <g id="bzTable"></g>
   <!-- 你 -->
-  <g id="bzMe" transform="translate(${ME[0]} ${ME[1]})">
-    <path d="M-34 52c0-26 14-34 34-34s34 8 34 34z" fill="#F7E6D2" stroke="#C9A98A"/>
-    <g clip-path="url(#bzMeClip)"><rect x="-28" y="-28" width="56" height="56" fill="#FFF4E0"/><image id="bzMeImg" x="-28" y="-28" width="56" height="56" preserveAspectRatio="xMidYMin slice"/></g>
-    <circle r="28" fill="none" stroke="#FFF4E0" stroke-width="3"/>
-  </g>
   <!-- 打包袋 -->
   <g id="bzBag" transform="translate(${BAG[0]} ${BAG[1]})" style="display:none">
     <ellipse cx="0" cy="2" rx="26" ry="5" fill="url(#bzShadow)"/>
@@ -129,20 +123,22 @@ export function initBanquet(api) {
     return m;
   }
   function paintGuests(show) {
-    const mine = me().id;
-    guests = shuffle(chars.filter((c) => c.id !== mine), seeded('guest' + dayKey())).slice(0, 9);
-    S('bzGuests').innerHTML = SEATS.map(([x, y], i) => `<g class="bz-guest" id="bzG${i}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" style="${show ? '' : 'display:none'}">
-      <path d="M-24 40c0-20 10-26 24-26s24 6 24 26z" fill="${['#7FA6D8', '#F2C14A', '#8AC85A', '#E88EA0', '#C8A0E0', '#F28A5A', '#6BC8C0', '#D8D0C0', '#A0C8F0'][i]}"/>
-      <g clip-path="url(#bzFaceClip)"><rect x="-21" y="-21" width="42" height="42" fill="#FFF4E0"/><image href="${guests[i].face}" x="-21" y="-21" width="42" height="42" preserveAspectRatio="xMidYMin slice"/></g>
-      <circle r="21" fill="none" stroke="#FFF4E0" stroke-width="2.4"/>
-    </g>`).join('');
-    S('bzMeImg').setAttribute('href', me().face);
+    const mine = me();
+    const others = shuffle(chars.filter((c) => c.id !== mine.id), seeded('guest' + dayKey())).slice(0, 9);
+    guests = [...others.slice(0, ME_SEAT), mine, ...others.slice(ME_SEAT)];
+    S('bzGuests').innerHTML = SEATS.map(([x, y], i) => {
+      const c = guests[i], k = c.scale || 1, w = 74 * k, h = 80 * k, isMe = i === ME_SEAT;
+      return `<g class="bz-guest" id="bzG${i}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" style="${show ? '' : 'display:none'}">
+      <image href="${c.kneel}" x="${(-w / 2).toFixed(1)}" y="${(62 - h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>
+      ${isMe ? `<text x="0" y="${(56 - h).toFixed(1)}" text-anchor="middle" class="bz-tag">你</text>` : ''}
+    </g>`;
+    }).join('');
   }
   function paintTable(list) {
     S('bzTable').innerHTML = list.map((d, i) => `<g transform="translate(${SLOTS[i][0]} ${SLOTS[i][1]}) scale(1.05)">${dishArt(d)}</g>`).join('');
   }
   function guestsCheer(n = 3) {
-    const picks = shuffle([...Array(9).keys()], Math.random).slice(0, n);
+    const picks = shuffle([...Array(SEATS.length).keys()], Math.random).slice(0, n);
     picks.forEach((i, k) => {
       const g = S('bzG' + i); if (!g) return;
       const [x, y] = SEATS[i];
@@ -161,7 +157,7 @@ export function initBanquet(api) {
     menu = todayMenu(); idx = 0; paintTable([]);
     paintGuests(false);
     say('廟口紅棚下擺好了圓桌。拜拜完，大家一起來吃<b>平安宴</b>！香客們陸續入座……');
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < SEATS.length; i++) {
       await sleep(reduce ? 30 : 150); if (r !== run) return;
       const g = S('bzG' + i); g.style.display = ''; g.classList.remove('pop'); void g.getBoundingClientRect(); g.classList.add('pop');
       sfx.knock();

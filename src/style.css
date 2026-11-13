@@ -448,3 +448,10 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .hall-pick button.on img { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
 .hall-pick .soon img { filter: grayscale(1); opacity: .55; }
 .hall-pick small { color: #A07A60; font-size: 10.5px; }
+/* 收驚阿嬤：站著時輕輕晃，像在唸經 */
+.sj-granny-idle { animation: sjIdle 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes sjIdle { 0%, 100% { transform: rotate(-1.4deg); } 50% { transform: rotate(1.4deg) translateY(-1.5px); } }
+@media (prefers-reduced-motion: reduce) { .sj-granny-idle { animation: none; } }
+/* 地圖按鈕：做成看得懂的「逛廟」膠囊 */
+.icon-btn.map-btn { width: auto; padding: 0 12px 0 9px; gap: 4px; display: inline-flex; align-items: center; border-radius: 17px; background: var(--red); border-color: var(--red); color: #FFF4E0; font-weight: 700; font-size: 13px; }
+.icon-btn.map-btn svg { width: 16px; height: 16px; }

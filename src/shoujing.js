@@ -33,6 +33,9 @@ const INHALE = 3200, EXHALE = 4200;
 const AV = { x: 180, base: 604, w: 150, h: 162 }; // 跪著的你
 const SHIRT_REST = [302, 610], SHIRT_AT = [104, 352];
 const CUP = [180, 364];
+// 阿嬤：平常站在櫃台後面（下半身被櫃台擋住），收驚時走出來站到你右手邊
+const GW = 92, GH = 221;
+const G_HOME = [180, 462, 1], G_SIDE = [272, 608, .9];
 
 const svgOf = () => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="青衣阿嬤收驚攤" class="stall-svg sj-svg">
@@ -41,9 +44,9 @@ const svgOf = () => `
     <radialGradient id="sjCalm"><stop offset="0" stop-color="#BFE6FF" stop-opacity="0"/><stop offset=".75" stop-color="#BFE6FF" stop-opacity=".18"/><stop offset="1" stop-color="#E8F6FF" stop-opacity=".55"/></radialGradient>
   </defs>
   <image href="${bgUrl}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>
-  <clipPath id="sjCounter"><rect width="360" height="350"/></clipPath>
-  <image id="sjGranny" href="${grannyUrl}" x="120" y="196" width="120" height="288" clip-path="url(#sjCounter)"/>
-  <text x="180" y="186" text-anchor="middle" class="xr-tag" style="fill:#FFF4E0">青衣阿嬤</text>
+  <clipPath id="sjGClip" clipPathUnits="userSpaceOnUse"><rect x="-200" y="-400" width="400" height="${400 - (G_HOME[1] - 350)}"/></clipPath>
+  <g id="sjGrannyG" transform="translate(${G_HOME[0]} ${G_HOME[1]})"><g class="sj-granny-idle"><image id="sjGranny" href="${grannyUrl}" x="${-GW / 2}" y="${-GH}" width="${GW}" height="${GH}"/></g></g>
+  <text id="sjGrannyTag" x="180" y="${G_HOME[1] - GH - 6}" text-anchor="middle" class="xr-tag" style="fill:#FFF4E0">青衣阿嬤</text>
   <!-- 米卦杯 -->
   <g id="sjCup" class="stall-prop" data-sj="cup" role="button" tabindex="0" aria-label="米卦杯，往下滑翻過來" transform="translate(${CUP[0]} ${CUP[1]})" style="display:none">
     <ellipse cx="0" cy="4" rx="26" ry="5" fill="url(#sjShadow)"/>
@@ -132,13 +135,37 @@ export function initShoujing(api) {
     onDrop() { sfx.pop(); cam?.reset(200); startBreath(); },
   });
 
+  /* ----- 阿嬤的動作 ----- */
+  const GG = S('sjGrannyG'), GI = S('sjGranny');
+  let gPos = G_HOME;
+  function grannyAt([x, y, sc], rot = 0, dy = 0) { GG.setAttribute('transform', `translate(${x.toFixed(1)} ${(y + dy).toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${sc})`); }
+  function clipGranny(on) { if (on) GI.setAttribute('clip-path', 'url(#sjGClip)'); else GI.removeAttribute('clip-path'); }
+  async function grannyMove(to) {
+    if (gPos === to) return;
+    const r = run;
+    await tween(reduce ? 60 : 260, (k) => { GG.style.opacity = String(1 - k); grannyAt(gPos, 0, -k * 12); });
+    if (r !== run) { GG.style.opacity = ''; return; }
+    gPos = to; clipGranny(to === G_HOME); S('sjGrannyTag').style.display = to === G_HOME ? '' : 'none';
+    sfx.knock();
+    await tween(reduce ? 60 : 320, (k) => { GG.style.opacity = String(k); grannyAt(to, 0, -Math.sin(k * Math.PI) * 14); });
+    GG.style.opacity = '';
+  }
+  async function grannyBow(deg = -16, ms = 700) {
+    await tween(ms, (k) => grannyAt(gPos, Math.sin(k * Math.PI) * deg, Math.sin(k * Math.PI) * 6));
+  }
+  function grannyHome() { gPos = G_HOME; clipGranny(true); GG.style.opacity = ''; S('sjGrannyTag').style.display = ''; grannyAt(G_HOME); }
+
   /* ----- 2. 阿嬤持香，你深呼吸 ----- */
   let breath = 0, bpm = 110, holdAt = 0, exhaling = false;
   const forOther = () => draft && draft.who !== 'me';
-  function startBreath() {
-    const r = ++run; phase = 'breath'; breath = 0; bpm = 110 - (forOther() ? 0 : 0);
+  async function startBreath() {
+    const r = ++run; phase = 'walk';
+    say('阿嬤拿起三炷香，從櫃台後面走出來，站到你旁邊……');
+    await grannyMove(G_SIDE); if (r !== run) return;
+    await grannyBow(-10, 500); if (r !== run) return;
+    phase = 'breath'; breath = 0; bpm = 110 - (forOther() ? 0 : 0);
     S('sjBreath').setAttribute('opacity', '1'); S('sjHeartG').setAttribute('opacity', '1'); S('sjBpm').textContent = bpm;
-    S('sjInc').style.display = ''; placeInc(212, 300, 0);
+    S('sjInc').style.display = ''; placeInc(244, 470, 0);
     S('sjTap').style.display = '';
     cam?.zoom(180, 470, 300);
     say(`阿嬤點起三炷香：「<b>${esc(draft.name)}</b>，阿嬤幫你收驚喔。」<br>${forOther() ? '你幫他深呼吸：' : ''}<b>按住畫面吸氣</b>，光圈變大；<b>放開吐氣</b>，慢慢的就好。`);
@@ -164,6 +191,7 @@ export function initShoujing(api) {
       if (!holdAt || r !== run) return;
       const k = Math.min(1, (now - holdAt) / INHALE);
       S('sjRing').setAttribute('r', (40 + 56 * k).toFixed(1));
+      grannyAt(gPos, -2 * k, -4 * k);
       if (k >= 1) { S('sjCue').textContent = '可以放開，吐氣'; S('sjRingMax').setAttribute('stroke', '#FFE08A'); }
       requestAnimationFrame(step);
     };
@@ -187,6 +215,9 @@ export function initShoujing(api) {
       const a = raw * Math.PI * 2 * 2 - Math.PI / 2;
       const x = z.at[0] + Math.cos(a) * z.r, y = z.at[1] + Math.sin(a) * z.r * .55 - 30;
       placeInc(x, y, Math.cos(a) * 12);
+      // 阿嬤跟著香繞圈搖身體，繞頭頂時往前探、繞後背時彎得更低
+      const lean = z.name === '頭頂' ? -6 : z.name === '前胸' ? -10 : -16;
+      grannyAt(gPos, lean * Math.min(1, raw * 4, (1 - raw) * 4) + Math.sin(a) * 4, Math.abs(Math.sin(a)) * 3);
       if (Math.random() < .35) emit('smoke', x, y - 42, { color: '#F4F1EA', alpha: .45 });
     }, (k) => k);
     if (r !== run) return;
@@ -201,7 +232,11 @@ export function initShoujing(api) {
     phase = 'cup'; S('sjTap').style.display = 'none'; S('sjBreath').setAttribute('opacity', '0');
     S('sjInc').style.display = 'none';
     burst('spark', 180, 500, reduce ? 3 : 14); sfx.chime();
-    await sleep(500);
+    const r = run;
+    say('阿嬤對著你深深一鞠躬：「好了好了，收回來了。」');
+    await grannyBow(-22, 900); if (r !== run) return;
+    await grannyMove(G_HOME); if (r !== run) return;
+    await sleep(200);
     S('sjCup').style.display = ''; S('sjCupBody').setAttribute('transform', ''); S('sjRice').style.display = 'none';
     S('sjSwipeHint').setAttribute('opacity', '1');
     cam?.zoom(180, 360, 220);
@@ -285,12 +320,12 @@ export function initShoujing(api) {
 
   return {
     enter() {
-      run++; phase = 'idle'; holdAt = 0; exhaling = false; paintMe();
+      run++; phase = 'idle'; holdAt = 0; exhaling = false; paintMe(); grannyHome();
       for (const id of ['sjCup', 'sjShirt', 'sjInc', 'sjTap']) S(id).style.display = 'none';
       S('sjCupBody').style.opacity = ''; S('sjBreath').setAttribute('opacity', '0'); S('sjHeartG').setAttribute('opacity', '0'); S('sjSwipeHint').setAttribute('opacity', '0');
       say(sj.last === dayKey() ? '阿嬤：「今天又來啦？心還慌慌的嗎？再收一次也可以。」'
         : '青衣阿嬤拍拍椅子：「來，坐。最近有沒有被什麼嚇到、睡不好？阿嬤幫你收驚。」<br>按「<b>收驚</b>」開始。');
     },
-    leave() { run++; phase = 'idle'; holdAt = 0; },
+    leave() { run++; phase = 'idle'; holdAt = 0; grannyHome(); },
   };
 }
