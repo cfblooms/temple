@@ -45,6 +45,8 @@
       <div id="tudiHost" hidden></div>
       <div id="wenHost" hidden></div>
       <div id="jiHost" hidden></div>
+      <div id="sanHost" hidden></div>
+      <div id="gyHost" hidden></div>
       <canvas id="fx" aria-hidden="true"></canvas>
       <div class="gods" id="godBar" role="tablist" aria-label="今天要拜哪位神明"></div>
     </div>
@@ -94,6 +96,22 @@
     <button data-act="draw"><svg viewBox="0 0 24 24"><rect x="6" y="9" width="12" height="13" rx="2" fill="#A0703E"/><path d="M9 10V3M12 10V1.5M15 10V4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg><span>濟公籤</span></button>
     <button data-ji="worry"><svg viewBox="0 0 24 24"><path d="M12 21V12" stroke="#7A4A24" stroke-width="2" stroke-linecap="round"/><path d="M12 13C5 13 3 7 5 3c2 2 4 1 7 0 3 1 5 2 7 0 2 4 0 10-7 10z" fill="#C9A26A" stroke="#8A6234" stroke-width="1"/><circle cx="9" cy="7" r="1" fill="#F5EBD8"/><circle cx="15" cy="9" r="1.2" fill="#F5EBD8"/></svg><span>搧煩惱</span></button>
     <button data-ji="wine"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4" fill="#D8792E"/><ellipse cx="9" cy="16" rx="5.4" ry="5" fill="#D8792E"/><path d="M7 11.4h4" stroke="var(--red)" stroke-width="1.6"/><path d="M15 15h6l-1 5h-4z" fill="#FFF" stroke="#7FA6D8" stroke-width="1"/></svg><span>敬一杯</span></button>
+  </nav>
+  <nav class="bar san-bar" id="sanBar" aria-label="三太子殿動作" hidden>
+    <button data-act="candle"><svg viewBox="0 0 24 24"><path d="M12 2c2 3 2 5 0 6-2-1-2-3 0-6z" fill="var(--gold)"/><rect x="7" y="9" width="10" height="12" rx="4" fill="var(--red)"/></svg><span>點燭</span></button>
+    <button data-act="incense"><svg viewBox="0 0 24 24"><path d="M8 13l-2-10M12 13V2M16 13l2-10" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/><path d="M4 13h16l-2 7H6z" fill="var(--gold)"/></svg><span>上香</span></button>
+    <button data-act="jiao"><svg viewBox="0 0 24 24"><path d="M2 12c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)"/><path d="M13 14c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)" opacity=".7"/></svg><span>擲筊</span></button>
+    <button data-act="draw"><svg viewBox="0 0 24 24"><rect x="6" y="9" width="12" height="13" rx="2" fill="#A0703E"/><path d="M9 10V3M12 10V1.5M15 10V4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg><span>太子籤</span></button>
+    <button data-san="wheel"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="#E8A23A" stroke-width="2.4"/><path d="M12 4v16M4 12h16M6.3 6.3l11.4 11.4M17.7 6.3L6.3 17.7" stroke="var(--red)" stroke-width="1.4"/><circle cx="12" cy="12" r="2.2" fill="#E8A23A"/><path d="M3 9c-1-3 1-6 3-7 0 2 1 3 2 3M21 15c1 3-1 6-3 7 0-2-1-3-2-3" stroke="#FF7A2A" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg><span>風火輪</span></button>
+    <button data-san="snack"><svg viewBox="0 0 24 24"><path d="M7 7h5l1 3v10a1 1 0 01-1 1H7a1 1 0 01-1-1V10z" fill="#FFF6E4" stroke="#C9A98A" stroke-width="1"/><rect x="6.5" y="5" width="6" height="2.4" rx="1" fill="var(--red)"/><circle cx="17" cy="9" r="4" fill="#FF8FB0"/><path d="M15 9a2 2 0 014 0" stroke="#FFF" stroke-width="1.2" fill="none"/><path d="M17 13v8" stroke="#C9A98A" stroke-width="1.4" stroke-linecap="round"/></svg><span>獻零食</span></button>
+  </nav>
+  <nav class="bar gy-bar" id="gyBar" aria-label="觀音殿動作" hidden>
+    <button data-act="candle"><svg viewBox="0 0 24 24"><path d="M12 2c2 3 2 5 0 6-2-1-2-3 0-6z" fill="var(--gold)"/><rect x="7" y="9" width="10" height="12" rx="4" fill="var(--red)"/></svg><span>點燭</span></button>
+    <button data-act="incense"><svg viewBox="0 0 24 24"><path d="M8 13l-2-10M12 13V2M16 13l2-10" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/><path d="M4 13h16l-2 7H6z" fill="var(--gold)"/></svg><span>上香</span></button>
+    <button data-act="jiao"><svg viewBox="0 0 24 24"><path d="M2 12c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)"/><path d="M13 14c0-6 9-6 9 0-3-2-6-2-9 0z" fill="var(--red)" opacity=".7"/></svg><span>擲筊</span></button>
+    <button data-act="draw"><svg viewBox="0 0 24 24"><rect x="6" y="9" width="12" height="13" rx="2" fill="#A0703E"/><path d="M9 10V3M12 10V1.5M15 10V4" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg><span>觀音籤</span></button>
+    <button data-gy="water"><svg viewBox="0 0 24 24"><path d="M9 21h6l-1-9 1.5-2-1.5-2V5h-4v3L8.5 10 10 12z" fill="#FFFFFF" stroke="#7FA6D8" stroke-width="1.1"/><path d="M12 5c2-3 6-3 8-1-2 0-3 2-4 4" stroke="#5E9A4A" stroke-width="1.4" fill="none" stroke-linecap="round"/><path d="M19 9.5c.8 1.2.8 2-.1 2.5M21 12c.6.9.6 1.6-.1 2" stroke="#7FC4F0" stroke-width="1.4" stroke-linecap="round"/></svg><span>灑淨水</span></button>
+    <button data-gy="lamp"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="19" rx="9" ry="2.6" fill="#7DBA6A"/><path d="M12 6c2 2 3 5 0 12-3-7-2-10 0-12z" fill="#FF9EBB"/><path d="M5 12c3 0 6 2 7 6-4 0-7-2-7-6zM19 12c-3 0-6 2-7 6 4 0 7-2 7-6z" fill="#FFC2D4"/><path d="M12 2.5c1 1.2 1 2.2 0 3-1-.8-1-1.8 0-3z" fill="var(--gold)"/></svg><span>蓮花燈</span></button>
   </nav>
   <nav class="bar cai-bar" id="caiBar" aria-label="財神閣動作" hidden>
     <button data-act="candle"><svg viewBox="0 0 24 24"><path d="M12 2c2 3 2 5 0 6-2-1-2-3 0-6z" fill="var(--gold)"/><rect x="7" y="9" width="10" height="12" rx="4" fill="var(--red)"/></svg><span>點燭</span></button>
