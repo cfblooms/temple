@@ -102,16 +102,15 @@ export const TG_SVG = (bg) => `
     ${[0, 1, 2, 3, 4, 5, 6].map((i) => `<path d="M${i * 60 - 30} 645 L${180 + (i - 3) * 22} 520" stroke="#6A5444" stroke-width="1.2" opacity=".5"/>`).join('')}
     <rect x="0" y="500" width="360" height="8" fill="#9A7A60"/>${[20, 70, 120, 240, 290, 340].map((x) => `<rect x="${x - 4}" y="480" width="8" height="40" fill="#A88A70"/>`).join('')}
     <rect x="0" y="480" width="360" height="5" fill="#B89A80"/>
-    <!-- 天公爐（香插進爐口） -->
-    <ellipse cx="${BURN[0]}" cy="${BURN[1] + 80}" rx="86" ry="10" fill="url(#kContact)"/>
-    <rect x="${BURN[0] - 44}" y="${BURN[1] + 66}" width="88" height="22" rx="4" fill="#5A2A1E"/>
-    <g id="kBurner" transform="translate(${BURN[0]} ${BURN[1] + 66})">
-      ${art('burner') ? `<image href="${art('burner')}" x="-90" y="-150" width="180" height="150"/>` : `<g transform="translate(0 -70)">${BURNER_SVG}</g>`}
-    </g>
+    <!-- 天公爐（香插進爐口；香畫在爐子後面，看起來插在爐裡） -->
     <g id="kPlanted" style="display:none">
-      ${[-10, 0, 10].map((dx, i) => `<line x1="${BURN[0] + dx}" y1="${BURN[1] - 6}" x2="${BURN[0] + dx * 2.2}" y2="${BURN[1] - 66}" stroke="#7A3A1A" stroke-width="2.4" stroke-linecap="round"/><circle cx="${BURN[0] + dx * 2.2}" cy="${BURN[1] - 66}" r="2.2" fill="#FF7A3A"/>`).join('')}
+      ${[-10, 0, 10].map((dx) => `<line x1="${BURN[0] + dx}" y1="${BURN[1] - 30}" x2="${BURN[0] + dx * 2.2}" y2="${BURN[1] - 100}" stroke="#7A3A1A" stroke-width="2.4" stroke-linecap="round"/><circle cx="${BURN[0] + dx * 2.2}" cy="${BURN[1] - 100}" r="2.2" fill="#FF7A3A"/>`).join('')}
     </g>
-    <circle id="kRing" cx="${BURN[0]}" cy="${BURN[1] - 6}" r="30" fill="none" stroke="#FFE08A" stroke-width="2.4" stroke-dasharray="6 4" opacity="0"/>
+    <ellipse cx="${BURN[0]}" cy="${BURN[1] + 64}" rx="80" ry="9" fill="url(#kContact)"/>
+    <g id="kBurner" transform="translate(${BURN[0]} ${BURN[1] + 66})">
+      ${art('burner') ? `<image href="${art('burner')}" x="-90" y="-143" width="180" height="143"/>` : `<g transform="translate(0 -70)">${BURNER_SVG}</g>`}
+    </g>
+    <circle id="kRing" cx="${BURN[0]}" cy="${BURN[1] - 40}" r="30" fill="none" stroke="#FFE08A" stroke-width="2.4" stroke-dasharray="6 4" opacity="0"/>
 
     <!-- 三支香 -->
     <g id="kSticks" class="tg-prop" data-tg="sticks" role="button" tabindex="0" aria-label="三支香，插進天公爐" style="display:none" transform="translate(${STICK_REST[0]} ${STICK_REST[1]})">
@@ -121,8 +120,8 @@ export const TG_SVG = (bg) => `
     <!-- 疏文（包在天公金裡） -->
     <g id="kScroll" class="tg-prop" data-tg="scroll" role="button" tabindex="0" aria-label="疏文，往上甩送上天" style="display:none" transform="translate(${SCROLL_REST[0]} ${SCROLL_REST[1]})">
       <ellipse cx="0" cy="2" rx="22" ry="4" fill="url(#kContact)"/>
-      ${art('gold') ? `<image href="${art('gold')}" x="-32" y="-58" width="64" height="58"/>` : `<g transform="translate(0 0)">${SCROLL_SVG}</g>`}
-      ${art('scroll') ? `<image href="${art('scroll')}" x="-14" y="-74" width="28" height="56"/>` : ''}
+      ${art('scroll') ? `<image href="${art('scroll')}" x="-10" y="-74" width="20" height="55" transform="rotate(-8)"/>` : ''}
+      ${art('gold') ? `<image href="${art('gold')}" x="-34" y="-50" width="68" height="50"/>` : `<g transform="translate(0 0)">${SCROLL_SVG}</g>`}
     </g>
 
     <!-- 拜（三拜） -->
@@ -185,18 +184,18 @@ export function initTiangong(api) {
   }
   function smoke() {
     clearInterval(smokeT);
-    smokeT = setInterval(() => { if (mode) emit('smoke', BURN[0] + (Math.random() - .5) * 26, BURN[1] - 68); }, reduce ? 900 : 260);
+    smokeT = setInterval(() => { if (mode) emit('smoke', BURN[0] + (Math.random() - .5) * 30, BURN[1] - 102); }, reduce ? 900 : 260);
   }
 
   /* ----- 敬天：三支香插天公爐，三拜 ----- */
   const sticks = S('kSticks');
   const stickCarrier = makeCarrier({
     svg, el: sticks, sfx, cam, ring: S('kRing'), lift: 70, radius: 34,
-    rest: () => STICK_REST, target: () => [BURN[0], BURN[1] + 6], zoom: () => [BURN[0], BURN[1] - 60, 230],
+    rest: () => STICK_REST, target: () => [BURN[0], BURN[1] - 26], zoom: () => [BURN[0], BURN[1] - 70, 230],
     onTap: () => say('按住右下角的<b>三支香</b>拿起來，插進前面的<b>天公爐</b>。', 'god'),
     onDrop() {
       sticks.style.display = 'none'; S('kPlanted').style.display = ''; smoke();
-      sfx.pop(); sfx.buzz?.(20); burst('spark', BURN[0], BURN[1] - 60, reduce ? 3 : 12);
+      sfx.pop(); sfx.buzz?.(20); burst('spark', BURN[0], BURN[1] - 95, reduce ? 3 : 12);
       bows = 0; S('kBowN').textContent = '0 / 3'; S('kBow').style.display = '';
       say('香插好了。面向天空，按「<b>拜</b>」三下：一拜天、二拜地、三拜自己的良心。', 'god');
       cam?.reset(900);
