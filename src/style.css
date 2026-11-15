@@ -119,6 +119,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
   background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 0 5px; font-size: 12px;
   transition: transform .12s;
 }
+.bar button span { white-space: nowrap; }
 .bar button:active { transform: translateY(2px); }
 .bar button svg { width: 26px; height: 26px; }
 .bar button.next { border-color: var(--gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent); }
