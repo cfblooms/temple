@@ -445,6 +445,7 @@ async function throwJiao(tip, cancel = true) {
     ];
     const dur = REDUCED_MOTION ? 0.2 : 0.95;
     let t0 = null, landed = false;
+    cam.zoom(182, 560 + jdy, 250, 380); // 鏡頭靠近地板看筊杯落地
     blocks.forEach((b) => b.el.setAttribute('opacity', '1'));
     onTick((t) => {
       if (t0 === null) t0 = t;
@@ -461,6 +462,7 @@ async function throwJiao(tip, cancel = true) {
       if (k >= 1 && !landed) {
         landed = true; sfx.knock(); sfx.knock(0.09); sfx.buzz([10, 40, 10]);
         setTimeout(() => resolve(key), 250);
+        zoomOut(1900);
         return false;
       }
     });
