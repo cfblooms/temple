@@ -1,6 +1,6 @@
 // 第一批節慶小遊戲：冬至、送神、除夕、春節（初一～初五）
 // 座標 360 × 645。道具有 Gemini 圖（src/assets/fest/<key>.webp）就用圖，沒有先用 SVG 手繪。
-import { art, clamp, rand, pick, place } from './core.js';
+import { art, hasArt, clamp, rand, pick, place } from './core.js';
 import burnerUrl from '../assets/burner.webp';
 import lighterUrl from '../assets/lighter.webp';
 import tigerSleepUrl from '../assets/tiger-sleep.webp';
@@ -164,12 +164,13 @@ const duster = () => `<rect x="-24" y="-22" width="48" height="94" fill="#000" o
 
 const songshen = {
   play(st, o) {
-    const PRINT = [180, 200], MOUTH = [180, 204], JAR = [72, 404], JAR_MOUTH = [72, 386];
+    const ZJ_DY = hasArt('ss-zaojun') ? -3 : 4; // Gemini 灶君圖的嘴巴比畫面中心高一點
+    const PRINT = [180, 200], MOUTH = [180, 200 + ZJ_DY], JAR = [72, 404], JAR_MOUTH = [72, 386];
     const BR_REST = [292, 400], DU_REST = [292, 515];
     const DUST = [[54, 452], [128, 440], [198, 460], [250, 446], [318, 470], [116, 300], [246, 120]];
     let phase = 'paint', honey = 0, cov = 0, tip = [...BR_REST], dust = DUST.map(() => 1), last = null;
     st.set(`${backdrop('songshen', { wall: ['#EFD8B8', '#D9B48A'], table: 420, extra: `<rect x="0" y="380" width="360" height="44" fill="#A56A3E"/>` })}
-      <g id="print" transform="translate(${PRINT[0]} ${PRINT[1]})">${art('ss-zaojun', 170, 230, zaojun)}<ellipse id="zjSweet" cx="0" cy="4" rx="11" ry="5.5" fill="#E8A030" opacity="0"/></g>
+      <g id="print" transform="translate(${PRINT[0]} ${PRINT[1]})">${art('ss-zaojun', 170, 230, zaojun)}<ellipse id="zjSweet" cx="0" cy="${ZJ_DY}" rx="11" ry="5.5" fill="#E8A030" opacity="0"/></g>
       <g transform="translate(${JAR[0]} ${JAR[1]})">${art('ss-jar', 70, 70, jar)}</g>
       <g id="stove" transform="translate(180 530)"><rect x="-170" y="-90" width="340" height="200" fill="#B5643C"/><path d="M-170 -50h340M-170 -10h340M-170 30h340M-90 -90v40M40 -90v40M-20 -50v40M110 -50v40M-120 -10v40M60 -10v40" stroke="#8E4A2A" stroke-width="2"/><path d="M-50 110 v-70 a50 50 0 0 1 100 0 v70z" fill="#3A1E12"/><path d="M-26 108c-6-22 8-30 10-42 8 10 4 18 10 24 4-6 2-14 8-18 6 14 10 22 4 36z" fill="#FF8A3A"/></g>
       ${DUST.map(([x, y], i) => `<g id="dust${i}" transform="translate(${x} ${y})"><ellipse rx="20" ry="9" fill="#9A8C80" opacity=".75"/><circle cx="-8" cy="-3" r="5" fill="#B5A79A" opacity=".8"/><circle cx="7" cy="2" r="4" fill="#857668" opacity=".7"/></g>`).join('')}

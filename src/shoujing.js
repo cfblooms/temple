@@ -5,6 +5,12 @@
 import { makeCarrier } from './carry.js';
 import bgUrl from './assets/sj/bg.webp';
 import grannyUrl from './assets/sj/granny.webp';
+// 阿嬤收驚的三個動作圖（繞頭頂、繞前胸、鞠躬）：有圖就換成香拿在阿嬤手上，沒有就用飄著的香
+const POSE_ART = import.meta.glob('./assets/sj/granny-*.webp', { eager: true, import: 'default' });
+const POSE = (k) => POSE_ART[`./assets/sj/granny-${k}.webp`];
+// 動作圖的框（腳底中心是原點）和香頭位置
+const PW = 105, PH = 237, PX = -70, PY = -233;
+const TIP = { up: [-52, -230], chest: [-62, -176], bow: [-52, -191] };
 import cupUrl from './assets/sj/cup.webp';
 import shirtUrl from './assets/sj/shirt.webp';
 import { reduce, sleep, tween, pick, daily, yesterdayKey, onSwipe } from './stall.js';
@@ -138,14 +144,24 @@ export function initShoujing(api) {
   /* ----- 阿嬤的動作 ----- */
   const GG = S('sjGrannyG'), GI = S('sjGranny');
   let gPos = G_HOME;
-  function grannyAt([x, y, sc], rot = 0, dy = 0) { GG.setAttribute('transform', `translate(${x.toFixed(1)} ${(y + dy).toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${sc})`); }
+  function grannyAt([x, y, sc], rot = 0, dy = 0, dx = 0) { GG.setAttribute('transform', `translate(${(x + dx).toFixed(1)} ${(y + dy).toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${sc})`); }
+  const hasPoses = !!(POSE('up') && POSE('chest') && POSE('bow'));
+  let pose = null;
+  function setPose(k) {
+    if (!hasPoses || pose === k) return;
+    pose = k;
+    if (k) { GI.setAttribute('href', POSE(k)); GI.setAttribute('x', PX); GI.setAttribute('y', PY); GI.setAttribute('width', PW); GI.setAttribute('height', PH); }
+    else { GI.setAttribute('href', grannyUrl); GI.setAttribute('x', -GW / 2); GI.setAttribute('y', -GH); GI.setAttribute('width', GW); GI.setAttribute('height', GH); }
+  }
+  // 香頭在畫面上的位置（跟著阿嬤的位置和大小）
+  function tipAt(dx = 0, dy = 0) { const [tx, ty] = TIP[pose] || TIP.up; const [x, y, sc] = gPos; return [x + dx + tx * sc, y + dy + ty * sc]; }
   function clipGranny(on) { if (on) GI.setAttribute('clip-path', 'url(#sjGClip)'); else GI.removeAttribute('clip-path'); }
   async function grannyMove(to) {
     if (gPos === to) return;
     const r = run;
     await tween(reduce ? 60 : 260, (k) => { GG.style.opacity = String(1 - k); grannyAt(gPos, 0, -k * 12); });
     if (r !== run) { GG.style.opacity = ''; return; }
-    gPos = to; clipGranny(to === G_HOME); S('sjGrannyTag').style.display = to === G_HOME ? '' : 'none';
+    gPos = to; clipGranny(to === G_HOME); setPose(to === G_HOME ? null : 'up'); S('sjGrannyTag').style.display = to === G_HOME ? '' : 'none';
     sfx.knock();
     await tween(reduce ? 60 : 320, (k) => { GG.style.opacity = String(k); grannyAt(to, 0, -Math.sin(k * Math.PI) * 14); });
     GG.style.opacity = '';
@@ -153,7 +169,7 @@ export function initShoujing(api) {
   async function grannyBow(deg = -16, ms = 700) {
     await tween(ms, (k) => grannyAt(gPos, Math.sin(k * Math.PI) * deg, Math.sin(k * Math.PI) * 6));
   }
-  function grannyHome() { gPos = G_HOME; clipGranny(true); GG.style.opacity = ''; S('sjGrannyTag').style.display = ''; grannyAt(G_HOME); }
+  function grannyHome() { setPose(null); gPos = G_HOME; clipGranny(true); GG.style.opacity = ''; S('sjGrannyTag').style.display = ''; grannyAt(G_HOME); }
 
   /* ----- 2. 阿嬤持香，你深呼吸 ----- */
   let breath = 0, bpm = 110, holdAt = 0, exhaling = false;
@@ -165,7 +181,7 @@ export function initShoujing(api) {
     await grannyBow(-10, 500); if (r !== run) return;
     phase = 'breath'; breath = 0; bpm = 110 - (forOther() ? 0 : 0);
     S('sjBreath').setAttribute('opacity', '1'); S('sjHeartG').setAttribute('opacity', '1'); S('sjBpm').textContent = bpm;
-    S('sjInc').style.display = ''; placeInc(244, 470, 0);
+    if (!hasPoses) { S('sjInc').style.display = ''; placeInc(244, 470, 0); }
     S('sjTap').style.display = '';
     cam?.zoom(180, 470, 300);
     say(`阿嬤點起三炷香：「<b>${esc(draft.name)}</b>，阿嬤幫你收驚喔。」<br>${forOther() ? '你幫他深呼吸：' : ''}<b>按住畫面吸氣</b>，光圈變大；<b>放開吐氣</b>，慢慢的就好。`);
@@ -214,9 +230,17 @@ export function initShoujing(api) {
       S('sjRing').setAttribute('r', (r0 - (r0 - 40) * k).toFixed(1));
       const a = raw * Math.PI * 2 * 2 - Math.PI / 2;
       const x = z.at[0] + Math.cos(a) * z.r, y = z.at[1] + Math.sin(a) * z.r * .55 - 30;
-      placeInc(x, y, Math.cos(a) * 12);
       // 阿嬤跟著香繞圈搖身體，繞頭頂時往前探、繞後背時彎得更低
       const lean = z.name === '頭頂' ? -6 : z.name === '前胸' ? -10 : -16;
+      if (hasPoses) {
+        // 香拿在阿嬤手上：整個人輕輕畫小圈，香頭冒煙
+        setPose(z.name === '頭頂' ? 'up' : 'chest');
+        const dx = Math.cos(a) * 6, dy = Math.sin(a) * 3;
+        grannyAt(gPos, (lean / 2) * Math.min(1, raw * 4, (1 - raw) * 4), dy, dx);
+        if (Math.random() < .35) { const [sx, sy] = tipAt(dx, dy); emit('smoke', sx, sy, { color: '#F4F1EA', alpha: .45 }); }
+        return;
+      }
+      placeInc(x, y, Math.cos(a) * 12);
       grannyAt(gPos, lean * Math.min(1, raw * 4, (1 - raw) * 4) + Math.sin(a) * 4, Math.abs(Math.sin(a)) * 3);
       if (Math.random() < .35) emit('smoke', x, y - 42, { color: '#F4F1EA', alpha: .45 });
     }, (k) => k);
@@ -234,7 +258,8 @@ export function initShoujing(api) {
     burst('spark', 180, 500, reduce ? 3 : 14); sfx.chime();
     const r = run;
     say('阿嬤對著你深深一鞠躬：「好了好了，收回來了。」');
-    await grannyBow(-22, 900); if (r !== run) return;
+    setPose('bow');
+    await grannyBow(hasPoses ? -8 : -22, 900); if (r !== run) return;
     await grannyMove(G_HOME); if (r !== run) return;
     await sleep(200);
     S('sjCup').style.display = ''; S('sjCupBody').setAttribute('transform', ''); S('sjRice').style.display = 'none';

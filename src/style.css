@@ -91,7 +91,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .hall-hit { position: absolute; left: 33%; top: 33%; width: 36%; height: 17%; background: transparent; border: 0; border-radius: 12px; }
 .plaque { position: absolute; left: 51.1%; top: 85.3%; transform: translate(-50%, -50%); width: 14%; padding: .25cqw 0; background: #5A2318; color: #FFE29A; border: .3cqw solid #E6B85C; border-radius: .6cqw; font-size: 1.9cqw; letter-spacing: .4cqw; text-align: center; pointer-events: none; }
 .scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.5581); aspect-ratio: 360 / 645; max-width: 100%; border-radius: 26px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
-#sceneHost, #sceneHost svg, #caiHost, #caiHost svg, #yueHost, #yueHost svg, #tudiHost, #tudiHost svg, #wenHost, #wenHost svg, #jiHost, #jiHost svg, #sanHost, #sanHost svg, #gyHost, #gyHost svg, #ggHost, #ggHost svg, #zsHost, #zsHost svg, #tsHost, #tsHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#sceneHost, #sceneHost svg, #caiHost, #caiHost svg, #yueHost, #yueHost svg, #tudiHost, #tudiHost svg, #wenHost, #wenHost svg, #jiHost, #jiHost svg, #sanHost, #sanHost svg, #gyHost, #gyHost svg, #ggHost, #ggHost svg, #zsHost, #zsHost svg, #tsHost, #tsHost svg, #muHost, #muHost svg, #mlHost, #mlHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hit { cursor: pointer; outline: none; }
 .hit:focus-visible { filter: drop-shadow(0 0 4px #FFE08A) drop-shadow(0 0 2px #FFE08A); }
@@ -220,7 +220,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @media (prefers-reduced-motion: reduce) { .offer.pop { animation: none; } }
 
 /* ---------- 財神聚寶閣 ---------- */
-#caiHost[hidden], #sceneHost[hidden], #yueHost[hidden], #tudiHost[hidden], #wenHost[hidden], #jiHost[hidden], #sanHost[hidden], #gyHost[hidden], #ggHost[hidden], #zsHost[hidden], #tsHost[hidden] { display: none; }
+#caiHost[hidden], #sceneHost[hidden], #yueHost[hidden], #tudiHost[hidden], #wenHost[hidden], #jiHost[hidden], #sanHost[hidden], #gyHost[hidden], #ggHost[hidden], #zsHost[hidden], #tsHost[hidden], #muHost[hidden], #mlHost[hidden] { display: none; }
 .cai-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 .bar.cai-bar { grid-template-columns: repeat(7, 1fr); }
 .cai-ingot, .cai-bowl, .cai-coin { transform-box: fill-box; transform-origin: 50% 80%; cursor: pointer; }
@@ -277,9 +277,9 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @media (prefers-reduced-motion: reduce) { .jt-pair.hold img { animation: none; } }
 
 /* 專科殿堂的道具層疊在正殿場景上面：只有道具本身可以點，其他地方穿透到下面（蠟燭、香爐、拿工具） */
-#caiHost, #yueHost, #tudiHost, #wenHost, #jiHost, #sanHost, #gyHost, .cai-svg, .yue-svg, .tudi-svg, .wen-svg, .ji-svg, .san-svg, .gy-svg, #ggHost, #zsHost, #tsHost, .gg-svg, .zs-svg, .ts-svg { pointer-events: none; }
-.cai-svg [data-cai], .yue-svg [data-yue], .tudi-svg [data-tudi], .wen-svg [data-wen], .ji-svg [data-ji], .san-svg [data-san], .gy-svg [data-gy], .gg-svg [data-gg], .zs-svg [data-zs], .ts-svg [data-ts] { pointer-events: auto; }
-#sceneWrap.tooling .cai-svg [data-cai], #sceneWrap.tooling .yue-svg [data-yue], #sceneWrap.tooling .tudi-svg [data-tudi], #sceneWrap.tooling .wen-svg [data-wen], #sceneWrap.tooling .ji-svg [data-ji], #sceneWrap.tooling .san-svg [data-san], #sceneWrap.tooling .gy-svg [data-gy], #sceneWrap.tooling .gg-svg [data-gg], #sceneWrap.tooling .zs-svg [data-zs], #sceneWrap.tooling .ts-svg [data-ts] { pointer-events: none; }
+#caiHost, #yueHost, #tudiHost, #wenHost, #jiHost, #sanHost, #gyHost, .cai-svg, .yue-svg, .tudi-svg, .wen-svg, .ji-svg, .san-svg, .gy-svg, #ggHost, #zsHost, #tsHost, .gg-svg, .zs-svg, .ts-svg, #muHost, #mlHost, .mu-svg, .ml-svg { pointer-events: none; }
+.cai-svg [data-cai], .yue-svg [data-yue], .tudi-svg [data-tudi], .wen-svg [data-wen], .ji-svg [data-ji], .san-svg [data-san], .gy-svg [data-gy], .gg-svg [data-gg], .zs-svg [data-zs], .ts-svg [data-ts], .mu-svg [data-mu], .ml-svg [data-ml] { pointer-events: auto; }
+#sceneWrap.tooling .cai-svg [data-cai], #sceneWrap.tooling .yue-svg [data-yue], #sceneWrap.tooling .tudi-svg [data-tudi], #sceneWrap.tooling .wen-svg [data-wen], #sceneWrap.tooling .ji-svg [data-ji], #sceneWrap.tooling .san-svg [data-san], #sceneWrap.tooling .gy-svg [data-gy], #sceneWrap.tooling .gg-svg [data-gg], #sceneWrap.tooling .zs-svg [data-zs], #sceneWrap.tooling .ts-svg [data-ts], #sceneWrap.tooling .mu-svg [data-mu], #sceneWrap.tooling .ml-svg [data-ml] { pointer-events: none; }
 
 /* ---------- 今日參拜路線（地圖下方） ---------- */
 .route { display: flex; align-items: center; gap: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -494,3 +494,13 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .day-list { display: grid; gap: 8px; }
 .day-btn { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--chip); }
 .day-btn b { font-family: var(--font-serif); color: var(--red); }
+
+/* 瑤池宮（母娘）、歡喜堂（彌勒） */
+.mu-svg, .ml-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+.bar.mu-bar, .bar.ml-bar { grid-template-columns: repeat(6, 1fr); }
+.mu-prop, .ml-prop, .ml-belly { cursor: grab; }
+.mu-prop.held, .ml-prop.held { cursor: grabbing; filter: drop-shadow(0 6px 4px rgb(40 15 5 / .35)); }
+.mu-prop:focus:not(:focus-visible), .ml-prop:focus:not(:focus-visible), .ml-belly:focus:not(:focus-visible) { outline: none; }
+.mu-offer > *, .mu-prop > *, .ml-prop > * { transform-box: fill-box; transform-origin: 50% 100%; }
+.mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
+@media (prefers-reduced-motion: reduce) { .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: none; } }
