@@ -224,7 +224,7 @@ const zhongqiu = {
       <circle id="ring" cx="${POM[0]}" cy="${POM[1]}" r="96" fill="none" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8" opacity=".6"/>
       <g id="pom" transform="translate(${POM[0]} ${POM[1]})">${pomelo()}</g>
       <g id="tiger" transform="translate(${TIGER[0]} ${TIGER[1]})">${img(tigerAwakeUrl, 140, 168)}</g>
-      <g id="hat" class="fest-hit" filter="url(#fToy)" style="display:none">${art('zq-hat', 110, 70, hat)}</g>
+      <g id="hat" class="fest-hit" filter="url(#fToy)" style="display:none">${art('zq-hat', 100, 90, hat)}</g>
       <text id="ringTxt" x="${POM[0]}" y="${POM[1] + 122}" text-anchor="middle" class="fest-tip">沿著虛線圈畫圈剝皮</text>`);
     const peel = st.$('#peel');
     st.progress(0, 3);
