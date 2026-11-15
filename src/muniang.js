@@ -192,7 +192,7 @@ export function initMuniang(api) {
     enter() {
       paintPeach();
       say(mu.talks ? `歡迎回到瑤池宮。你已經跟母娘說了 ${mu.talks} 天心事。先點燭、上香，心裡有話就按「說心事」。`
-        : '歡迎來到瑤池宮，這裡拜的是瑤池金母，大家叫她「母娘」。先點燭、上香。心累的時候按「說心事」，寫下來摺成紙鶴送給母娘。', 'god');
+        : '歡迎來到瑤池宮，這裡拜的是母娘（瑤池金母）。先點燭、上香，心累的時候按「說心事」，摺一隻紙鶴送給母娘。', 'god');
     },
     leave() { if (draft) { draft = null; craneEl.style.display = 'none'; } },
     god: '母娘', qianName: '母娘籤', qianCount: MU_QIAN.length,
