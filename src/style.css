@@ -261,8 +261,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-tip { position: absolute; top: 16%; left: 16px; right: 16px; text-align: center; color: #FFF1DA; font-size: 18px; line-height: 1.6; margin: 0; text-shadow: 0 1px 3px rgb(0 0 0 / .5); }
 .jt-tip b { color: #FFD77A; }
 .jt-floor { position: absolute; left: 10%; right: 10%; bottom: 23%; height: 60px; border-radius: 50%; background: radial-gradient(ellipse, rgb(255 210 140 / .22), transparent 70%); pointer-events: none; }
-.jt-pair { display: flex; gap: 14px; align-items: center; justify-content: center; height: 120px; margin-bottom: 18%; transition: transform .1s; }
-.jt-pair img { width: 84px; height: auto; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .45)); }
+.jt-pair { position: absolute; left: 0; top: 0; display: flex; gap: 14px; align-items: center; justify-content: center; height: 120px; will-change: transform; pointer-events: none; }
+.jt-pair img { width: 84px; height: auto; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .45)); -webkit-user-drag: none; }
 .jt-pair img.flat { width: 58px; rotate: 90deg; }
 .jt-pair.hold img { animation: jtShake .18s ease-in-out infinite alternate; }
 .jt-pair.ready { filter: drop-shadow(0 0 14px #FFD77A); }
@@ -274,7 +274,12 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-row[hidden] { display: none; }
 .jt-row button { border: 1.5px solid rgb(255 230 190 / .5); background: rgb(0 0 0 / .25); color: #FFF1DA; border-radius: 999px; padding: 8px 18px; font: inherit; font-size: 14px; }
 .jt-row button[hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { .jt-pair.hold img { animation: none; } }
+.jt:focus { outline: none; }
+.jt-swipe { position: absolute; left: 0; right: 0; top: calc(70% + 64px); display: flex; flex-direction: column; align-items: center; gap: 4px; color: #FFE7B0; font-size: 13px; letter-spacing: .1em; pointer-events: none; }
+.jt-swipe[hidden] { display: none; }
+.jt-swipe i { width: 22px; height: 22px; border-left: 3px solid #FFD77A; border-top: 3px solid #FFD77A; rotate: 45deg; animation: jtSwipe 1.3s ease-in-out infinite; }
+@keyframes jtSwipe { 0% { translate: 0 18px; opacity: 0; } 30% { opacity: 1; } 100% { translate: 0 -18px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .jt-pair.hold img, .jt-swipe i { animation: none; } }
 
 /* 專科殿堂的道具層疊在正殿場景上面：只有道具本身可以點，其他地方穿透到下面（蠟燭、香爐、拿工具） */
 #caiHost, #yueHost, #tudiHost, #wenHost, #jiHost, #sanHost, #gyHost, .cai-svg, .yue-svg, .tudi-svg, .wen-svg, .ji-svg, .san-svg, .gy-svg, #ggHost, #zsHost, #tsHost, .gg-svg, .zs-svg, .ts-svg, #muHost, #mlHost, .mu-svg, .ml-svg { pointer-events: none; }
