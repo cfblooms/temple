@@ -50,6 +50,22 @@ export function knock(delay = 0) {
   src.start(t); o.start(t); o.stop(t + 0.1);
 }
 
+// 木魚「叩」：空心木頭的短音，pitch 可以微調讓連敲不單調
+export function muyu(pitch = 1, vol = 1, delay = 0) {
+  const c = ac(); if (!c) return;
+  const t = c.currentTime + delay;
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(560 * pitch, t); o.frequency.exponentialRampToValueAtTime(390 * pitch, t + 0.05);
+  env(c, g, t, 0.55 * vol, 0.002, 0.2);
+  const o2 = c.createOscillator(), g2 = c.createGain();
+  o2.type = 'sine'; o2.frequency.value = 1420 * pitch; env(c, g2, t, 0.12 * vol, 0.001, 0.05);
+  const src = c.createBufferSource(); src.buffer = noiseBuffer(c, 0.05);
+  const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100 * pitch; bp.Q.value = 5;
+  const gn = c.createGain(); env(c, gn, t, 0.5 * vol, 0.001, 0.035);
+  o.connect(g).connect(c.destination); o2.connect(g2).connect(c.destination); src.connect(bp).connect(gn).connect(c.destination);
+  o.start(t); o2.start(t); src.start(t); o.stop(t + 0.3); o2.stop(t + 0.1);
+}
+
 // 磬／頌缽長尾音
 export function bowl() {
   const c = ac(); if (!c) return;
