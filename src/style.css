@@ -504,3 +504,14 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .mu-offer > *, .mu-prop > *, .ml-prop > * { transform-box: fill-box; transform-origin: 50% 100%; }
 .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 @media (prefers-reduced-motion: reduce) { .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: none; } }
+/* 中元普渡法會：寫牌位表單、牌位字 */
+.fest-form { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 2; max-width: 420px; margin: 0 auto; padding: 14px 14px 12px; border-radius: 18px; background: rgb(255 248 236 / .97); color: #3B1F17; box-shadow: 0 6px 20px rgb(30 10 5 / .4); display: flex; flex-direction: column; gap: 10px; }
+.fest-form-h { font-family: var(--font-serif); font-size: 18px; letter-spacing: .08em; }
+.fest-form-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fest-form-chips .chip.on { background: #C8382E; color: #FFF4E0; }
+.fest-form-pv { margin: 0; font-size: 13px; color: #6A4A3A; }
+.fest-form .fest-btn { align-self: center; }
+.zy-tab-txt { font-family: var(--font-serif); font-weight: 900; fill: #2A1208; }
+.zy-tab-by { font-family: var(--font-serif); font-weight: 700; fill: #8A2420; }
+.zy-lamp-txt { font-family: var(--font-serif); font-weight: 900; font-size: 16px; fill: #C8382E; paint-order: stroke; stroke: #FFF4D8; stroke-width: 3px; }
+.fest-form [hidden] { display: none; }

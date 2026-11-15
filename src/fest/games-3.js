@@ -3,9 +3,6 @@ import { art, clamp, rand, pick, place } from './core.js';
 import { backdrop } from './games-1.js';
 import tigerAwakeUrl from '../assets/tiger-awake.webp';
 import tigerHappyUrl from '../assets/tiger-happy.webp';
-import fruitUrl from '../assets/offer/fruit.webp';
-import teaUrl from '../assets/offer/tea.webp';
-import cakesUrl from '../assets/offer/cakes.webp';
 
 const D = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 function flyTo(st, el, from, to, ms, s0 = 1, s1 = 1, done) {
@@ -146,70 +143,7 @@ const qixi = {
   },
 };
 
-/* ================= 中元：普度、放水燈 ================= */
-// 素淨的畫面，不用紅燈籠。供品是分享給無主的好兄弟，水燈照亮水路。
-const basin = `<ellipse cy="6" rx="34" ry="12" fill="#C8C0B0"/><ellipse rx="30" ry="9" fill="#9CC8E0"/><path d="M14 -20 q10 10 2 24" stroke="#FFF" stroke-width="6" fill="none" stroke-linecap="round"/>`;
-const waterLamp = `<path d="M-26 6 L26 6 L18 20 L-18 20Z" fill="#E8D8B8"/><path d="M-20 6 L-16 -26 L16 -26 L20 6Z" fill="#FFF4D8" stroke="#E0C48A" stroke-width="2"/><ellipse cy="-6" rx="12" ry="14" fill="url(#fGlow)"/><path d="M0 -14 c4 4 4 8 0 10 c-4 -2 -4 -6 0 -10z" fill="#FFB43A"/>`;
-
-const zhongyuan = {
-  play(st, o) {
-    const ITEMS = [['fruit', fruitUrl, 64, 74, '水果'], ['cakes', cakesUrl, 70, 62, '餅乾糕點'], ['tea', teaUrl, 66, 47, '清茶'], ['basin', null, 70, 40, '臉盆毛巾']];
-    const SPOTS = [[80, 352], [150, 346], [220, 346], [290, 356]], REST = [[60, 520], [140, 530], [220, 530], [300, 520]];
-    let placed = 0, pos = [0, 0];
-    st.set(`${backdrop('zhongyuan', { wall: ['#D8D4CC', '#B8B0A4'], table: 380, tableColor: ['#B8A07A', '#8A7650'], extra: `<rect x="40" y="120" width="70" height="150" fill="#F4EEE2" stroke="#C8BEB0"/><rect x="250" y="120" width="70" height="150" fill="#F4EEE2" stroke="#C8BEB0"/><text x="180" y="110" text-anchor="middle" class="fest-sign" style="fill:#6A5A4A;font-size:26px">慶讚中元</text>` })}
-      ${SPOTS.map(([x, y], i) => `<ellipse id="zs${i}" cx="${x}" cy="${y + 20}" rx="28" ry="7" fill="none" stroke="#FFF" stroke-width="2" stroke-dasharray="5 5"/>`).join('')}
-      ${ITEMS.map(([k, url, w, h]) => `<g id="zy-${k}" class="fest-hit" filter="url(#fToy)">${hit(w, h)}${url ? img(url, w, h) : art('zy-basin', w, h, basin)}</g>`).join('')}`);
-    ITEMS.forEach(([k], i) => place(st.$('#zy-' + k), ...REST[i]));
-    st.progress(0, 2);
-    st.say('七月十五中元普度，把供品擺上桌，分享給四方沒人祭拜的好兄弟。別忘了<b>臉盆和毛巾</b>，讓祂們遠道而來可以洗洗手。', 'temple');
-    ITEMS.forEach(([k], i) => {
-      const el = st.$('#zy-' + k); let done = false;
-      st.hold(el, {
-        magnet: () => (done ? null : [...SPOTS[placed] || SPOTS[0], 40]),
-        onStart() { if (!done) st.zoom(180, 400, 280); },
-        onMove(x, y) { if (done) return; pos = [x, y]; place(el, x, y); },
-        onUp() {
-          if (done) return; st.reset();
-          const s = SPOTS[placed];
-          if (s && D(pos, s) < 32) { done = true; place(el, ...s); st.$('#zs' + placed).setAttribute('opacity', '0'); placed++; st.sfx.pop(); if (placed === 4) table(); }
-          else flyTo(st, el, pos, REST[i], 300);
-        },
-      });
-    });
-    st.buttons([{ label: '幫我擺好', on: () => { ITEMS.forEach(([k], i) => place(st.$('#zy-' + k), ...SPOTS[i])); SPOTS.forEach((_, i) => st.$('#zs' + i).setAttribute('opacity', '0')); placed = 4; table(); } }]);
-    let tabled = false;
-    function table() {
-      if (tabled) return; tabled = true; st.buttons([]); st.progress(1, 2); st.sfx.bowl();
-      st.say('普度桌擺好了。接著到河邊<b>放水燈</b>，替水裡的好兄弟照亮回家的路。', 'temple');
-      st.later(1600, river);
-    }
-    function river() {
-      const ROCKS = [[110, 470], [250, 380], [140, 270], [240, 180]];
-      let lx = 180, ly = 560, tx = 180, bump = 0;
-      st.set(`${backdrop('zhongyuan-river', { wall: ['#1A2A40', '#2A4A60'], table: 645, extra: `
-        <path d="M60 645 C40 400 120 200 100 0 L260 0 C240 200 320 400 300 645Z" fill="#2E5A7A"/>
-        ${Array.from({ length: 14 }, (_, i) => `<path d="M${rand(80, 260)} ${i * 46} q12 -4 24 0" stroke="#7AB0D0" stroke-width="2" fill="none" opacity=".5"/>`).join('')}` })}
-        ${ROCKS.map(([x, y]) => `<g transform="translate(${x} ${y})"><ellipse rx="26" ry="14" fill="#4A4A50"/><ellipse cx="-6" cy="-4" rx="12" ry="5" fill="#6A6A70"/></g>`).join('')}
-        <g id="wl" filter="url(#fToy)">${art('zy-lamp', 60, 54, waterLamp)}</g>
-        <text x="180" y="560" text-anchor="middle" class="fest-tip">手指在水燈下面左右撥水</text>`);
-      const wl = st.$('#wl');
-      st.say('手指放在<b>水燈下方</b>左右移動撥水，水燈會往手指那邊漂，避開石頭往上游漂。', 'temple');
-      st.touch({ move(p) { tx = clamp(p.x, 80, 280); } });
-      loop(st, (dt, t) => {
-        lx += (tx - lx) * Math.min(1, dt * 1.6); ly -= (bump > 0 ? -40 : 34) * dt; bump -= dt;
-        for (const r of ROCKS) if (bump <= 0 && D([lx, ly], r) < 34) { bump = .5; st.sfx.knock(); lx += lx < r[0] ? -14 : 14; }
-        place(wl, lx, ly + Math.sin(t / 300) * 2, 1, Math.sin(t / 400) * 5);
-        if (Math.random() < .1) st.emit('spark', lx, ly - 6, { vy: -10, vx: rand(-6, 6), life: .8, color: '#FFD07A' });
-        if (ly < 70) {
-          st.progress(2, 2); st.sfx.chime();
-          st.tween(800, (k, e) => wl.setAttribute('opacity', (1 - e).toFixed(2)));
-          st.later(900, () => o.done('水燈漂遠了，替好兄弟照亮了水路。七月也是孝親月，記得打電話給家裡的長輩。'));
-          return false;
-        }
-      });
-    }
-  },
-};
+// 中元普渡法會搬到 zhongyuan.js
 
 /* ================= 中秋：剝柚子、柚子帽給虎爺 ================= */
 const pomelo = (p) => `<circle r="56" fill="#F7EBD0"/>${Array.from({ length: 10 }, (_, i) => `<path d="M0 0 L${(Math.cos(i / 10 * 6.283) * 50).toFixed(1)} ${(Math.sin(i / 10 * 6.283) * 50).toFixed(1)}" stroke="#F0D8A8" stroke-width="2"/>`).join('')}
@@ -328,4 +262,4 @@ const chongyang = {
   },
 };
 
-export const GAMES = { duanwu, qixi, zhongyuan, zhongqiu, chongyang };
+export const GAMES = { duanwu, qixi, zhongqiu, chongyang };
