@@ -650,5 +650,5 @@ export function fahuiNews(state, dayKey) {
   const due = FAHUI.filter((f) => { const r = fh.reg?.[f.id]; return r && r.mode !== 'wait' && r.last !== dayKey; });
   const active = FAHUI.filter((f) => windowAt(f));
   const waitingNow = active.filter((f) => fh.reg?.[f.id]?.mode === 'wait');
-  return { due: due.length > 0 || waitingNow.length > 0, active, line: active.length ? `廟裡正在辦<b>${active.map((f) => f.name).join('、')}</b>，可以到廟埕左邊的<b>法會報名處</b>報名。` : due.length ? `今天的<b>${due[0].name}</b>功課還沒做，記得到<b>法會報名處</b>拜一段。` : '' };
+  return { due: due.length > 0 || waitingNow.length > 0, active, line: active.length ? `廟裡正在辦<b>${active.map((f) => f.name).join('、')}</b>，可以到左邊廂房的<b>法會報名處</b>報名。` : due.length ? `今天的<b>${due[0].name}</b>功課還沒做，記得到<b>法會報名處</b>拜一段。` : '' };
 }
