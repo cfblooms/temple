@@ -1144,7 +1144,6 @@ function switchHall(h) {
 }
 // 神明列：可以左右滑。已開放的殿在前面，其他是「籌備中」
 const SOON = [
-  ['天公', godTian, '玉皇大帝是最大的神，初九天公生要來拜'],
 ];
 function paintGods() {
   const bar = $('#godBar');
