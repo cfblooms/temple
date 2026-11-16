@@ -46,7 +46,7 @@ export const FESTIVALS = [
   { id: 'tiangong', name: '天公生', game: '擺頂桌', when: isLunar(1, 9), date: '正月初九' },
   { id: 'yuanxiao', name: '元宵', game: '放天燈・猜燈謎', when: isLunar(1, 15), date: '正月十五' },
   { id: 'qingming', name: '清明', game: '捲潤餅', when: (d) => d.getMonth() === 3 && d.getDate() === term(d.getFullYear(), 4.81), date: '國曆 4/4 或 4/5' },
-  { id: 'mazu', name: '媽祖生', game: '鑽轎腳', when: isLunar(3, 23), date: '三月廿三' },
+  { id: 'mazu', name: '媽祖生', game: '小遶境・鑽轎腳', when: isLunar(3, 23), date: '三月廿三' },
   { id: 'duanwu', name: '端午', game: '正午立蛋・掛香包', when: isLunar(5, 5), date: '五月初五' },
   { id: 'qixi', name: '七夕', game: '搭鵲橋', when: isLunar(7, 7), date: '七月初七' },
   { id: 'zhongyuan', name: '中元', game: '普度・放水燈', when: isLunar(7, 15), date: '七月十五' },
