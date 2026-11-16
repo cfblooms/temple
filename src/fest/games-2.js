@@ -88,7 +88,10 @@ const tiangong = {
       if (fin) return; fin = true; st.buttons([]); st.sfx.bowl();
       const rain = (n) => { if (n <= 0) return; st.emit('star', rand(40, 320), 40, { vy: rand(50, 110), vx: rand(-10, 10), life: 2.6, color: '#FFE9A0' }); st.later(60, () => rain(n - 1)); };
       rain(40);
-      st.later(1600, () => o.done('頂桌擺好了，天公收到你的心意。傳統是初九凌晨子時拜，拜完三跪九叩，祈求整年平安。'));
+      st.later(1600, () => {
+        o.done('頂桌擺好了，天公收到你的心意。傳統是初九凌晨子時拜，拜完三跪九叩，祈求整年平安。要不要去凌霄寶殿敬天、寫疏文給天公？');
+        st.later(50, () => st.buttons([{ label: '去凌霄寶殿', primary: true, on: () => o.goHall('tg') }, { label: '回到殿裡', on: () => o.goHall(null) }]));
+      });
     }
     st.buttons([{ label: '幫我擺好', on: () => { items.forEach((it) => { const el = st.$('#tg-' + it.id); const t = it.top ? TOP[topFill++] : LOW[lowFill++]; if (t) place(el, ...t); }); TOP.forEach((_, i) => st.$('#ts' + i).setAttribute('opacity', '0')); LOW.forEach((_, i) => st.$('#ls' + i).setAttribute('opacity', '0')); step(); canesUp(); } }]);
   },
