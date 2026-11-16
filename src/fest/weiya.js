@@ -1,4 +1,4 @@
-// 第四批節慶小遊戲：尾牙（臘月十六）夾刈包
+// 尾牙（臘月十六）夾刈包
 import { art, clamp, rand, place } from './core.js';
 import { backdrop } from './games-1.js';
 import godTudi from '../assets/gods/tudigong.webp';
