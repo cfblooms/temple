@@ -118,3 +118,34 @@ export function buzz(pattern) {
   if (muted) return;
   try { navigator.vibrate && navigator.vibrate(pattern); } catch {}
 }
+
+// 布袋戲後場：大鑼「哐」
+export function gong(delay = 0) {
+  const c = ac(); if (!c) return;
+  const t = c.currentTime + delay;
+  [[180, .3, 1.6], [271, .16, 1.2], [409, .1, .9], [630, .05, .6]].forEach(([f, a, d]) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(f * 1.04, t); o.frequency.exponentialRampToValueAtTime(f, t + .25);
+    env(c, g, t, a, 0.004, d);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + d + .1);
+  });
+}
+// 堂鼓「咚」
+export function drum(delay = 0) {
+  const c = ac(); if (!c) return;
+  const t = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(60, t + .18);
+  env(c, g, t, 0.6, 0.003, 0.22);
+  o.connect(g).connect(c.destination); o.start(t); o.stop(t + .3);
+}
+// 台下拍手
+export function clap(n = 8) {
+  const c = ac(); if (!c) return;
+  for (let i = 0; i < n; i++) {
+    const t = c.currentTime + i * (0.07 + Math.random() * 0.06);
+    const src = c.createBufferSource(); src.buffer = noiseBuffer(c, 0.04);
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100 + Math.random() * 600; bp.Q.value = 1.2;
+    const g = c.createGain(); env(c, g, t, 0.35, 0.002, 0.035);
+    src.connect(bp).connect(g).connect(c.destination); src.start(t);
+  }
+}

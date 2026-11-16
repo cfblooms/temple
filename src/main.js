@@ -26,6 +26,8 @@ import { initShoujing } from './shoujing.js';
 import { initFahui, fahuiNews } from './fahui.js';
 import { initJingxin } from './jingxin.js';
 import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
+import { initXitai } from './xitai.js';
+import { wallet } from './wallet.js';
 import { tossJiao } from './jiaotoss.js';
 import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
@@ -92,6 +94,7 @@ const state = {
 };
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+wallet.bind(state, save, { emit });
 // 只在這次參拜有效的狀態
 const session = { lit: false, incenseUntil: 0, xiaoRun: 0, busy: false, drawFails: 0 };
 
@@ -175,7 +178,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fhHost > svg, #jxHost > svg, #fsHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fhHost > svg, #jxHost > svg, #fsHost > svg, #xiHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -455,8 +458,8 @@ function setFace(el, face) {
 async function throwJiao(tip, cancel = true) {
   if (!(await tossJiao({ tip, cancel }))) return null;
   return new Promise((resolve) => {
-    const r = Math.random();
-    const key = r < 0.5 ? 'sheng' : r < 0.75 ? 'xiao' : 'yin';
+    const r = Math.random(), b = STALLS.xi?.mod.boost(hall) || 0; // 酬神戲的好運加成
+    const key = r < 0.5 + b ? 'sheng' : r < 0.75 + b / 2 ? 'xiao' : 'yin';
     const faces = [...JIAO[key].faces]; if (Math.random() < 0.5) faces.reverse();
     const jdy = Math.min(26, HALLS[hall].base - 536);
     const blocks = [
@@ -1017,6 +1020,7 @@ const AREAS = [
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
   { id: 'shop', name: '廟口供品店', x: 24, y: 63, w: 18, main: true, info: '廟口供品店：用福氣幣買供品。' },
+  { id: 'xitai', name: '酬神戲台', x: 22, y: 68.5, w: 16, main: true, info: '酬神戲台：神明生日那天，廟埕搭台演布袋戲。' },
   { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
   { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
 ];
@@ -1043,6 +1047,7 @@ function buildMap() {
     if (a.id === 'backyard') { showStall('jx'); return; }
     if (a.id === 'jieqian') { showStall('jq'); return; }
     if (a.id === 'pond') { showStall('fs'); return; }
+    if (a.id === 'xitai') { showStall('xi'); return; }
     if (a.id === 'wings') { pickHall(); return; }
     if (a.id === 'shop') { shop.openShop(); return; }
     sfx.knock();
@@ -1106,7 +1111,7 @@ function showMap() {
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
   const fn = fahuiNews(state, dayKey()); document.querySelector('.area[data-area="fahui"]')?.classList.toggle('due', fn.due);
-  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>法會報名處</b>、<b>廟公解籤處</b>、<b>許願放生池</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>，最上面的<b>後院靜心閣</b>可以抄經、敲木魚。每逢初一、十五和節日，還有<b>全廟巡禮</b>。' + (fn.line ? '<br>' + fn.line : '')); return; }
+  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>法會報名處</b>、<b>廟公解籤處</b>、<b>許願放生池</b>、<b>酬神戲台</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>，最上面的<b>後院靜心閣</b>可以抄經、敲木魚。每逢初一、十五和節日，還有<b>全廟巡禮</b>。' + (fn.line ? '<br>' + fn.line : '')); return; }
   say(!r.done.length ? '今天有<b>全廟巡禮</b>！像真的去廟裡一樣，照下面的路線走：先拜正殿，再到財神閣、月老閣、福德祠，最後到金亭化金紙，走完有加碼。'
     : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
     : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
@@ -1196,7 +1201,7 @@ const mu = initMuniang({ $, state, save, say, sfx, burst, emit, openSheet, close
 const ml = initMile({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const addFish = (n) => { state.fish += n; save(); updateFish(); };
 const me = () => charById(state.char);
-const xapi = { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, addFish, me, chars: CHARS };
+const xapi = { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, addFish, me, chars: CHARS, lunar, halls: HALLS };
 const jg = initJigai(xapi);
 // 廟埕攤位：不是神明殿，是一整張自己的場景，蓋在正殿上面（神明列最後面、地圖上都進得去）
 const ICON = {
@@ -1212,6 +1217,7 @@ const STALLS = {
   jx: { name: '後院靜心閣', short: '靜心閣', mod: initJingxin(xapi) },
   jq: { name: '廟公解籤處', short: '解籤', mod: initJieqian({ ...xapi, halls: HALLS, goDraw: (h) => { SHOW[h](); setTimeout(openDraw, 500); } }) },
   fs: { name: '許願放生池', short: '放生池', mod: initPond(xapi) },
+  xi: { name: '酬神戲台', short: '戲台', mod: initXitai(xapi) },
 };
 let stall = null;
 function leaveStall() {
@@ -1240,6 +1246,8 @@ $('#basketBtn').addEventListener('click', () => act('offer'));
 const festMod = initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars: { byId: charById, me: () => charById(state.char) }, goHall: (h) => (SHOW[h] || showHall)() });
 SUB.cai = cai; SUB.yue = yue; SUB.tudi = tudi; SUB.wen = wen; SUB.ji = ji; SUB.san = san; SUB.gy = gy; SUB.gg = gg; SUB.zs = zs; SUB.ts = ts; SUB.mu = mu; SUB.ml = ml;
 buildMap();
+// 神明生日：地圖上的戲台標籤改成「今日開演」
+{ const bd = STALLS.xi.mod.birthdayToday(); const el = document.querySelector('[data-area="xitai"]'); if (bd.length && el) { el.textContent = '酬神戲台・今日開演'; el.classList.add('live'); } }
 
 // 打開就直接進上次拜的那位神明；地圖是「逛逛全廟」
 SHOW[HALLS[state.home] ? state.home : 'main']();
