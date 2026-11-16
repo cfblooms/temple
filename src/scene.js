@@ -133,6 +133,8 @@ export const SCENE_SVG = (bg) => `
   </g>
 
   </g>
+  <!-- 從供品店買來、擺上供桌的供品（每殿都有） -->
+  <g id="shrine" pointer-events="none"></g>
   <g id="mainOnlyC">
   <!-- 籤筒（放在左邊地上） -->
   <use href="#tubeScene" filter="url(#cast)" pointer-events="none" aria-hidden="true" transform="translate(0 561) matrix(1 0 -1.3 .26 0 0) translate(0 -561)"/>
