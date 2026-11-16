@@ -180,7 +180,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #fhHost > svg, #jxHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #fhHost > svg, #jxHost > svg, #jqHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -1017,7 +1017,7 @@ const AREAS = [
   { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, main: true, info: '流水席紅圓桌：拜完一起吃平安宴。' },
   { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
   { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, main: true, info: '許願放生池：每天餵魚、放小烏龜、放蓮花水燈，池子會一天天變熱鬧。' },
-  { id: 'jieqian', name: '廟公解籤處', x: 25, y: 70.5, w: 15, main: true, info: '廟公解籤處：問事、抽籤，請廟公阿伯用白話解給你聽。' },
+  { id: 'jieqian', name: '廟公解籤處', x: 64, y: 53, w: 14, main: true, info: '廟公解籤處：問事、抽籤，請廟公阿伯用白話解給你聽。' },
   { id: 'fahui', name: '法會報名處', x: 26, y: 61.6, w: 15, main: true, info: '法會報名處：報名水懺、梁皇寶懺、禮斗法會，寫上家人的名字。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
