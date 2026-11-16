@@ -21,6 +21,7 @@ import { initMile } from './mile.js';
 import { initJigai } from './jigai.js';
 import { initBanquet } from './banquet.js';
 import { initXiaoren } from './xiaoren.js';
+import { initNightMarket } from './nightmarket.js';
 import { initShoujing } from './shoujing.js';
 import { tossJiao } from './jiaotoss.js';
 import { initFest } from './fest/index.js';
@@ -169,7 +170,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #ysHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -903,6 +904,7 @@ const AREAS = [
   { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, info: '許願放生池：把蓮花水燈放進池裡，看它慢慢綻放。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
+  { id: 'yeshi', name: '廟口夜市', x: 68, y: 96.4, w: 13, main: true, info: '廟口夜市：套圈圈、撈金魚、射氣球，贏彩券換點心。' },
   { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
   { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
 ];
@@ -925,9 +927,10 @@ function buildMap() {
     if (a.id === 'banquet') { showStall('bz'); return; }
     if (a.id === 'xiaoren') { showStall('xr'); return; }
     if (a.id === 'shoujing') { showStall('sj'); return; }
+    if (a.id === 'yeshi') { showStall('ys'); return; }
     if (a.id === 'wings') { pickHall(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十三位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人也開張了。`);
+    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十三位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人，還有山門外的廟口夜市也開張了。`);
   });
 }
 
@@ -1087,6 +1090,7 @@ const STALLS = {
   bz: { name: '流水席辦桌', short: '辦桌', icon: ICON.bz, mod: initBanquet(xapi) },
   sj: { name: '青衣阿嬤收驚', short: '收驚', icon: ICON.sj, mod: initShoujing(xapi) },
   xr: { name: '鵝頸橋打小人', short: '打小人', icon: ICON.xr, mod: initXiaoren(xapi) },
+  ys: { name: '廟口夜市', short: '夜市', icon: '', mod: initNightMarket({ ...xapi, godName: (h) => HALLS[h]?.god }) },
 };
 let stall = null;
 function leaveStall() {
