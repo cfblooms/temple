@@ -27,6 +27,7 @@ import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
 import { initTiangong } from './tiangong.js';
 import { initFahui, fahuiNews } from './fahui.js';
+import { initJingxin } from './jingxin.js';
 import { tossJiao } from './jiaotoss.js';
 import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
@@ -179,7 +180,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #fhHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #fhHost > svg, #jxHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -1004,7 +1005,7 @@ const fl = festMod.greetLine(); if (fl) say(`${$('#sayText').innerHTML}<br>${fl}
 // x / y 是標籤中心在地圖上的百分比，w 是寬度百分比（要蓋住原圖上的標籤）
 const AREAS = [
   { id: 'hall', name: '正殿・進入參拜', x: 51.1, y: 31.3, w: 24, main: true },
-  { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, title: true, info: '後院長效靜心閣：點一支 25 分鐘會慢慢融化的蠟燭，配著古寺夜雨聲專心讀書。' },
+  { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, title: true, main: true, info: '後院靜心閣：每天抄一段心經或大悲咒，敲木魚念佛號，讓心靜下來。' },
   { id: 'study', name: '伴讀自習室', x: 70, y: 7.1, w: 19.5, info: '伴讀自習室：番茄鐘燃燭計時，手機橫放就是開運桌面擺飾。' },
   { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
   { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, main: true, info: '兩廂專科殿堂：十多位神明各有一座殿。' },
@@ -1048,10 +1049,11 @@ function buildMap() {
     if (a.id === 'pond') { showStall('fs'); return; }
     if (a.id === 'xitai') { showStall('xi'); return; }
     if (a.id === 'fahui') { showStall('fh'); return; }
+    if (a.id === 'backyard') { showStall('jx'); return; }
     if (a.id === 'wings') { pickHall(); return; }
     if (a.id === 'shop') { shop.openShop(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十四位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人、許願放生池也開張了。`);
+    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十四位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人、許願放生池，還有後院的靜心閣也開張了。`);
   });
 }
 
@@ -1111,7 +1113,7 @@ function showMap() {
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
   const fn = fahuiNews(state, dayKey()); document.querySelector('.area[data-area="fahui"]')?.classList.toggle('due', fn.due);
-  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>廟公解籤處</b>、<b>法會報名處</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>、<b>許願放生池</b>和<b>酬神戲台</b>。每逢初一、十五和節日，還有<b>全廟巡禮</b>。' + (fn.line ? '<br>' + fn.line : '')); return; }
+  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>廟公解籤處</b>、<b>法會報名處</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>、<b>許願放生池</b>和<b>酬神戲台</b>，最上面的<b>後院靜心閣</b>可以抄經、敲木魚。每逢初一、十五和節日，還有<b>全廟巡禮</b>。' + (fn.line ? '<br>' + fn.line : '')); return; }
   say(!r.done.length ? '今天有<b>全廟巡禮</b>！像真的去廟裡一樣，照下面的路線走：先拜正殿，再到財神閣、月老閣、福德祠，最後到金亭化金紙，走完有加碼。'
     : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
     : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
@@ -1218,6 +1220,7 @@ const STALLS = {
   fs: { name: '許願放生池', short: '放生池', mod: initPond(xapi) },
   xi: { name: '酬神戲台', short: '戲台', mod: initXitai(xapi) },
   fh: { name: '法會壇', short: '法會', icon: '', mod: initFahui(xapi) },
+  jx: { name: '後院靜心閣', short: '靜心閣', mod: initJingxin(xapi) },
 };
 let stall = null;
 function leaveStall() {
