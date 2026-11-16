@@ -5,8 +5,9 @@ import { GAMES as G1 } from './games-1.js';
 import { GAMES as G2 } from './games-2.js';
 import { GAMES as G3 } from './games-3.js';
 import { mazu as raojing } from './raojing.js';
+import { GAMES as G4 } from './games-4.js';
 
-const GAMES = { ...G1, ...G2, ...G3, mazu: raojing }; // 媽祖生改成完整的小遶境
+const GAMES = { ...G1, ...G2, ...G3, ...G4, mazu: raojing }; // 媽祖生改成完整的小遶境
 const STAMP_DAYS = 330; // 一年內蓋過的章算「今年已蓋」
 
 export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars, goHall }) {
