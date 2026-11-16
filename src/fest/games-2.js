@@ -1,4 +1,4 @@
-// 第二批節慶小遊戲：天公生、元宵、清明、媽祖生
+// 第二批節慶小遊戲：天公生、元宵、清明
 import { art, clamp, rand, pick, place } from './core.js';
 import { backdrop } from './games-1.js';
 
@@ -229,53 +229,6 @@ const runbing = {
   },
 };
 
-/* ================= 媽祖生：鑽轎腳 ================= */
-const sedan = (n) => `<rect x="-120" y="34" width="240" height="7" rx="3" fill="#7A3A1A"/>
-  <path d="M-44 -70 L44 -70 L54 -60 L-54 -60Z" fill="#F3C64A"/><path d="M0 -96 L-36 -70 L36 -70Z" fill="#E0443E"/><circle cy="-100" r="7" fill="#F3C64A"/>
-  <rect x="-44" y="-60" width="88" height="94" rx="6" fill="#C8302A" stroke="#F3C64A" stroke-width="4"/>
-  <rect x="-28" y="-46" width="56" height="62" rx="4" fill="#FFE9B8"/><circle cy="-22" r="14" fill="#FFE0C4"/><path d="M-18 -30 Q0 -50 18 -30 L14 -26 Q0 -40 -14 -26Z" fill="#F3C64A"/><path d="M-20 16 Q0 -8 20 16Z" fill="#E0443E"/>
-  <text y="30" text-anchor="middle" class="fest-small" fill="#FFE29A">${n}</text>`;
+// 媽祖生改成完整的小遶境，在 raojing.js
 
-const mazu = {
-  play(st, o) {
-    const AV = [180, 560], NAMES = ['大媽', '二媽', '三媽'];
-    let low = false, k = 0, x = 460, phase = 'walk', lowAmt = 0;
-    const me = o.me; mazu.warned = false;
-    st.set(`${backdrop('mazu', { wall: ['#BFE0F2', '#F8E2C0'], table: 470, tableColor: ['#C8B8A0', '#A8987E'], extra: `<g opacity=".8">${[30, 110, 250, 330].map((xx, i) => `<path d="M${xx} 470 v-200" stroke="#7A3A1A" stroke-width="3"/><path d="M${xx} 270 l40 14 l-40 14z" fill="${['#E0443E', '#F3C64A', '#3E9E86', '#E0443E'][i]}"/>`).join('')}</g>${Array.from({ length: 6 }, (_, i) => `<circle cx="${30 + i * 60}" cy="${470 - 8}" r="12" fill="#E0443E" opacity=".4"/>`).join('')}` })}
-      <g id="av"><ellipse cx="0" cy="0" rx="46" ry="8" fill="#000" opacity=".15"/><image href="${me.kneel}" x="-60" y="-130" width="120" height="130" preserveAspectRatio="xMidYMax meet"/></g>
-      <g id="sedan">${art('mz-sedan', 240, 210, sedan(NAMES[0]))}<g class="bearer">${[-100, 100].map((bx) => `<g transform="translate(${bx} 40)"><circle cy="-6" r="10" fill="#FFE0C4"/><rect x="-10" y="4" width="20" height="40" rx="6" fill="#F7F7F7"/><path d="M-6 44v22M6 44v22" stroke="#3A2A2A" stroke-width="6" stroke-linecap="round"/></g>`).join('')}</g></g>
-      <text x="180" y="610" text-anchor="middle" class="fest-tip">按住畫面就會趴低</text>`);
-    const av = st.$('#av'), sd = st.$('#sedan');
-    st.progress(0, 3);
-    st.say('三月廿三媽祖生，神轎出巡！傳說從轎底鑽過去會被保佑。轎子靠近時<b>按住畫面</b>讓自己趴低，等轎子過去再放開。', 'temple');
-    st.touch({ down() { low = true; }, up() { low = false; } });
-    st.buttons([]);
-    const SED_Y = 380; // 轎槓的高度：跪著的頭會撞到，趴低剛好過
-    let last = performance.now();
-    const loop = () => {
-      if (!st.alive || phase === 'end') return;
-      const t = performance.now(), dt = Math.min(.05, (t - last) / 1000); last = t;
-      lowAmt += ((low ? 1 : 0) - lowAmt) * Math.min(1, dt * 10);
-      av.setAttribute('transform', `translate(${AV[0]} ${AV[1] + lowAmt * 26}) rotate(${(lowAmt * -8).toFixed(1)}) scale(1 ${(1 - lowAmt * .38).toFixed(3)})`);
-      const over = Math.abs(x - AV[0]) < 130;
-      // 轎子走到頭上、自己還沒趴低：轎班停下來等
-      const blocked = over && lowAmt < .7 && x > AV[0];
-      if (!blocked) x -= 110 * dt;
-      if (blocked && !mazu.warned) { mazu.warned = true; st.say('轎子在等你，<b>按住畫面</b>趴低！', 'temple'); }
-      const bob = Math.sin(t / 160) * 3;
-      place(sd, x, SED_Y + bob);
-      if (over && lowAmt > .7 && Math.random() < .25) st.emit('star', x + rand(-60, 60), SED_Y + 30, { vy: 40, vx: rand(-10, 10), life: .8 });
-      if (x < -140) {
-        k++; st.progress(k, 3); st.sfx.chime(); st.burst('star', AV[0], AV[1] - 80, 16);
-        mazu.warned = false;
-        if (k >= 3) { phase = 'end'; st.later(600, () => o.done('鑽過大媽、二媽、三媽的轎腳，媽祖保佑你一整年平安順利。')); return; }
-        x = 480; sd.querySelector('text') && (sd.querySelector('text').textContent = NAMES[k]);
-        st.say(`鑽過${NAMES[k - 1]}的轎腳了！下一頂是<b>${NAMES[k]}</b>，等祂靠近再按住。`, 'temple');
-      }
-      requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
-  },
-};
-
-export const GAMES = { tiangong, yuanxiao, qingming: runbing, mazu };
+export const GAMES = { tiangong, yuanxiao, qingming: runbing };
