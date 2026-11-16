@@ -45,7 +45,7 @@ const svgOf = () => `
     <radialGradient id="jxMoon" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#FFF6DC"/><stop offset=".7" stop-color="#F6E2B0"/><stop offset="1" stop-color="#E8C88A"/></radialGradient>
     <radialGradient id="jxSun" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#FFF1C8" stop-opacity=".55"/><stop offset="1" stop-color="#FFF1C8" stop-opacity="0"/></radialGradient>
     <radialGradient id="jxShadow"><stop offset="0" stop-color="#2A0E06" stop-opacity=".45"/><stop offset="1" stop-color="#2A0E06" stop-opacity="0"/></radialGradient>
-    <radialGradient id="jxDim" cx=".5" cy=".62" r=".75"><stop offset="0" stop-color="#140806" stop-opacity=".25"/><stop offset="1" stop-color="#140806" stop-opacity=".82"/></radialGradient>
+    <radialGradient id="jxDim" cx=".5" cy=".62" r=".75"><stop offset="0" stop-color="#140806" stop-opacity=".55"/><stop offset="1" stop-color="#140806" stop-opacity=".92"/></radialGradient>
     <pattern id="jxGrid" width="44" height="44" patternUnits="userSpaceOnUse"><path d="M0 0h44v44" fill="none" stroke="#A08060" stroke-width="1" opacity=".35"/></pattern>
   </defs>
   ${BG ? `<image href="${BG}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>` : `
@@ -137,6 +137,7 @@ export function initJingxin(api) {
   jx.sutra ||= 'xin'; jx.pos ||= { xin: 0, dabei: 0 }; jx.copies ||= { xin: 0, dabei: 0 }; jx.pending ||= 0;
   jx.copy ||= {}; jx.muyu ||= {}; jx.sheng ||= 0; jx.dedic ||= [];
   let mode = 'idle';
+  const desk = (on) => { for (const id of ['jxDeskPaper', 'jxDeskMuyuG']) S(id).style.display = on ? '' : 'none'; };
 
   function paintMe() {
     const c = me(); const w = AV.w * c.scale, h = AV.h * c.scale;
@@ -191,7 +192,7 @@ export function initJingxin(api) {
     const su = SU(), seg = su.segs[jx.pos[jx.sutra]];
     chars = [...seg.join('')]; ci = 0;
     mode = 'trace';
-    S('jxTrace').style.display = '';
+    desk(false); S('jxTrace').style.display = '';
     S('jxTitle').textContent = `${su.name}・第 ${jx.pos[jx.sutra] + 1} / ${su.segs.length} 段`;
     paintLine(); loadChar();
     cam?.zoom(180, 300, 300);
@@ -267,7 +268,7 @@ export function initJingxin(api) {
     if (first) addFish(1);
     jx.pos[k]++;
     let full = false;
-    if (jx.pos[k] >= su.segs.length) { jx.pos[k] = 0; jx.copies[k]++; jx.pending++; full = true; }
+    if (jx.pos[k] >= su.segs.length) { jx.pos[k] = 0; jx.copies[k]++; jx.pending++; (jx.pendSu ||= []).push(su.name); full = true; }
     save();
     sfx.chime(); burst('spark', 180, 300, reduce ? 4 : 18);
     mode = 'segdone';
@@ -280,7 +281,7 @@ export function initJingxin(api) {
   }
   function closeTrace() {
     S('jxTrace').style.display = 'none'; S('jxBrush').style.display = 'none'; S('jxHint').style.display = '';
-    mode = 'idle'; busy = false; cam?.reset();
+    mode = 'idle'; busy = false; cam?.reset(); desk(true);
   }
 
   /* ================= 迴向 ================= */
@@ -305,7 +306,7 @@ export function initJingxin(api) {
       const label = WHO.find((x) => x[0] === who)[1];
       const name = body.querySelector('#jxName').value.trim() || (who === 'self' ? (state.name !== '香客' ? state.name : '我自己') : label);
       const wish = body.querySelector('#jxWish').value.trim() || WISH[who];
-      const sutra = Object.entries(jx.copies).find(([, n]) => n)?.[0] === 'dabei' && jx.sutra === 'dabei' ? '大悲咒' : SU().name;
+      const sutra = (jx.pendSu || []).shift() || SU().name;
       jx.pending--; jx.dedic.unshift({ date: dayKey(), who, name, wish, sutra }); jx.dedic = jx.dedic.slice(0, 30); save();
       closeSheet(); sfx.bowl(); burst('spark', 180, 200, reduce ? 4 : 24);
       openSheet('迴向文', `
@@ -343,7 +344,7 @@ export function initJingxin(api) {
   function startChant([, text], g, bpm) {
     mode = 'chant'; words = [...text]; wi = 0; count = 0; goal = g; stats = { n: 0, p: 0, g: 0 };
     chant = makeChant({ bpm });
-    S('jxChant').style.display = ''; S('jxCue').textContent = '點畫面任何地方，敲一下開始';
+    desk(false); S('jxChant').style.display = ''; S('jxCue').textContent = '點畫面任何地方，敲一下開始';
     paintWords(); paintCount();
     cam?.zoom(180, 360, 320);
     sfx.bowl();
@@ -355,7 +356,7 @@ export function initJingxin(api) {
       if (chant.on) {
         // 停太久就不催，等你再敲
         if (now - lastHit > chant.per * 4) { chant.stop(); S('jxCue').textContent = '慢慢來，準備好再敲'; gd.setAttribute('opacity', '0'); }
-        else { const rr = chant.ring(now, 76, 150); gd.setAttribute('rx', rr.toFixed(1)); gd.setAttribute('ry', (rr * .76).toFixed(1)); gd.setAttribute('opacity', (.25 + .65 * chant.phase(now)).toFixed(2)); }
+        else { const rr = chant.ring(now, 76, 124); gd.setAttribute('rx', rr.toFixed(1)); gd.setAttribute('ry', (rr * .76).toFixed(1)); gd.setAttribute('opacity', (.25 + .65 * chant.phase(now)).toFixed(2)); }
       } else {
         const k = (Math.sin(now / 600) + 1) / 2; gd.setAttribute('rx', (80 + k * 10).toFixed(1)); gd.setAttribute('ry', (61 + k * 8).toFixed(1)); gd.setAttribute('opacity', (.25 + k * .3).toFixed(2));
       }
@@ -398,7 +399,7 @@ export function initJingxin(api) {
   function stopChant(summary) {
     if (mode !== 'chant') return;
     if (summary && count > 0) { finishChant(); return; }
-    crun++; mode = 'idle'; chant?.stop(); S('jxChant').style.display = 'none'; cam?.reset();
+    crun++; mode = 'idle'; chant?.stop(); S('jxChant').style.display = 'none'; cam?.reset(); desk(true);
     if (summary) say('木魚先放著，想敲再來。');
   }
   function finishChant() {
@@ -410,7 +411,7 @@ export function initJingxin(api) {
     burst('spark', 180, 340, reduce ? 4 : 20); sfx.chime();
     const text = words.join('');
     setTimeout(() => {
-      S('jxChant').style.display = 'none'; cam?.reset();
+      S('jxChant').style.display = 'none'; cam?.reset(); desk(true);
       openSheet('今日靜心', `
         <div class="jx-sum"><b>${count}</b><span>聲「${esc(text)}」</span></div>
         <p>心定指數 <b>${calm}%</b>${calm >= 85 ? '，每一下都很穩。' : calm >= 60 ? '，心慢慢靜下來了。' : '，沒關係，下次跟著光圈慢慢敲。'}</p>
@@ -456,7 +457,7 @@ export function initJingxin(api) {
   return {
     enter() {
       paintMe(); mode = 'idle'; crun++;
-      S('jxTrace').style.display = 'none'; S('jxChant').style.display = 'none';
+      S('jxTrace').style.display = 'none'; S('jxChant').style.display = 'none'; desk(true);
       const today = dayKey();
       const su = SU();
       say(jx.copy.last === today && jx.muyu.last === today ? '今天已經抄過經、敲過木魚了。想再坐一下也很好。'
