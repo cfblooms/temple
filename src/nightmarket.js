@@ -4,7 +4,7 @@
 // 手勢都照全廟的規則：拿著的東西（圈圈、紙網、準星）浮在手指上方，手指不會擋住要瞄的東西；玩的時候鏡頭拉近攤位。
 // 場景 360 × 645；SVG 裡的 id 都加 n 前綴。美術還沒生好之前先用程式畫的圖，assets/ys/*.webp 放進來就會自動換上。
 import { wallet } from './wallet.js';
-import { registerItems } from './shop.js';
+import { registerItems, pantry } from './shop.js';
 import { reduce, sleep, tween, shake, pick, svgPt } from './stall.js';
 
 const ART = import.meta.glob('./assets/ys/*.webp', { eager: true, import: 'default' });
@@ -171,8 +171,6 @@ const balloonArt = (c, gold) => `<path d="M0 22q-4 14 2 26" stroke="#FFF4E0" str
 
 export function initNightMarket(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam } = api;
-  // 錢包還沒被主程式接上就自己接（福氣幣存在 state.fu）
-  if (!wallet.balance()) wallet.bind(state, save, { emit }); // 沒接上時 balance() 是 0；接過的話重接也不會改餘額
   const host = $('#ysHost');
   host.innerHTML = svgOf();
   const svg = host.querySelector('svg');
@@ -522,7 +520,7 @@ export function initNightMarket(api) {
         const s = SNACKS.find((x) => x.id === b.dataset.sn); if (!s || ys.tix < s.tix) return;
         const first = !ys.snacks[s.id];
         ys.tix -= s.tix; ys.snacks[s.id] = (ys.snacks[s.id] || 0) + 1;
-        state.pantry = state.pantry || {}; state.pantry[s.id] = (state.pantry[s.id] || 0) + 1; // 跟供品店同一個供品籃
+        pantry.add(s.id); // 跟供品店同一個供品籃
         save(); sfx.pop(); sfx.buzz(10);
         say(`換到一份<b>${s.name}</b>（${s.mean}），放進供品籃了。${first ? '點心圖鑑多一格！' : ''}${s.fav.length && api.godName ? `${s.fav.map((h) => api.godName(h)).filter(Boolean).join('、')}最愛這個。` : ''}`);
       }

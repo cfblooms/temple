@@ -23,6 +23,7 @@
     </button>
     <div class="lunar" id="lunar" role="button" title="點一下預覽節慶廟"></div>
     <div class="top-right">
+      <button type="button" class="fu" id="btnFu" title="福氣幣（點一下逛供品店）" aria-label="福氣幣，點一下打開廟口供品店"><i class="fu-coin" aria-hidden="true">福</i><b id="fuCount">0</b></button>
       <span class="fish" title="開運小魚乾" aria-label="開運小魚乾數量"><svg viewBox="0 0 24 14" aria-hidden="true"><path d="M2 7c4-6 11-6 15 0-4 6-11 6-15 0z" fill="var(--gold)"/><path d="M17 7l5-4v8z" fill="var(--gold)"/><circle cx="6" cy="6" r="1.2" fill="var(--ink)"/></svg><b id="fishCount">0</b></span>
       <button class="icon-btn map-btn" id="btnMap" aria-label="逛廟：打開全廟地圖"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="2"/></svg>逛廟</button>
       <button class="icon-btn" id="btnMute" aria-label="關閉聲音">聲</button>
@@ -58,6 +59,7 @@
       <div id="xrHost" hidden></div>
       <div id="ysHost" hidden></div>
       <canvas id="fx" aria-hidden="true"></canvas>
+      <button type="button" class="basket-chip" id="basketBtn" aria-label="供品籃：把供品擺上供桌" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10a5 5 0 0 1 10 0" fill="none" stroke="#8A5A32" stroke-width="1.8"/><path d="M3 10h18l-2 10H5z" fill="#D9A55A" stroke="#8A5A32" stroke-width="1.2"/><path d="M6 13h12M7 16h10" stroke="#8A5A32" stroke-width="1"/><circle cx="9" cy="8.6" r="2.2" fill="#E0443E"/><circle cx="14.5" cy="8.2" r="2.4" fill="#F28A1E"/></svg><span>供品</span><i id="basketN" hidden>0</i></button>
       <div class="gods" id="godBar" role="tablist" aria-label="今天要拜哪位神明"></div>
     </div>
   </main>
