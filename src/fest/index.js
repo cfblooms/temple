@@ -1,12 +1,13 @@
 // 節慶入口：場景左上角的燈籠按鈕 → 節慶印章冊；節日當天可以玩那個節慶的小遊戲並蓋章。
 // 平常日也能「試玩」（不蓋章），方便預覽。
-import { FESTIVALS, festById, todayFest, nextDates, makeStage, lunarOf } from './core.js';
+import { FESTIVALS, festById, todayFest, todayFests, nextDates, makeStage, lunarOf } from './core.js';
 import { GAMES as G1 } from './games-1.js';
 import { GAMES as G2 } from './games-2.js';
 import { GAMES as G3 } from './games-3.js';
 import { GAMES as GW } from './weiya.js';
+import { GAMES as GFP } from './games-fengpao.js';
 
-const GAMES = { ...G1, ...G2, ...G3, ...GW };
+const GAMES = { ...G1, ...G2, ...G3, ...GW, ...GFP };
 const STAMP_DAYS = 330; // 一年內蓋過的章算「今年已蓋」
 
 export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars, goHall }) {
@@ -22,13 +23,15 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     return (Date.now() - new Date(y, m - 1, d).getTime()) / 864e5 < STAMP_DAYS;
   };
   const playable = (id) => !!GAMES[id];
+  // 今天可以玩的節慶（同一天可能不只一個）
+  const todayList = () => todayFests().filter((x) => playable(x.f.id));
 
   function paintChip() {
-    const t = todayFest();
-    if (t && playable(t.f.id)) {
+    const ts = todayList(), t = ts[0];
+    if (t) {
       btn.classList.add('today');
-      $('#festTxt').textContent = t.f.id === 'chunjie' && t.L ? `初${'一二三四五'[t.L.day - 1]}・${GAMES.chunjie.days[t.L.day - 1]}` : `今天${t.f.name}`;
-      btn.setAttribute('aria-label', `今天是${t.f.name}，來玩${t.f.game}`);
+      $('#festTxt').textContent = t.f.id === 'chunjie' && t.L ? `初${'一二三四五'[t.L.day - 1]}・${GAMES.chunjie.days[t.L.day - 1]}` : `今天${t.f.name}${ts.length > 1 ? `＋${ts.length - 1}` : ''}`;
+      btn.setAttribute('aria-label', `今天是${ts.map((x) => x.f.name).join('、')}，來玩${ts.map((x) => x.f.game).join('、')}`);
       return;
     }
     btn.classList.remove('today');
@@ -40,26 +43,26 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
 
   const md = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
   function openAlbum() {
-    const t = todayFest(), nd = nextDates();
+    const ts = todayList(), isToday = (id) => ts.some((x) => x.f.id === id), nd = nextDates();
     const list = [...FESTIVALS].sort((a, b) => (nd[a.id]?.days ?? 999) - (nd[b.id]?.days ?? 999));
     const got = FESTIVALS.filter((f) => stamped(f.id)).length;
     const body = openSheet('節慶印章冊', `
       <p class="hint">每到一個節慶，當天來廟裡玩那天的小遊戲就能蓋一枚章，一年集滿 ${FESTIVALS.length} 枚。節慶前三天，左上角的燈籠會開始倒數。今年已經蓋了 <b>${got}</b> 枚。</p>
-      ${t && playable(t.f.id) ? `<button type="button" class="btn" data-go="${t.f.id}">今天是${t.f.name}：${t.f.game}</button>` : ''}
+      ${ts.map((x) => `<button type="button" class="btn" data-go="${x.f.id}">今天是${x.f.name}：${x.f.game}${stamped(x.f.id) && state.festStamps[x.f.id] === dayKey() ? '（已蓋章）' : ''}</button>`).join('')}
       <div class="stamp-grid">${list.map((f) => {
         const n = nd[f.id], s = stamped(f.id);
-        return `<div class="stamp${s ? ' got' : ''}${t?.f.id === f.id ? ' now' : ''}">
+        return `<div class="stamp${s ? ' got' : ''}${isToday(f.id) ? ' now' : ''}">
           <div class="stamp-seal" aria-hidden="true">${s ? f.name : ''}</div>
           <div class="stamp-info"><b>${f.name}</b><span>${f.game}</span><small>${f.date}${n ? `・${n.days === 0 ? '今天' : `${md(n.date)}，還有 ${n.days} 天`}` : ''}</small></div>
-          ${playable(f.id) ? `<button type="button" class="chip" data-try="${f.id}">${t?.f.id === f.id ? '開始' : '試玩'}</button>` : '<span class="chip soon">籌備中</span>'}
+          ${playable(f.id) ? `<button type="button" class="chip" data-try="${f.id}">${isToday(f.id) ? '開始' : '試玩'}</button>` : '<span class="chip soon">籌備中</span>'}
         </div>`;
       }).join('')}</div>
       <p class="muted small">試玩不會蓋章，只有節日當天玩才會蓋。</p>`);
     body.addEventListener('click', (e) => {
       const b = e.target.closest('[data-go],[data-try]'); if (!b) return;
       const id = b.dataset.go || b.dataset.try;
-      if (id === 'chunjie' && !(t && t.f.id === 'chunjie')) { pickDay(); return; }
-      closeSheet(); start(id, { real: t?.f.id === id });
+      if (id === 'chunjie' && !isToday('chunjie')) { pickDay(); return; }
+      closeSheet(); start(id, { real: isToday(id) });
     });
   }
   // 春節試玩：選初幾
@@ -110,15 +113,16 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
 
   btn.addEventListener('click', () => {
     sfx.knock();
-    const t = todayFest();
-    if (t && playable(t.f.id)) start(t.f.id, { real: true }); else openAlbum();
+    const ts = todayList();
+    // 同一天有好幾個節慶：打開印章冊讓人選
+    if (ts.length === 1) start(ts[0].f.id, { real: true }); else openAlbum();
   });
   paintChip();
   return {
     openAlbum, start, stop, paintChip,
     greetLine() { // 進廟的招呼加一句節慶
-      const t = todayFest();
-      if (t && playable(t.f.id)) return state.festStamps[t.f.id] === dayKey() ? '' : `今天是<b>${t.f.name}</b>，點左上角的燈籠玩「${t.f.game}」，可以蓋節慶印章。`;
+      const ts = todayList();
+      if (ts.length) { const left = ts.filter((x) => state.festStamps[x.f.id] !== dayKey()); return left.length ? `今天是<b>${left.map((x) => x.f.name).join('</b>和<b>')}</b>，點左上角的燈籠玩「${left.map((x) => x.f.game).join('」「')}」，可以蓋節慶印章。` : ''; }
       const nd = nextDates(), soon = FESTIVALS.find((f) => nd[f.id] && nd[f.id].days > 0 && nd[f.id].days <= 3);
       return soon ? `再 ${nd[soon.id].days} 天就是<b>${soon.name}</b>了，當天記得回來玩「${soon.game}」。` : '';
     },
