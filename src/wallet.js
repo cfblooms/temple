@@ -11,7 +11,7 @@ const tell = (d, why) => subs.forEach((f) => { try { f(st.fu, d, why); } catch {
 
 export const wallet = {
   bind(state, save, opts = {}) {
-    st = state; persist = save; fx = opts;
+    st = state; persist = save; fx = { ...fx, ...opts }; // 可以重複 bind，選項會合併
     if (typeof st.fu !== 'number' || !Number.isFinite(st.fu)) { st.fu = START; persist(); }
     tell(0, 'bind');
   },
