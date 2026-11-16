@@ -78,7 +78,7 @@ export function initCaiku({ svg, state, save, say, sfx, burst, emit, openSheet, 
   const layer = mk('g', { id: 'kuLayer', style: 'display:none' });
   S('cAvatar').before(layer);
   const TABLE = [182, 408]; // 供桌前緣
-  const TAB = ROADS.map((r, i) => ({ ...r, x: [182, 128, 236, 101, 263][i], y: 378 + [0, 6, 6, 14, 14][i] })); // 中路在中間，兩邊往外排
+  const TAB = ROADS.map((r, i) => ({ ...r, x: [182, 142, 222, 104, 260][i], y: [350, 358, 358, 370, 370][i] })); // 中路在中間，兩邊往外排
 
   /* ---------- 財庫畫面（表單裡） ---------- */
   function vaultSvg(fill) {

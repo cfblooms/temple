@@ -10,6 +10,7 @@ import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
 import { tossJiao } from './jiaotoss.js';
 import { initCaiku } from './caiku.js';
+import { wallet, EARN } from './wallet.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -109,7 +110,8 @@ export function initCaishen(api) {
     cai.rubDay = t;
     const bonus = Math.min(cai.streak - 1, 6) * 10;
     addWealth(88 + bonus, 304, 520);
-    say(`摸到金元寶了！今日財氣 +88${bonus ? `，連續 ${cai.streak} 天再加 ${bonus}` : ''}。${cai.streak >= 7 ? '連續一整週，財神爺都記住你了。' : '明天再來，連續天數越多，財氣越高。'}`, 'god');
+    wallet.earn(EARN.ingot, '摸財神元寶', 304, 490);
+    say(`摸到金元寶了！今日財氣 +88${bonus ? `，連續 ${cai.streak} 天再加 ${bonus}` : ''}。${cai.streak >= 7 ? '連續一整週，財神爺都記住你了。' : '明天再來，連續天數越多，財氣越高。'}福氣幣 +${EARN.ingot}。`, 'god');
   }
   ingot.addEventListener('pointerdown', (e) => { e.preventDefault(); ingot.setPointerCapture(e.pointerId); const p = pt(e); rub = { x: p.x, y: p.y, d: 0, last: 0 }; cam?.zoom(304, 520, 200); });
   ingot.addEventListener('pointermove', (e) => {

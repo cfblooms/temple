@@ -25,6 +25,8 @@ import { initShoujing } from './shoujing.js';
 import { tossJiao } from './jiaotoss.js';
 import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
+import { wallet, EARN } from './wallet.js';
+import { initShop, pantry, itemById, favOf } from './shop.js';
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
@@ -211,6 +213,17 @@ paintAvatar();
 function updateFish() { $('#fishCount').textContent = state.fish; }
 updateFish();
 
+/* ---------- 福氣幣（全廟共用的遊戲幣，見 wallet.js） ---------- */
+wallet.bind(state, save, {
+  emit,
+  short: (need) => { sfx.knock(); say(`福氣幣還差 <b>${need}</b> 枚。每天上香、到各殿上香、摸財神元寶都會得到福氣幣。`); },
+});
+wallet.onChange((n, d) => {
+  $('#fuCount').textContent = n;
+  if (d) { const el = $('#btnFu'); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+});
+const paintBasket = () => { const n = pantry.total(); $('#basketN').textContent = n; $('#basketN').hidden = !n; };
+
 const SUB = {}; // 專科殿堂模組（財神、月老、土地公、文昌、濟公），初始化後填入
 const drawnToday = () => (hall === 'main' ? !!state.fortune : SUB[hall].hasQianToday());
 function markNext() {
@@ -368,8 +381,11 @@ function plantIncense() {
   burst('spark', 182, 305 + HALLS[hall].burnerDy, 10);
   runIncense();
   say('三炷清香插進香爐，青煙裊裊往上飄。可以抽籤問事，拜完也可以去廟埕的金爐<b>燒金紙</b>。');
+  // 每座殿當天第一次上香，福氣幣 +5（鼓勵到各殿走走）
+  if (!state.fuHalls || state.fuHalls.date !== dayKey()) state.fuHalls = { date: dayKey(), list: [] };
+  if (!state.fuHalls.list.includes(hall)) { state.fuHalls.list.push(hall); save(); wallet.earn(EARN.hall, `${HALLS[hall].god}上香`, 182, 290 + HALLS[hall].burnerDy); }
   const gain = checkin(); // 不管拜哪位神明，上完香就算今天參拜，連續天數 +1
-  if (gain) setTimeout(() => { burst('fish', 182, 470, Math.min(gain, 5)); say(`今天的參拜完成！已連續參拜 <b>${state.streak}</b> 天，虎爺叼來開運小魚乾 ×${gain}。${state.streak % 7 === 0 ? '連續七天，加碼！' : ''}接著可以抽籤問事。`, 'cat'); }, 1900);
+  if (gain) setTimeout(() => { burst('fish', 182, 470, Math.min(gain, 5)); say(`今天的參拜完成！已連續參拜 <b>${state.streak}</b> 天，虎爺叼來開運小魚乾 ×${gain}，還有福氣幣 +${checkin.fu}。${state.streak % 7 === 0 ? '連續七天，加碼！' : ''}福氣幣可以到<b>廟口供品店</b>買供品。`, 'cat'); }, 1900);
   markNext();
 }
 let incenseRun = 0;
@@ -659,6 +675,8 @@ function checkin() {
   let gain = state.streak % 7 === 0 ? 5 : 1;
   if (isYa) gain *= 2;
   state.fish += gain; save(); updateFish();
+  checkin.fu = EARN.checkin + (state.streak % 7 === 0 ? EARN.week : 0);
+  wallet.earn(checkin.fu, '每日上香');
   return gain;
 }
 
@@ -668,7 +686,7 @@ function petTiger() {
   const gain = checkin();
   if (gain) {
     burst('fish', 130, 430, Math.min(gain, 5));
-    say(`虎爺伸了個懶腰，叼來今天的開運小魚乾 ×${gain}！${state.streak % 7 === 0 ? '連續七天，加碼！' : `已連續參拜 ${state.streak} 天。`}${isYa ? '今天做牙，虎爺加菜雙倍。' : ''}點右上角小魚乾可以餵虎爺。`, 'cat');
+    say(`虎爺伸了個懶腰，叼來今天的開運小魚乾 ×${gain}、福氣幣 +${checkin.fu}！${state.streak % 7 === 0 ? '連續七天，加碼！' : `已連續參拜 ${state.streak} 天。`}${isYa ? '今天做牙，虎爺加菜雙倍。' : ''}點右上角小魚乾可以餵虎爺。`, 'cat');
   } else {
     const lines = ['呼嚕呼嚕……（虎爺翻出肚子）', '虎爺用頭蹭了蹭你的手。', '虎爺瞇起眼睛，鈴鐺叮了一聲。', '虎爺說：今天也辛苦了喵。', '虎爺把尾巴捲在你手上，看起來很放心。'];
     say(lines[Math.floor(Math.random() * lines.length)], 'cat');
@@ -735,35 +753,78 @@ function showOffers(anim) {
   }));
 }
 showOffers();
+/* ---------- 供品店買來的供品：每殿供桌最多再擺 4 樣（當天有效） ---------- */
+const SHRINE_MAX = 4;
+// [中心 x, 底部 y]：正殿中間已經有鮮花水果，買的擺在蠟燭外側；其他殿擺在香爐兩邊
+const SHRINE_SLOTS = { main: [[80, 389], [285, 389], [150, 395], [216, 395]], other: [[122, 390], [242, 390], [86, 393], [278, 393]] };
+const shrineSlots = () => SHRINE_SLOTS[hall === 'main' ? 'main' : 'other'];
+function shrineList(h = hall) {
+  if (!state.shrine || state.shrine.date !== dayKey()) state.shrine = { date: dayKey(), halls: {} };
+  return state.shrine.halls[h] || (state.shrine.halls[h] = []);
+}
+function paintShrine(pop = -1) {
+  const slots = shrineSlots();
+  S('shrine').setAttribute('transform', `translate(0 ${HALLS[hall].burnerDy})`);
+  S('shrine').innerHTML = shrineList().map((id, i) => {
+    const it = itemById(id); if (!it || !slots[i]) return '';
+    const [cx, by] = slots[i], w = Math.round(it.w * 1.4), h = it.tall ? 80 : Math.round(w * 1.3);
+    return `<g class="offer${i === pop ? ' pop' : ''}"><ellipse cx="${cx}" cy="${by - 1.5}" rx="${(w * 0.46).toFixed(1)}" ry="2.6" fill="url(#contact)"/>
+      <image href="${it.img}" x="${cx - w / 2}" y="${by - h}" width="${w}" height="${h}" preserveAspectRatio="xMidYMax meet" filter="url(#lit)"/></g>`;
+  }).join('');
+}
+
 let offerUI = null;
 function offerGifts() {
   if (offerUI) return;
-  const done = offeredToday();
-  if (done.length === OFFERS.length) {
-    zoomIn(); burst('heart', 182, 370, 6);
-    say('今天的供品都擺好了：鮮花、水果、清茶、糕餅。神明收到你的心意。');
-    zoomOut(2200); return;
+  const main = hall === 'main', done = main ? offeredToday() : [];
+  const basicsLeft = main && done.length < OFFERS.length;
+  if (!basicsLeft && !pantry.total()) {
+    shop.openShop({
+      back: () => { if (pantry.total()) offerGifts(); },
+      line: main ? '今天的鮮花、水果、清茶、糕餅都擺好了。想多供一點，在供品店挑神明愛吃的，買好按下面的按鈕去擺。'
+        : `供品籃是空的。挑幾樣${HALLS[hall].god}愛吃的，買好按下面的按鈕回來擺上供桌。`,
+    });
+    return;
   }
   session.busy = true; camera(altarView(58)); // 下面有供品盤，鏡頭往下移一點，讓供桌在畫面上半部
   const tray = document.createElement('div');
   tray.className = 'offer-tray'; tray.id = 'offerTray';
-  tray.innerHTML = `<p class="offer-tip">按住供品拖到供桌上，或點一下</p><div class="offer-items">${OFFERS.map((o) => `<button type="button" class="offer-item${done.includes(o.id) ? ' done' : ''}" data-offer="${o.id}" aria-label="把${o.name}擺上供桌">
-      <img src="${o.img}" alt="" draggable="false"><b>${o.name}</b><small>${o.mean}</small></button>`).join('')}</div>
-    <button type="button" class="offer-close" id="offerClose">先這樣</button>`;
   $('#sceneWrap').append(tray);
   offerUI = { tray, drag: null };
-  say('供桌拉近了。把下面的供品<b>拖到供桌上</b>（點一下也會自己擺好）。鮮花放兩邊，水果、清茶、糕餅擺中間。');
+  renderTray();
+  const fav = favHere();
+  say(main
+    ? '供桌拉近了。把下面的供品<b>拖到供桌上</b>（點一下也會自己擺好）。鮮花放兩邊，水果、清茶、糕餅擺中間，供品店買的擺在蠟燭外側。'
+    : `${HALLS[hall].god}的供桌拉近了。把供品籃裡的東西<b>拖到供桌上</b>。${fav.length ? `${HALLS[hall].god}最愛${fav.map((x) => x.name).join('、')}。` : ''}`);
   tray.addEventListener('pointerdown', offerDown);
   tray.addEventListener('click', (e) => {
     if (e.target.closest('#offerClose')) { endOffer(); return; }
+    if (e.target.closest('#offerShop')) { endOffer(0); shop.openShop({ back: () => { if (pantry.total() || (hall === 'main' && offeredToday().length < OFFERS.length)) offerGifts(); } }); return; }
     const b = e.target.closest('.offer-item'); if (!b || b.classList.contains('done')) return;
-    if (e.detail === 0) placeOffer(b.dataset.offer); // 鍵盤
+    if (e.detail === 0) placeAny(b); // 鍵盤
   });
 }
+const favHere = () => favOf(hall);
+function renderTray() {
+  const main = hall === 'main', done = main ? offeredToday() : [], full = shrineList().length >= SHRINE_MAX;
+  const basics = main && done.length < OFFERS.length ? OFFERS.map((o) => `<button type="button" class="offer-item${done.includes(o.id) ? ' done' : ''}" data-offer="${o.id}" aria-label="把${o.name}擺上供桌">
+      <img src="${o.img}" alt="" draggable="false"><b>${o.name}</b><small>${o.mean}</small></button>`).join('') : '';
+  const bag = pantry.list().filter((it) => !it.tags.includes('kuqian')).map((it) => `<button type="button" class="offer-item bag${full ? ' done' : ''}${it.fav.includes(hall) ? ' fav' : ''}" data-item="${it.id}" aria-label="把${it.name}擺上供桌，還有 ${pantry.count(it.id)} 份">
+      <img src="${it.img}" alt="" draggable="false"><b>${it.name}</b><small>${it.fav.includes(hall) ? '最愛' : it.mean}</small><i class="offer-n">${pantry.count(it.id)}</i></button>`).join('');
+  offerUI.tray.innerHTML = `<p class="offer-tip">${full ? `今天這張供桌已經擺了 ${SHRINE_MAX} 樣買來的供品` : '按住供品拖到供桌上，或點一下'}</p>
+    <div class="offer-items">${basics}${bag}<button type="button" class="offer-item shop-tile" id="offerShop" aria-label="去廟口供品店買供品"><span class="shop-ico" aria-hidden="true">店</span><b>供品店</b><small>福氣幣 ${wallet.balance()}</small></button></div>
+    <button type="button" class="offer-close" id="offerClose">先這樣</button>`;
+}
+function trayPick(b) {
+  if (b.dataset.offer) { const o = OFFERS.find((x) => x.id === b.dataset.offer); return { ...o, place: () => placeOffer(o.id) }; }
+  const it = itemById(b.dataset.item), slot = shrineSlots()[shrineList().length] || shrineSlots()[0];
+  return { name: it.name, img: it.img, slots: [[slot[0], slot[1] - 14 + HALLS[hall].burnerDy]], place: () => placeItem(it.id) };
+}
+const placeAny = (b) => trayPick(b).place();
 function offerDown(e) {
-  const b = e.target.closest('.offer-item'); if (!b || b.classList.contains('done') || offerUI.drag) return;
+  const b = e.target.closest('.offer-item'); if (!b || b.id === 'offerShop' || b.classList.contains('done') || offerUI.drag) return;
   e.preventDefault(); b.setPointerCapture(e.pointerId);
-  const o = OFFERS.find((x) => x.id === b.dataset.offer);
+  const o = trayPick(b);
   const ghost = document.createElement('img');
   ghost.src = o.img; ghost.className = 'offer-ghost'; ghost.alt = '';
   $('#sceneWrap').append(ghost);
@@ -773,10 +834,11 @@ function offerDown(e) {
   const move = (ev) => { if (Math.hypot(ev.clientX - d.sx, ev.clientY - d.sy) > 8) d.moved = true; moveGhost(ev); };
   const up = (ev) => {
     b.removeEventListener('pointermove', move); b.removeEventListener('pointerup', up); b.removeEventListener('pointercancel', up);
+    if (!offerUI) { ghost.remove(); return; }
     offerUI.drag = null; b.classList.remove('lifting'); aimAt(null); d.run = -1;
-    const p = ghostPt(ev);
-    const onTable = p.x > TABLE.x0 && p.x < TABLE.x1 && p.y > TABLE.y0 && p.y < TABLE.y1;
-    if (!d.moved || onTable) { ghost.remove(); placeOffer(o.id); return; }
+    const p = ghostPt(ev), dy = HALLS[hall].burnerDy;
+    const onTable = p.x > TABLE.x0 - 40 && p.x < TABLE.x1 + 50 && p.y > TABLE.y0 + dy && p.y < TABLE.y1 + dy;
+    if (!d.moved || onTable) { ghost.remove(); o.place(); return; }
     ghost.classList.add('back'); setTimeout(() => ghost.remove(), 250);
     say(`再往上一點，把${o.name}放到<b>供桌</b>上（金色虛線圈的位置）。`);
   };
@@ -799,13 +861,39 @@ function placeOffer(id) {
   sfx.pop(); sfx.buzz(10);
   o.slots.forEach(([x, y]) => burst('spark', x, y - 8, 6));
   emit('text', 182, 412, { text: `${o.name}・${o.mean}`, size: 12 });
-  const b = offerUI && offerUI.tray.querySelector(`[data-offer="${id}"]`); if (b) b.classList.add('done');
+  if (offerUI) renderTray();
   const left = OFFERS.filter((x) => !state.offer.items.includes(x.id));
   if (left.length) { say(`${o.name}擺好了，${o.mean}。還有${left.map((x) => x.name).join('、')}。`); return; }
+  const more = pantry.total();
   setTimeout(() => {
-    endOffer(1800); bow(); sfx.chime(); S('halo').setAttribute('opacity', '.7'); burst('heart', 182, 340, 6);
-    say('供品都擺好了：鮮花表敬意、水果求平安、清茶清心、糕餅圓滿。雙手合十拜一拜。');
+    if (!more) endOffer(1800);
+    bow(); sfx.chime(); S('halo').setAttribute('opacity', '.7'); burst('heart', 182, 340, 6);
+    say(`供品都擺好了：鮮花表敬意、水果求平安、清茶清心、糕餅圓滿。雙手合十拜一拜。${more ? '供品籃裡還有買來的供品，也可以擺上去。' : ''}`);
   }, 500);
+}
+function placeItem(id) {
+  const it = itemById(id), list = shrineList();
+  if (list.length >= SHRINE_MAX) { say(`供桌上已經擺了 ${SHRINE_MAX} 樣買來的供品，明天再來換新的吧。`); return; }
+  if (!pantry.take(id)) return;
+  list.push(id); save(); paintShrine(list.length - 1); paintBasket();
+  const [cx, by] = shrineSlots()[list.length - 1], dy = HALLS[hall].burnerDy;
+  sfx.pop(); sfx.buzz(10);
+  burst('spark', cx, by - 10 + dy, 6);
+  emit('text', 182, 412 + dy, { text: `${it.name}・${it.mean}`, size: 12 });
+  if (offerUI) renderTray();
+  const god = HALLS[hall].god;
+  if (it.fav.includes(hall)) {
+    const back = Math.round(it.price / 2);
+    setTimeout(() => {
+      bow(); sfx.chime(); sfx.buzz([10, 40, 10]); burst('heart', 182, 300, 8);
+      if (hall === 'main') S('halo').setAttribute('opacity', '.8');
+      wallet.earn(back, `${god}回禮`, 182, 270);
+      say(`${god}最愛${it.name}了！神像好像笑了一下，回禮福氣幣 +${back}。`, 'god');
+    }, 350);
+    return;
+  }
+  const fav = favHere().filter((x) => !list.includes(x.id));
+  say(`${it.name}擺上${god}的供桌了，${it.mean}。${fav.length ? `悄悄說：${god}最愛的是${fav.map((x) => x.name).join('、')}。` : ''}`);
 }
 function endOffer(delay = 300) {
   if (!offerUI) return;
@@ -905,6 +993,7 @@ const AREAS = [
   { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, info: '許願放生池：把蓮花水燈放進池裡，看它慢慢綻放。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
+  { id: 'shop', name: '廟口供品店', x: 24, y: 63, w: 18, main: true, info: '廟口供品店：用福氣幣買供品。' },
   { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
   { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
 ];
@@ -928,6 +1017,7 @@ function buildMap() {
     if (a.id === 'xiaoren') { showStall('xr'); return; }
     if (a.id === 'shoujing') { showStall('sj'); return; }
     if (a.id === 'wings') { pickHall(); return; }
+    if (a.id === 'shop') { shop.openShop(); return; }
     sfx.knock();
     say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十三位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人也開張了。`);
   });
@@ -1010,6 +1100,7 @@ function switchHall(h) {
   for (const id of ['mainOnlyA', 'mainOnlyB', 'mainOnlyC']) S(id).style.display = h === 'main' ? '' : 'none';
   S('avatarG').setAttribute('transform', `translate(0 ${dy})`);
   S('burnerG').setAttribute('transform', `translate(0 ${H.burnerDy})`);
+  paintShrine(); $('#basketBtn').hidden = false;
   for (const k of ['L', 'R']) { S('flame' + k).setAttribute('opacity', lit[k] ? '1' : '0'); if (!lit[k]) S('glow' + k).setAttribute('opacity', '0'); }
   if (session.incenseUntil > Date.now()) runIncense(); else { incenseRun++; S('incense').style.display = 'none'; }
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
@@ -1104,12 +1195,16 @@ function showStall(k) {
   for (const h of ['cai', 'yue', 'tudi', 'wen', 'ji', 'san', 'gy', 'gg', 'zs', 'ts', 'mu', 'ml']) { $(`#${h}Host`).hidden = true; $(`#${h}Bar`).hidden = true; }
   $('#jgHost').hidden = true; jg.reset();
   for (const s of Object.keys(STALLS)) { $(`#${s}Host`).hidden = s !== k; $(`#${s}Bar`).hidden = s !== k; }
-  $('#sceneHost').hidden = true;
+  $('#sceneHost').hidden = true; $('#basketBtn').hidden = true;
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
   sfx.bowl(); paintGods();
   STALLS[k].mod.enter();
 }
 document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', showMap)); // 攤位從地圖進來，也回地圖
+const shop = initShop({ state, save, openSheet, closeSheet, say, sfx, esc, hall: () => hall, godName: (h) => HALLS[h]?.god, onChange: () => { paintBasket(); if (offerUI) renderTray(); } });
+paintBasket();
+$('#btnFu').addEventListener('click', () => { if (offerUI) endOffer(0); shop.openShop(); });
+$('#basketBtn').addEventListener('click', () => act('offer'));
 const festMod = initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars: { byId: charById, me: () => charById(state.char) }, goHall: (h) => (SHOW[h] || showHall)() });
 SUB.cai = cai; SUB.yue = yue; SUB.tudi = tudi; SUB.wen = wen; SUB.ji = ji; SUB.san = san; SUB.gy = gy; SUB.gg = gg; SUB.zs = zs; SUB.ts = ts; SUB.mu = mu; SUB.ml = ml;
 buildMap();
