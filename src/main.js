@@ -107,7 +107,7 @@ function lunar(d = new Date()) {
 const L = lunar();
 const isYa = !!L && (L.day === 2 || L.day === 16); // 初二、十六做牙
 // 節慶廟（方案三）：春節 正月初一～十五、土地公與濟公生 二月初二（頭牙）、文昌生 二月初三、媽祖生 三月廿三、中秋 八月十五、三太子 九月初九、觀音 二月／六月／九月十九、註生娘娘 三月二十、關公 六月廿四（太歲殿的正月安太歲季跟春節同一段）。中元不換紅燈籠。
-const FESTS = [[1, 1, 15, '春節'], [2, 2, 2, '土地公・濟公聖誕'], [2, 3, 3, '文昌帝君聖誕'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕'], [2, 19, 19, '觀音菩薩聖誕'], [6, 19, 19, '觀音菩薩成道日'], [9, 19, 19, '觀音菩薩出家日'], [3, 20, 20, '註生娘娘聖誕'], [6, 24, 24, '關聖帝君聖誕'], [7, 18, 18, '瑤池金母聖誕']];
+const FESTS = [[1, 1, 15, '春節'], [2, 2, 2, '土地公・濟公聖誕'], [2, 3, 3, '文昌帝君聖誕'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕'], [2, 19, 19, '觀音菩薩聖誕'], [6, 19, 19, '觀音菩薩成道日'], [9, 19, 19, '觀音菩薩出家日'], [3, 20, 20, '註生娘娘聖誕'], [6, 24, 24, '關聖帝君聖誕'], [7, 18, 18, '瑤池金母聖誕'], [3, 15, 15, '趙公明元帥聖誕'], [7, 22, 22, '財神爺聖誕']];
 const fest = L && !L.leap ? FESTS.find(([m, a, b]) => L.mon === m && L.day >= a && L.day <= b) : null;
 let festive = !!fest;
 // 每座殿：背景、人偶跪的高度（拜墊）、香爐的上下位移。點燭、上香、擲筊、抽籤共用同一套。
@@ -984,7 +984,7 @@ function openStep(id) {
 }
 
 function showMap() {
-  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0);
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); SUB[hall]?.leave?.();
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#sanBar').hidden = true; $('#gyBar').hidden = true; $('#ggBar').hidden = true; $('#zsBar').hidden = true; $('#tsBar').hidden = true; $('#muBar').hidden = true; $('#mlBar').hidden = true; leaveStall(); $('#jgHost').hidden = true; jg.reset(); $('#mapView').hidden = false;
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
@@ -997,7 +997,7 @@ function showMap() {
 // 每座殿各自記得蠟燭、香的狀態（這次參拜的，不存檔）
 const hallState = {};
 function switchHall(h) {
-  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0);
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); SUB[hall]?.leave?.();
   hallState[hall] = { lit, sLit: session.lit, until: session.incenseUntil };
   hall = h;
   const st = hallState[h] || { lit: { L: false, R: false }, sLit: false, until: 0 };
@@ -1063,7 +1063,7 @@ function showMl() { switchHall('ml'); ml.enter(); }
 const SHOW = { main: showHall, cai: showCai, yue: showYue, tudi: showTudi, wen: showWen, ji: showJi, san: showSan, gy: showGy, gg: showGg, zs: showZs, ts: showTs, mu: showMu, ml: showMl };
 $('#btnMap').addEventListener('click', showMap);
 $('#routeBar').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) openStep(b.dataset.step); });
-const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, lunar: () => L });
 const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const tudi = initTudigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const wen = initWenchang({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
