@@ -59,7 +59,7 @@ const GOOD = [[1, 5, '正月初五接財神'], [3, 15, '趙公明元帥聖誕'],
 export function initCaiku({ svg, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, lunar, hideCoin }) {
   const cai = state.cai;
   const ku = cai.ku || (cai.ku = { fill: 0, full: 0, total: 0, day: '', log: [], name: '' });
-  if (typeof state.fu !== 'number') wallet.bind(state, save, { emit }); // 供品店的整合還沒進來時，自己接上錢包
+  if (wallet.balance() !== state.fu) wallet.bind(state, save, { emit }); // main.js 還沒接上錢包時，自己接上（接過了就略過）
   const S = (id) => svg.querySelector('#' + id);
   const NS = 'http://www.w3.org/2000/svg';
   const mk = (tag, attrs = {}, html = '') => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (html) el.innerHTML = html; return el; };
