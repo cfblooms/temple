@@ -88,7 +88,7 @@ const state = {
 };
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
-wallet.bind(state, save);
+wallet.bind(state, save, { emit });
 // 只在這次參拜有效的狀態
 const session = { lit: false, incenseUntil: 0, xiaoRun: 0, busy: false, drawFails: 0 };
 
