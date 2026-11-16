@@ -261,8 +261,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-tip { position: absolute; top: 16%; left: 16px; right: 16px; text-align: center; color: #FFF1DA; font-size: 18px; line-height: 1.6; margin: 0; text-shadow: 0 1px 3px rgb(0 0 0 / .5); }
 .jt-tip b { color: #FFD77A; }
 .jt-floor { position: absolute; left: 10%; right: 10%; bottom: 23%; height: 60px; border-radius: 50%; background: radial-gradient(ellipse, rgb(255 210 140 / .22), transparent 70%); pointer-events: none; }
-.jt-pair { display: flex; gap: 14px; align-items: center; justify-content: center; height: 120px; margin-bottom: 18%; transition: transform .1s; }
-.jt-pair img { width: 84px; height: auto; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .45)); }
+.jt-pair { position: absolute; left: 0; top: 0; display: flex; gap: 14px; align-items: center; justify-content: center; height: 120px; will-change: transform; pointer-events: none; }
+.jt-pair img { width: 84px; height: auto; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .45)); -webkit-user-drag: none; }
 .jt-pair img.flat { width: 58px; rotate: 90deg; }
 .jt-pair.hold img { animation: jtShake .18s ease-in-out infinite alternate; }
 .jt-pair.ready { filter: drop-shadow(0 0 14px #FFD77A); }
@@ -274,7 +274,12 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-row[hidden] { display: none; }
 .jt-row button { border: 1.5px solid rgb(255 230 190 / .5); background: rgb(0 0 0 / .25); color: #FFF1DA; border-radius: 999px; padding: 8px 18px; font: inherit; font-size: 14px; }
 .jt-row button[hidden] { display: none; }
-@media (prefers-reduced-motion: reduce) { .jt-pair.hold img { animation: none; } }
+.jt:focus { outline: none; }
+.jt-swipe { position: absolute; left: 0; right: 0; top: calc(70% + 64px); display: flex; flex-direction: column; align-items: center; gap: 4px; color: #FFE7B0; font-size: 13px; letter-spacing: .1em; pointer-events: none; }
+.jt-swipe[hidden] { display: none; }
+.jt-swipe i { width: 22px; height: 22px; border-left: 3px solid #FFD77A; border-top: 3px solid #FFD77A; rotate: 45deg; animation: jtSwipe 1.3s ease-in-out infinite; }
+@keyframes jtSwipe { 0% { translate: 0 18px; opacity: 0; } 30% { opacity: 1; } 100% { translate: 0 -18px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .jt-pair.hold img, .jt-swipe i { animation: none; } }
 
 /* 專科殿堂的道具層疊在正殿場景上面：只有道具本身可以點，其他地方穿透到下面（蠟燭、香爐、拿工具） */
 #caiHost, #yueHost, #tudiHost, #wenHost, #jiHost, #sanHost, #gyHost, .cai-svg, .yue-svg, .tudi-svg, .wen-svg, .ji-svg, .san-svg, .gy-svg, #ggHost, #zsHost, #tsHost, .gg-svg, .zs-svg, .ts-svg, #muHost, #mlHost, .mu-svg, .ml-svg { pointer-events: none; }
@@ -505,6 +510,39 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 @media (prefers-reduced-motion: reduce) { .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: none; } }
 
+/* 財神殿・補財庫 */
+.ku-chip { cursor: pointer; }
+.ku-wrap { text-align: center; }
+.ku-vault { width: min(260px, 80%); height: auto; display: block; margin: 0 auto; }
+.ku-lv { margin: 4px 0 8px; font-size: 15px; }
+.ku-lv b { color: var(--red); font-size: 18px; }
+.ku-add { text-align: center; font-size: 18px; margin: 4px 0; }
+.ku-add b { color: var(--red); }
+.ku-good { background: color-mix(in srgb, var(--gold) 25%, transparent); border-radius: 10px; padding: 6px 10px; }
+.ku-log ul { margin: 6px 0; padding-left: 18px; font-size: 13px; }
+.ku-item { display: grid; grid-template-columns: 48px 1fr auto auto; gap: 8px; align-items: center; padding: 6px 8px; margin: 6px 0; border: 1.5px solid var(--line); border-radius: 12px; background: var(--paper); }
+.ku-item.on { border-color: var(--gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 40%, transparent); }
+.ku-item img { width: 48px; height: 40px; object-fit: contain; }
+.ku-item b { display: block; }
+.ku-item small { display: block; font-size: 12px; opacity: .75; }
+.ku-tog { border: 1.5px solid var(--line); border-radius: 10px; padding: 4px 8px; background: transparent; font-size: 13px; }
+.ku-tog[aria-pressed="true"] { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 30%, transparent); }
+.ku-tog:disabled { opacity: .4; }
+.ku-name { display: block; margin: 10px 0; }
+.ku-name input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; font: inherit; }
+.ku-bundle { cursor: grab; }
+.ku-bundle.held { filter: drop-shadow(0 6px 6px rgb(0 0 0 / .35)); }
+.ku-tab { cursor: pointer; }
+.ku-tab.next .ku-tab-lit { animation: kuPulse 1.1s ease-in-out infinite; }
+.ku-tab.lit .ku-tab-lit { opacity: .45; }
+@keyframes kuPulse { 50% { opacity: .5; } }
+.ku-pop { animation: kuPop .45s ease-out both; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes kuPop { from { transform: scale(.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ku-tab.next .ku-tab-lit, .ku-pop { animation: none; } }
+.ku-prep .shop-bal { margin: 0 0 6px; }
+.ku-prep .fu-coin { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 3px; border-radius: 50%; background: var(--gold); color: #7A3A08; font-size: 11px; font-style: normal; font-weight: 700; vertical-align: -3px; }
+.ku-prep .shop-buy { border: 1.5px solid var(--gold); border-radius: 10px; padding: 4px 8px; background: color-mix(in srgb, var(--gold) 18%, var(--paper)); font-size: 13px; white-space: nowrap; }
+.ku-prep .shop-buy:disabled { opacity: .45; }
 /* ---------- 福氣幣與廟口供品店 ---------- */
 .fu { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 2px; min-height: 28px; border: 1.5px solid #E9CF96; border-radius: 999px; background: #FFF4D8; color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
 .fu.bump { animation: fuBump .5s ease; }

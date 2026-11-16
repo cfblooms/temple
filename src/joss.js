@@ -5,11 +5,12 @@ import stackUrl from './assets/joss-stack.webp';
 // 廟埕金爐：把金紙一張一張拖進爐口化掉。自成一格的小 SVG 場景，自己跑粒子。
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const paper = (id, x, y, r = 0) => `<g id="${id}" transform="translate(${x} ${y}) rotate(${r})"><image href="${sheetUrl}" x="-29" y="-30" width="58" height="60"/></g>`;
+const paper = (id, x, y, r = 0, img = sheetUrl) => `<g id="${id}" transform="translate(${x} ${y}) rotate(${r})"><image href="${img}" x="-29" y="-30" width="58" height="60"/></g>`;
 
 const flame = (x, h, w, d, cls) => `<path class="jf ${cls}" style="animation-delay:${d}s" d="M${x} 0 C${x + w} ${-h * .45} ${x + w * .4} ${-h * .8} ${x} ${-h} C${x - w * .4} ${-h * .8} ${x - w} ${-h * .45} ${x} 0 Z"/>`;
 
-export const FURNACE_SVG = `
+// sheet / stack 可以換成別的紙錢（例如補財庫的庫錢）
+export const furnaceSvg = (sheet = sheetUrl, stack = stackUrl) => `
 <svg viewBox="0 0 300 350" class="joss-svg" role="img" aria-label="廟埕金爐">
   <defs>
     <linearGradient id="foilG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF3B8"/><stop offset=".5" stop-color="#F2C24E"/><stop offset="1" stop-color="#C98E22"/></linearGradient>
@@ -33,15 +34,17 @@ export const FURNACE_SVG = `
   <g id="burning"></g>
   <g id="embers" pointer-events="none"></g>
   <!-- 金紙疊 -->
-  <g id="stack"><image href="${stackUrl}" x="112" y="282" width="78" height="62" id="p3"/><g id="p2"></g><g id="p1"></g></g>
-  <g id="jossTop" class="joss-top" role="button" tabindex="0" aria-label="拿一張金紙放進金爐">${paper('pTop', 150, 300, 0)}</g>
+  <g id="stack"><image href="${stack}" x="112" y="282" width="78" height="62" id="p3"/><g id="p2"></g><g id="p1"></g></g>
+  <g id="jossTop" class="joss-top" role="button" tabindex="0" aria-label="拿一張金紙放進金爐">${paper('pTop', 150, 300, 0, sheet)}</g>
 </svg>`;
+export const FURNACE_SVG = furnaceSvg();
 
-export function bindJoss(root, { total = 5, onBurn, onDone }) {
+export function bindJoss(root, { total = 5, lift = 46, onBurn, onDone }) { // lift：拿起來的紙浮在手指上方，不會被手指擋住
   const svg = root.querySelector('svg.joss-svg');
   const $ = (id) => svg.querySelector('#' + id);
   const top = $('jossTop'), embers = $('embers'), burning = $('burning'), fire = $('fire'), heat = $('heat');
   const MOUTH = { x: 150, y: 210 };
+  const img = top.querySelector('image').getAttribute('href');
   let left = total, drag = null, flare = 0, parts = [], raf = 0, alive = true, flying = false;
 
   const pt = (e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
@@ -85,7 +88,7 @@ export function bindJoss(root, { total = 5, onBurn, onDone }) {
     flying = true; left--;
     // 飛進爐口的那張
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.innerHTML = paper('fly', 0, 0, 0);
+    g.innerHTML = paper('fly', 0, 0, 0, img);
     burning.appendChild(g);
     top.style.display = 'none';
     const t0 = performance.now(), dur = reduce ? 200 : 650;
@@ -112,8 +115,10 @@ export function bindJoss(root, { total = 5, onBurn, onDone }) {
   });
   top.addEventListener('pointermove', (e) => {
     if (!drag) return;
-    const p = pt(e); drag.x = 150 + p.x - drag.x0; drag.y = 300 + p.y - drag.y0;
+    const p = pt(e);
     if (Math.hypot(p.x - drag.x0, p.y - drag.y0) > 6) drag.moved = true;
+    const up = drag.moved ? lift : 0;
+    drag.x = 150 + p.x - drag.x0; drag.y = 300 + p.y - drag.y0 - up;
     setTop(drag.x, drag.y, (drag.x - 150) * .1);
   });
   const end = () => {
