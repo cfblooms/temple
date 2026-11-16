@@ -405,8 +405,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-book { cursor: pointer; }
 
 /* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
-#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden] { display: none; }
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #xiHost, #xiHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #xiHost[hidden] { display: none; }
 .stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 #jgHost, .jg-svg { pointer-events: none; }
 .jg-svg [data-jg] { pointer-events: auto; }
@@ -504,3 +504,22 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .mu-offer > *, .mu-prop > *, .ml-prop > * { transform-box: fill-box; transform-origin: 50% 100%; }
 .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 @media (prefers-reduced-motion: reduce) { .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: none; } }
+
+/* 酬神戲台 */
+.bar.xi-bar { grid-template-columns: repeat(5, 1fr); }
+.xi-board { font: 900 15px var(--font-serif); fill: #C8302A; letter-spacing: .06em; }
+.xi-board2 { font: 700 10px var(--font-ui); fill: #7A4A2A; }
+.xi-ban { font: 900 12px var(--font-serif); fill: #FFE08A; letter-spacing: .04em; }
+.xi-ban2 { font: 700 8px var(--font-ui); fill: #FFF4E0; }
+.xi-cue-line { font: 700 11.5px var(--font-ui); fill: #FFF4E0; }
+.xi-cue-g { font: 900 17px var(--font-serif); fill: #FFE08A; letter-spacing: .04em; }
+.xi-pad { font: 700 12px var(--font-ui); fill: #FFF4E0; opacity: .85; }
+#xiPad { cursor: grab; touch-action: none; }
+.xi-fan { animation: xiBob 2.4s ease-in-out infinite; }
+#xiCrowd.xi-cheer .xi-fan { animation: xiJump .5s ease 2; }
+#xiCrowd .xi-fan > * { transform-box: view-box; }
+@keyframes xiBob { 50% { translate: 0 -2px; } }
+@keyframes xiJump { 50% { translate: 0 -12px; } }
+#xiBanner.pop > * { animation: jelly .45s ease; transform-box: view-box; transform-origin: 0 0; }
+@media (prefers-reduced-motion: reduce) { .xi-fan, #xiCrowd.xi-cheer .xi-fan, #xiBanner.pop > * { animation: none; } }
+.area.live { background: #F2B53A; color: #5A1E10; }
