@@ -547,6 +547,39 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .fh-rec { display: flex; flex-direction: column; align-items: flex-start; border: 1.5px solid var(--line); background: var(--chip); border-radius: 12px; padding: 8px 12px; color: var(--ink); text-align: left; }
 .fh-rec small { color: var(--muted); }
 .area.due::before { content: ''; position: absolute; top: -0.8cqw; left: -0.8cqw; width: 2.6cqw; height: 2.6cqw; border-radius: 50%; background: #FFD86A; border: .4cqw solid #7A1A10; }
+/* 財神殿・補財庫 */
+.ku-chip { cursor: pointer; }
+.ku-wrap { text-align: center; }
+.ku-vault { width: min(260px, 80%); height: auto; display: block; margin: 0 auto; }
+.ku-lv { margin: 4px 0 8px; font-size: 15px; }
+.ku-lv b { color: var(--red); font-size: 18px; }
+.ku-add { text-align: center; font-size: 18px; margin: 4px 0; }
+.ku-add b { color: var(--red); }
+.ku-good { background: color-mix(in srgb, var(--gold) 25%, transparent); border-radius: 10px; padding: 6px 10px; }
+.ku-log ul { margin: 6px 0; padding-left: 18px; font-size: 13px; }
+.ku-item { display: grid; grid-template-columns: 48px 1fr auto auto; gap: 8px; align-items: center; padding: 6px 8px; margin: 6px 0; border: 1.5px solid var(--line); border-radius: 12px; background: var(--paper); }
+.ku-item.on { border-color: var(--gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 40%, transparent); }
+.ku-item img { width: 48px; height: 40px; object-fit: contain; }
+.ku-item b { display: block; }
+.ku-item small { display: block; font-size: 12px; opacity: .75; }
+.ku-tog { border: 1.5px solid var(--line); border-radius: 10px; padding: 4px 8px; background: transparent; font-size: 13px; }
+.ku-tog[aria-pressed="true"] { border-color: var(--gold); background: color-mix(in srgb, var(--gold) 30%, transparent); }
+.ku-tog:disabled { opacity: .4; }
+.ku-name { display: block; margin: 10px 0; }
+.ku-name input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 10px; font: inherit; }
+.ku-bundle { cursor: grab; }
+.ku-bundle.held { filter: drop-shadow(0 6px 6px rgb(0 0 0 / .35)); }
+.ku-tab { cursor: pointer; }
+.ku-tab.next .ku-tab-lit { animation: kuPulse 1.1s ease-in-out infinite; }
+.ku-tab.lit .ku-tab-lit { opacity: .45; }
+@keyframes kuPulse { 50% { opacity: .5; } }
+.ku-pop { animation: kuPop .45s ease-out both; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes kuPop { from { transform: scale(.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ku-tab.next .ku-tab-lit, .ku-pop { animation: none; } }
+.ku-prep .shop-bal { margin: 0 0 6px; }
+.ku-prep .fu-coin { display: inline-grid; place-items: center; width: 18px; height: 18px; margin-right: 3px; border-radius: 50%; background: var(--gold); color: #7A3A08; font-size: 11px; font-style: normal; font-weight: 700; vertical-align: -3px; }
+.ku-prep .shop-buy { border: 1.5px solid var(--gold); border-radius: 10px; padding: 4px 8px; background: color-mix(in srgb, var(--gold) 18%, var(--paper)); font-size: 13px; white-space: nowrap; }
+.ku-prep .shop-buy:disabled { opacity: .45; }
 /* ---------- 福氣幣與廟口供品店 ---------- */
 .fu { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 2px; min-height: 28px; border: 1.5px solid #E9CF96; border-radius: 999px; background: #FFF4D8; color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
 .fu.bump { animation: fuBump .5s ease; }
