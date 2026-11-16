@@ -410,8 +410,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-book { cursor: pointer; }
 
 /* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
-#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #jqHost, #jqHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #jqHost[hidden] { display: none; }
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #jqHost, #jqHost svg, #fsHost, #fsHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #jqHost[hidden], #fsHost[hidden] { display: none; }
 .stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 #jgHost, .jg-svg { pointer-events: none; }
 .jg-svg [data-jg] { pointer-events: auto; }
@@ -526,6 +526,13 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jq-pick small { color: #7A5A48; font-size: 12px; }
 .jq-talk p { margin: 0; }
 
+/* 許願放生池 */
+.bar.fs-bar { grid-template-columns: repeat(5, 1fr); }
+.fs-sign { font: 900 12px var(--font-serif); fill: #FFE08A; letter-spacing: .08em; }
+.fs-stage { font: 700 11px var(--font-ui); fill: #FFF4E0; }
+.fs-svg #pFish, .fs-svg #pPads, .fs-svg #pLamps, .fs-svg #pFood, .fs-svg #pRip, .fs-svg #pRock, .fs-svg #pFly, .fs-svg #pJump, .fs-svg #pStage { pointer-events: none; }
+.fs-meter { height: 10px; border-radius: 5px; background: #EADFCB; overflow: hidden; margin: 4px 0; }
+.fs-meter i { display: block; height: 100%; background: linear-gradient(90deg, #6BAE5A, #FFD24A); }
 /* ---------- 福氣幣與廟口供品店 ---------- */
 .fu { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 2px; min-height: 28px; border: 1.5px solid #E9CF96; border-radius: 999px; background: #FFF4D8; color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
 .fu.bump { animation: fuBump .5s ease; }

@@ -20,6 +20,7 @@ import { initMuniang } from './muniang.js';
 import { initMile } from './mile.js';
 import { initJigai } from './jigai.js';
 import { initBanquet } from './banquet.js';
+import { initPond } from './pond.js';
 import { initXiaoren } from './xiaoren.js';
 import { initShoujing } from './shoujing.js';
 import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
@@ -172,7 +173,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -1008,7 +1009,7 @@ const AREAS = [
   { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
   { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, main: true, info: '流水席紅圓桌：拜完一起吃平安宴。' },
   { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
-  { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, info: '許願放生池：把蓮花水燈放進池裡，看它慢慢綻放。' },
+  { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, main: true, info: '許願放生池：每天餵魚、放小烏龜、放蓮花水燈，池子會一天天變熱鬧。' },
   { id: 'jieqian', name: '廟公解籤處', x: 25, y: 70.5, w: 15, main: true, info: '廟公解籤處：問事、抽籤，請廟公阿伯用白話解給你聽。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
@@ -1036,10 +1037,11 @@ function buildMap() {
     if (a.id === 'xiaoren') { showStall('xr'); return; }
     if (a.id === 'shoujing') { showStall('sj'); return; }
     if (a.id === 'jieqian') { showStall('jq'); return; }
+    if (a.id === 'pond') { showStall('fs'); return; }
     if (a.id === 'wings') { pickHall(); return; }
     if (a.id === 'shop') { shop.openShop(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十三位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人也開張了。`);
+    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十三位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人、許願放生池也開張了。`);
   });
 }
 
@@ -1098,7 +1100,7 @@ function showMap() {
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#sanBar').hidden = true; $('#gyBar').hidden = true; $('#ggBar').hidden = true; $('#zsBar').hidden = true; $('#tsBar').hidden = true; $('#muBar').hidden = true; $('#mlBar').hidden = true; leaveStall(); $('#jgHost').hidden = true; jg.reset(); $('#mapView').hidden = false;
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
-  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>廟公解籤處</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>。每逢初一、十五和節日，還有<b>全廟巡禮</b>。'); return; }
+  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>廟公解籤處</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>、<b>許願放生池</b>。每逢初一、十五和節日，還有<b>全廟巡禮</b>。'); return; }
   say(!r.done.length ? '今天有<b>全廟巡禮</b>！像真的去廟裡一樣，照下面的路線走：先拜正殿，再到財神閣、月老閣、福德祠，最後到金亭化金紙，走完有加碼。'
     : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
     : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
@@ -1201,6 +1203,7 @@ const STALLS = {
   sj: { name: '青衣阿嬤收驚', short: '收驚', icon: ICON.sj, mod: initShoujing(xapi) },
   xr: { name: '鵝頸橋打小人', short: '打小人', icon: ICON.xr, mod: initXiaoren(xapi) },
   jq: { name: '廟公解籤處', short: '解籤', mod: initJieqian({ ...xapi, halls: HALLS, goDraw: (h) => { SHOW[h](); setTimeout(openDraw, 500); } }) },
+  fs: { name: '許願放生池', short: '放生池', mod: initPond(xapi) },
 };
 let stall = null;
 function leaveStall() {
