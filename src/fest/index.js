@@ -6,8 +6,13 @@ import { GAMES as G2 } from './games-2.js';
 import { GAMES as G3 } from './games-3.js';
 import { mazu as raojing } from './raojing.js';
 import { GAMES as G4 } from './games-4.js';
+import { GAMES as G5 } from './zhongyuan.js';
 
-const GAMES = { ...G1, ...G2, ...G3, ...G4, mazu: raojing }; // 媽祖生改成完整的小遶境
+const GAMES = { ...G1, ...G2, ...G3, ...G4, ...G5, mazu: raojing }; // 媽祖生改成完整的小遶境
+// 好幾天的節慶（春節初一～初五、中元十四～十五）：今天是第幾天、每天的標籤
+const CN = '一二三四五';
+const dayOf = (id, L) => { const g = GAMES[id]; if (!g?.days) return 1; return g.dayOf ? g.dayOf(L) : Math.min(g.days.length, Math.max(1, L?.day || 1)); };
+const dayLabel = (id, i) => GAMES[id].dayLabels?.[i] ?? `初${CN[i]}`;
 const STAMP_DAYS = 330; // 一年內蓋過的章算「今年已蓋」
 
 export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars, goHall }) {
@@ -28,7 +33,8 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     const t = todayFest();
     if (t && playable(t.f.id)) {
       btn.classList.add('today');
-      $('#festTxt').textContent = t.f.id === 'chunjie' && t.L ? `初${'一二三四五'[t.L.day - 1]}・${GAMES.chunjie.days[t.L.day - 1]}` : `今天${t.f.name}`;
+      const g = GAMES[t.f.id], di = dayOf(t.f.id, t.L) - 1;
+      $('#festTxt').textContent = g.days && t.L ? `${dayLabel(t.f.id, di)}・${g.days[di]}` : `今天${t.f.name}`;
       btn.setAttribute('aria-label', `今天是${t.f.name}，來玩${t.f.game}`);
       return;
     }
@@ -59,15 +65,16 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     body.addEventListener('click', (e) => {
       const b = e.target.closest('[data-go],[data-try]'); if (!b) return;
       const id = b.dataset.go || b.dataset.try;
-      if (id === 'chunjie' && !(t && t.f.id === 'chunjie')) { pickDay(); return; }
+      if (GAMES[id]?.days && !(t && t.f.id === id)) { pickDay(id); return; }
       closeSheet(); start(id, { real: t?.f.id === id });
     });
   }
-  // 春節試玩：選初幾
-  function pickDay() {
-    const body = openSheet('春節試玩：選一天', `<p>春節初一到初五每天的小遊戲都不一樣。</p>
-      <div class="day-list">${GAMES.chunjie.days.map((d, i) => `<button type="button" class="day-btn" data-d="${i + 1}"><b>初${'一二三四五'[i]}</b><span>${d}</span></button>`).join('')}</div>`);
-    body.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (!b) return; closeSheet(); start('chunjie', { real: false, day: +b.dataset.d }); });
+  // 好幾天的節慶試玩：選哪一天
+  function pickDay(id) {
+    const f = festById(id), g = GAMES[id];
+    const body = openSheet(`${f.name}試玩：選一天`, `<p>${f.name}每天的小遊戲都不一樣。</p>
+      <div class="day-list">${g.days.map((d, i) => `<button type="button" class="day-btn" data-d="${i + 1}"><b>${dayLabel(id, i)}</b><span>${d}</span></button>`).join('')}</div>`);
+    body.addEventListener('click', (e) => { const b = e.target.closest('[data-d]'); if (!b) return; closeSheet(); start(id, { real: false, day: +b.dataset.d }); });
   }
 
   let stage = null, hidden = [];
@@ -83,7 +90,7 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     const L = lunarOf(new Date());
     sfx.chime();
     game.play(stage, {
-      real, day: day || (id === 'chunjie' && L ? Math.min(5, L.day) : 1),
+      real, day: day || dayOf(id, L),
       chars, me: chars.me(), esc, state, save,
       goHall: (h) => { stop(true); if (h) goHall(h); },
       done: (text) => finish(f, real, text),
@@ -91,7 +98,7 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
   }
   function finish(f, real, text) {
     let extra = '';
-    if (real && state.festStamps[f.id] !== dayKey()) { // 春節初一到初五每天都有
+    if (real && state.festStamps[f.id] !== dayKey()) { // 好幾天的節慶每天都有
       const first = !stamped(f.id);
       state.festStamps[f.id] = dayKey(); state.fish += 6; save(); updateFish?.();
       extra = first ? `<br>節慶印章冊蓋上「${f.name}」，虎爺叼來小魚乾 ×6。` : '<br>虎爺叼來小魚乾 ×6，明天再來。';
