@@ -405,8 +405,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-book { cursor: pointer; }
 
 /* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
-#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden] { display: none; }
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #ysHost, #ysHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #ysHost[hidden] { display: none; }
 .stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 #jgHost, .jg-svg { pointer-events: none; }
 .jg-svg [data-jg] { pointer-events: auto; }
@@ -539,3 +539,25 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .shop-buy { display: inline-flex; align-items: center; gap: 3px; margin-top: 5px; min-height: 34px; padding: 3px 12px 3px 4px; border: 0; border-radius: 99px; background: #C8302A; color: #FFF4E0; font: inherit; font-size: 14px; font-weight: 700; }
 .shop-buy .fu-coin { width: 20px; height: 20px; font-size: 11px; }
 .shop-buy:disabled { background: #CDBBA8; }
+/* ---------- 廟口夜市 ---------- */
+.bar.ys-bar { grid-template-columns: repeat(5, 1fr); }
+.ys-booth { cursor: pointer; }
+.ys-booth:focus-visible { outline: none; }
+.ys-booth:focus-visible rect { stroke: var(--gold); stroke-width: 3px; }
+.ys-sign { font: 900 16px var(--font-serif); fill: #C8302A; letter-spacing: .12em; }
+.ys-booth-n { font: 900 15px var(--font-serif); fill: #3B1F17; }
+.ys-booth-f { font: 700 10px var(--font-ui); fill: #A0523C; }
+.ys-hud { font: 900 14px var(--font-ui); fill: #FFF4E0; paint-order: stroke; stroke: rgb(40 10 6 / .7); stroke-width: 3px; }
+.ys-hud.small { font-size: 11px; }
+.ys-hud.dark, .ys-booth-f.dark { fill: #3B1F17; stroke: none; }
+.ys-val { font: 900 9px var(--font-ui); fill: #FFE08A; paint-order: stroke; stroke: rgb(40 10 6 / .8); stroke-width: 2.5px; }
+.ys-svg text { pointer-events: none; }
+#nPrizes .ys-won > text:nth-of-type(1), #nPrizes .ys-won > image { opacity: .55; }
+.ys-big { font-size: 17px; text-align: center; margin: 4px 0 8px; }
+.ys-big b { color: var(--red); font-size: 22px; }
+.ys-snacks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 8px 0; }
+.ys-snack { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 6px; border: 1.5px solid var(--line); border-radius: 12px; text-align: center; }
+.ys-snack img { width: 56px; height: 56px; object-fit: contain; }
+.ys-snack small { color: var(--muted); font-size: 11px; min-height: 2.4em; }
+.ys-snack .btn { padding: 4px 14px; font-size: 13px; }
+.ys-snack i { position: absolute; top: 4px; right: 6px; font-style: normal; font-size: 10px; color: var(--muted); }
