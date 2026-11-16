@@ -892,7 +892,7 @@ const fl = festMod.greetLine(); if (fl) say(`${$('#sayText').innerHTML}<br>${fl}
 // x / y 是標籤中心在地圖上的百分比，w 是寬度百分比（要蓋住原圖上的標籤）
 const AREAS = [
   { id: 'hall', name: '正殿・進入參拜', x: 51.1, y: 31.3, w: 24, main: true },
-  { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, title: true, main: true, info: '後院靜心閣：每天抄一段心經或大悲咒，敲木魚念佛號，讓心靜下來。' },
+  { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, main: true, info: '後院靜心閣：每天抄一段心經或大悲咒，敲木魚念佛號，讓心靜下來。' },
   { id: 'study', name: '伴讀自習室', x: 70, y: 7.1, w: 19.5, info: '伴讀自習室：番茄鐘燃燭計時，手機橫放就是開運桌面擺飾。' },
   { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
   { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, main: true, info: '兩廂專科殿堂：十多位神明各有一座殿。' },
