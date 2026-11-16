@@ -46,6 +46,7 @@ export const FESTIVALS = [
   { id: 'tiangong', name: '天公生', game: '擺頂桌', when: isLunar(1, 9), date: '正月初九' },
   { id: 'qigui', name: '乞龜', game: '擲筊乞紅龜・明年加倍還', when: isLunar(1, 13, 14), date: '正月十三～十四（元宵前）' },
   { id: 'yuanxiao', name: '元宵', game: '放天燈・猜燈謎', when: isLunar(1, 15), date: '正月十五' },
+  { id: 'fengpao', name: '鹽水蜂炮', game: '穿護具躲蜂炮', when: isLunar(1, 15), date: '正月十五' },
   { id: 'qingming', name: '清明', game: '捲潤餅', when: (d) => d.getMonth() === 3 && d.getDate() === term(d.getFullYear(), 4.81), date: '國曆 4/4 或 4/5' },
   { id: 'mazu', name: '媽祖生', game: '小遶境・鑽轎腳', when: isLunar(3, 23), date: '三月廿三' },
   { id: 'duanwu', name: '端午', game: '正午立蛋・掛香包', when: isLunar(5, 5), date: '五月初五' },
@@ -68,6 +69,11 @@ export function todayFest(d = new Date()) {
   const L = lunarOf(d);
   const f = FESTIVALS.find((x) => x.when(d, L));
   return f ? { f, L } : null;
+}
+// 今天所有的節慶（同一天可能有好幾個，例如元宵和鹽水蜂炮）
+export function todayFests(d = new Date()) {
+  const L = lunarOf(d);
+  return FESTIVALS.filter((x) => x.when(d, L)).map((f) => ({ f, L }));
 }
 // 每個節慶下一次是幾天後（掃未來 400 天，結果記起來）
 let upcoming = null, upcomingKey = '';
