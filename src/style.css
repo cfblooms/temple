@@ -410,8 +410,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-book { cursor: pointer; }
 
 /* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
-#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden] { display: none; }
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #jqHost, #jqHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #jqHost[hidden] { display: none; }
 .stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 #jgHost, .jg-svg { pointer-events: none; }
 .jg-svg [data-jg] { pointer-events: auto; }
@@ -509,3 +509,18 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .mu-offer > *, .mu-prop > *, .ml-prop > * { transform-box: fill-box; transform-origin: 50% 100%; }
 .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 @media (prefers-reduced-motion: reduce) { .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: none; } }
+
+/* 廟公解籤處 */
+.bar.jq-bar { grid-template-columns: repeat(4, 1fr); }
+.jq-sign { font: 900 26px var(--font-serif); fill: #FFE08A; letter-spacing: .1em; }
+.jq-drawer { font: 700 8px var(--font-serif); fill: #FFF4E0; }
+.jq-slip { font: 900 12px var(--font-serif); fill: #C8302A; writing-mode: vertical-rl; }
+.jq-idle { animation: sjIdle 3.8s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .jq-idle { animation: none; } }
+.jq-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.jq-pick { display: flex; align-items: center; gap: 10px; text-align: left; padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--chip); background: var(--paper); font: inherit; color: var(--ink); cursor: pointer; }
+.jq-pick[aria-pressed="true"] { border-color: var(--red); background: var(--chip); }
+.jq-pick img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex: none; }
+.jq-pick span { display: flex; flex-direction: column; }
+.jq-pick small { color: #7A5A48; font-size: 12px; }
+.jq-talk p { margin: 0; }

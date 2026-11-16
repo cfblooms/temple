@@ -22,6 +22,7 @@ import { initJigai } from './jigai.js';
 import { initBanquet } from './banquet.js';
 import { initXiaoren } from './xiaoren.js';
 import { initShoujing } from './shoujing.js';
+import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { tossJiao } from './jiaotoss.js';
 import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
@@ -517,11 +518,15 @@ function bindChips(root, onPick) {
 
 /* ---------- 抽籤 ---------- */
 const draft = { cat: 'peace', wish: '', no: 0 };
+const askNow = () => (state.ask && state.ask.date === dayKey() && !state.ask.no && state.ask.hall === hall ? state.ask : null);
 function openDraw() {
   if (session.busy) return;
+  const ask = askNow(), askT = ask && ASK_TOPICS.find((t) => t.id === ask.topic);
+  if (askT) { draft.cat = askT.cat; if (ask.q) draft.wish = ask.q; }
   if (session.incenseUntil < Date.now() && !session.lit) say('通常會先點燭、上香再抽籤，不過心誠最重要，直接來也可以。');
   const body = openSheet(`向${hall === 'main' ? '神明' : SUB[hall].god}稟報`, `
     <p class="hint">抽籤前先報上自己是誰、想問什麼。一次問一件事，同一件事不要一直重抽。</p>
+    ${askT ? `<p class="hint">問事：<b>${askT.name}</b>${ask.q ? `「${esc(ask.q)}」` : ''}。抽到籤、擲出聖筊後，拿去廟埕給廟公解。</p>` : ''}
     <label class="field"><span>稱呼</span><input type="text" id="drawName" maxlength="12" value="${esc(state.name)}"></label>
     ${hall === 'main' ? `<div class="field"><span>想問的方向</span>${chipGroup('cat', CATEGORIES, draft.cat)}</div>` : `<p class="hint">今天抽的是<b>${SUB[hall].qianName}</b>。</p>`}
     <label class="field"><span>心願（選填，會印在祈福卡上）</span><input type="text" id="drawWish" maxlength="30" placeholder="例：期末考順利歐趴" value="${esc(draft.wish)}"></label>
@@ -568,6 +573,14 @@ async function confirmStick() {
   session.busy = false;
   if (key === 'sheng') {
     sfx.chime();
+    const ask = askNow();
+    if (ask) { // 問事：籤拿去給廟公解
+      ask.no = draft.no; ask.read = false;
+      if (hall === 'main') state.fortune = { no: draft.no, cat: draft.cat, wish: draft.wish, date: dayKey() }; else SUB[hall].setQian(draft.no);
+      save(); markNext(); burst('spark', 182, 590, 18);
+      say(`聖筊！神明確認就是第${cn(draft.no)}籤。帶著籤詩去<b>解籤處</b>，請廟公阿伯解給你聽。`, 'god');
+      await sleep(1500); showStall('jq'); return;
+    }
     say(`聖筊！神明確認就是第${cn(draft.no)}籤，去看籤詩吧。`, 'god');
     if (hall !== 'main') { SUB[hall].setQian(draft.no); markNext(); burst('spark', 182, 590, 18); await sleep(900); SUB[hall].openQian(); return; }
     state.fortune = { no: draft.no, cat: draft.cat, wish: draft.wish, date: dayKey() };
@@ -610,7 +623,12 @@ function showFortune() {
     </div>
     <p class="hint">籤詩是心靈參考，重要的決定還是要和信任的人商量。</p>
     <div class="row"><button class="btn" id="toCard">做成祈福卡</button><button class="btn ghost" id="keep">收下籤詩</button></div>
+    <button class="btn gold" id="toGong">拿去給廟公解籤</button>
     <button class="btn ghost" id="askOther">問另一件事，重新稟報</button>`);
+  $('#toGong').addEventListener('click', () => {
+    state.ask = { date: dayKey(), topic: ASK_TOPICS.find((t) => t.cat === state.fortune.cat)?.id || 'work', hall: 'main', q: state.fortune.wish || '', no: state.fortune.no, read: false };
+    save(); closeSheet(); showStall('jq');
+  });
   $('#toCard').addEventListener('click', openCard);
   $('#askOther').addEventListener('click', openDraw);
   $('#keep').addEventListener('click', () => { closeSheet(); say('籤詩收好了。之後點「抽籤」可以再看一次，也能做成祈福卡分享。'); });
@@ -903,6 +921,7 @@ const AREAS = [
   { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, main: true, info: '流水席紅圓桌：拜完一起吃平安宴。' },
   { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
   { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, info: '許願放生池：把蓮花水燈放進池裡，看它慢慢綻放。' },
+  { id: 'jieqian', name: '廟公解籤處', x: 25, y: 70.5, w: 15, main: true, info: '廟公解籤處：問事、抽籤，請廟公阿伯用白話解給你聽。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
   { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
@@ -927,6 +946,7 @@ function buildMap() {
     if (a.id === 'banquet') { showStall('bz'); return; }
     if (a.id === 'xiaoren') { showStall('xr'); return; }
     if (a.id === 'shoujing') { showStall('sj'); return; }
+    if (a.id === 'jieqian') { showStall('jq'); return; }
     if (a.id === 'wings') { pickHall(); return; }
     sfx.knock();
     say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十三位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人也開張了。`);
@@ -988,7 +1008,7 @@ function showMap() {
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#sanBar').hidden = true; $('#gyBar').hidden = true; $('#ggBar').hidden = true; $('#zsBar').hidden = true; $('#tsBar').hidden = true; $('#muBar').hidden = true; $('#mlBar').hidden = true; leaveStall(); $('#jgHost').hidden = true; jg.reset(); $('#mapView').hidden = false;
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
-  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>。每逢初一、十五和節日，還有<b>全廟巡禮</b>。'); return; }
+  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>廟公解籤處</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>。每逢初一、十五和節日，還有<b>全廟巡禮</b>。'); return; }
   say(!r.done.length ? '今天有<b>全廟巡禮</b>！像真的去廟裡一樣，照下面的路線走：先拜正殿，再到財神閣、月老閣、福德祠，最後到金亭化金紙，走完有加碼。'
     : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
     : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
@@ -1089,6 +1109,7 @@ const STALLS = {
   bz: { name: '流水席辦桌', short: '辦桌', icon: ICON.bz, mod: initBanquet(xapi) },
   sj: { name: '青衣阿嬤收驚', short: '收驚', icon: ICON.sj, mod: initShoujing(xapi) },
   xr: { name: '鵝頸橋打小人', short: '打小人', icon: ICON.xr, mod: initXiaoren(xapi) },
+  jq: { name: '廟公解籤處', short: '解籤', mod: initJieqian({ ...xapi, halls: HALLS, goDraw: (h) => { SHOW[h](); setTimeout(openDraw, 500); } }) },
 };
 let stall = null;
 function leaveStall() {
