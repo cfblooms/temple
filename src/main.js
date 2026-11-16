@@ -22,6 +22,7 @@ import { initJigai } from './jigai.js';
 import { initBanquet } from './banquet.js';
 import { initPond } from './pond.js';
 import { initXiaoren } from './xiaoren.js';
+import { initNightMarket } from './nightmarket.js';
 import { initShoujing } from './shoujing.js';
 import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
@@ -180,7 +181,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #fhHost > svg, #jxHost > svg, #jqHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #fhHost > svg, #jxHost > svg, #jqHost > svg, #ysHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -1022,6 +1023,7 @@ const AREAS = [
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
   { id: 'xiaoren', name: '鵝頸橋打小人', x: 87.2, y: 85.4, w: 17.5, main: true, info: '鵝頸橋打小人攤：婆婆用舊拖鞋幫你打走霉運。' },
   { id: 'xitai', name: '酬神戲台', x: 22, y: 68.5, w: 16, main: true, info: '酬神戲台：神明生日那天，廟埕搭台演布袋戲。' },
+  { id: 'yeshi', name: '廟口夜市', x: 68, y: 96.4, w: 13, main: true, info: '廟口夜市：套圈圈、撈金魚、射氣球，贏彩券換點心。' },
   { id: 'shop', name: '廟口供品店', x: 22, y: 57, w: 18, main: true, info: '廟口供品店：用福氣幣買供品。' },
   { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
   { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
@@ -1050,10 +1052,11 @@ function buildMap() {
     if (a.id === 'xitai') { showStall('xi'); return; }
     if (a.id === 'fahui') { showStall('fh'); return; }
     if (a.id === 'backyard') { showStall('jx'); return; }
+    if (a.id === 'yeshi') { showStall('ys'); return; }
     if (a.id === 'wings') { pickHall(); return; }
     if (a.id === 'shop') { shop.openShop(); return; }
     sfx.knock();
-    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十四位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人、許願放生池，還有後院的靜心閣也開張了。`);
+    say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十四位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人、許願放生池，後院的靜心閣，還有山門外的廟口夜市也開張了。`);
   });
 }
 
@@ -1221,6 +1224,7 @@ const STALLS = {
   xi: { name: '酬神戲台', short: '戲台', mod: initXitai(xapi) },
   fh: { name: '法會壇', short: '法會', icon: '', mod: initFahui(xapi) },
   jx: { name: '後院靜心閣', short: '靜心閣', mod: initJingxin(xapi) },
+  ys: { name: '廟口夜市', short: '夜市', icon: '', mod: initNightMarket({ ...xapi, godName: (h) => HALLS[h]?.god }) },
 };
 let stall = null;
 function leaveStall() {
