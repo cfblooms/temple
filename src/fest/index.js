@@ -7,8 +7,9 @@ import { GAMES as G3 } from './games-3.js';
 import { mazu as raojing } from './raojing.js';
 import { GAMES as G4 } from './games-4.js';
 import { GAMES as G5 } from './zhongyuan.js';
+import { GAMES as GW } from './weiya.js';
 
-const GAMES = { ...G1, ...G2, ...G3, ...G4, ...G5, mazu: raojing }; // 媽祖生改成完整的小遶境
+const GAMES = { ...G1, ...G2, ...G3, ...G4, ...G5, ...GW, mazu: raojing }; // 媽祖生改成完整的小遶境
 // 好幾天的節慶（春節初一～初五、中元十四～十五）：今天是第幾天、每天的標籤
 const CN = '一二三四五';
 const dayOf = (id, L) => { const g = GAMES[id]; if (!g?.days) return 1; return g.dayOf ? g.dayOf(L) : Math.min(g.days.length, Math.max(1, L?.day || 1)); };

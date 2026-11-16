@@ -55,6 +55,7 @@ export const FESTIVALS = [
   { id: 'zhongqiu', name: '中秋', game: '柚子帽給虎爺', when: isLunar(8, 15), date: '八月十五' },
   { id: 'chongyang', name: '重陽', game: '放風箏', when: isLunar(9, 9), date: '九月初九' },
   { id: 'dongzhi', name: '冬至', game: '搓湯圓', when: (d) => d.getMonth() === 11 && d.getDate() === term(d.getFullYear(), 21.94), date: '國曆 12/21 或 12/22' },
+  { id: 'weiya', name: '尾牙', game: '夾刈包', when: isLunar(12, 16), date: '臘月十六' },
   { id: 'songshen', name: '送神', game: '黏灶君嘴・擦神桌', when: isLunar(12, 24), date: '臘月廿四' },
   { id: 'chuxi', name: '除夕', game: '貼春聯・拉長年菜', when: (d) => { const n = lunarOf(addDays(d, 1)); return !!n && !n.leap && n.mon === 1 && n.day === 1; }, date: '臘月最後一天' },
 ];
