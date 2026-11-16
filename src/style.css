@@ -480,6 +480,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .fest-sign { font-family: var(--font-serif); font-weight: 900; font-size: 30px; fill: #FFE29A; letter-spacing: .1em; }
 .fest-sign.dark { fill: #C8382E; font-size: 24px; }
 .fest-tip { font-size: 14px; fill: #FFF4D8; paint-order: stroke; stroke: rgb(60 20 10 / .5); stroke-width: 3px; }
+.dz-tab { font-family: var(--font-serif); font-weight: 900; font-size: 17px; fill: #F3C64A; }
 .fest-small { font-size: 13px; font-weight: 700; }
 .fest-cp { font-family: var(--font-serif); font-weight: 900; font-size: 22px; fill: #1E120C; }
 .fest-fu { font-family: var(--font-serif); font-weight: 900; font-size: 36px; fill: #1E120C; }
