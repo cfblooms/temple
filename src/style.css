@@ -410,8 +410,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-book { cursor: pointer; }
 
 /* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
-#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden] { display: none; }
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #fhHost, #fhHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #fhHost[hidden] { display: none; }
 .stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 #jgHost, .jg-svg { pointer-events: none; }
 .jg-svg [data-jg] { pointer-events: auto; }
@@ -509,3 +509,40 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .mu-offer > *, .mu-prop > *, .ml-prop > * { transform-box: fill-box; transform-origin: 50% 100%; }
 .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 @media (prefers-reduced-motion: reduce) { .mu-offer.pop > *, .mu-prop.pop > *, .ml-prop.pop > * { animation: none; } }
+
+/* ---------- 法會壇 ---------- */
+.bar.fh-bar { grid-template-columns: repeat(5, 1fr); }
+.fh-svg:focus { outline: none; }
+.fh-svg .fh-tab { cursor: pointer; }
+.fh-tab-t { font: 700 12px var(--font-ui); fill: #7A2A1C; pointer-events: none; }
+.fh-tab-t.on { fill: #FFF6E8; }
+.fh-plaque { font: 900 15px var(--font-serif); fill: #FFD86A; letter-spacing: 1px; pointer-events: none; }
+.fh-board-h { font: 900 12px var(--font-serif); fill: #FFE08A; pointer-events: none; }
+.fh-board-h.dark, .fh-names.dark .fh-name, .fh-empty.dark { fill: #6A3A10; }
+.fh-name { font-family: var(--font-serif); font-weight: 900; fill: #FFF4DC; letter-spacing: 1px; }
+.fh-empty { font: 600 12px var(--font-serif); fill: #FFD0C0; opacity: .7; }
+.fh-more { font: 600 10px var(--font-ui); fill: currentColor; }
+#fhBoardL .fh-more { fill: #FFE08A; } #fhBoardR .fh-more { fill: #6A3A10; }
+.fh-ch { font: 700 15px var(--font-serif); fill: #C8B8A0; transition: fill .15s; }
+.fh-ch.on { fill: #B8322A; }
+.fh-ch.next { fill: #3B1F17; }
+.fh-ch.p { fill: #A89880; }
+.fh-page-t { font-size: 12px; }
+.fh-flicker { animation: fhFlicker 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes fhFlicker { 0%, 100% { transform: scale(1, 1); } 40% { transform: scale(.92, 1.08); } 70% { transform: scale(1.05, .95); } }
+@media (prefers-reduced-motion: reduce) { .fh-flicker { animation: none; } }
+.fh-list { display: flex; flex-wrap: wrap; gap: 6px; min-height: 30px; }
+.fh-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; border-radius: 8px; font-family: var(--font-serif); font-weight: 900; }
+.fh-tag.xz { background: #C8302A; color: #FFF4DC; }
+.fh-tag.cj { background: #F2D27A; color: #5A3410; }
+.fh-tag small { font: 400 11px var(--font-ui); opacity: .8; }
+.fh-tag button { border: 0; background: rgb(0 0 0 / .15); color: inherit; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; }
+.fh-shuwen { position: relative; background: #FFF4DC; border: 4px double #C8302A; border-radius: 6px; padding: 16px 10px 84px; margin-bottom: 10px; color: #3B1F17; }
+.fh-sw-cols { writing-mode: vertical-rl; font-family: var(--font-serif); font-weight: 600; font-size: 15px; line-height: 1.9; letter-spacing: .12em; height: 360px; overflow-x: auto; margin-inline: auto; max-width: 100%; }
+.fh-sw-cols p { margin: 0; }
+.fh-sw-cols p.h { color: #C8302A; font-weight: 900; font-size: 20px; }
+.fh-seal { position: absolute; left: 16px; bottom: 16px; width: 58px; height: 58px; display: grid; place-items: center; text-align: center; background: rgb(200 48 42 / .88); color: #FFF4DC; font: 900 15px/1.15 var(--font-serif); border-radius: 4px; transform: rotate(-6deg); }
+.fh-recs { display: flex; flex-direction: column; gap: 6px; }
+.fh-rec { display: flex; flex-direction: column; align-items: flex-start; border: 1.5px solid var(--line); background: var(--chip); border-radius: 12px; padding: 8px 12px; color: var(--ink); text-align: left; }
+.fh-rec small { color: var(--muted); }
+.area.due::before { content: ''; position: absolute; top: -0.8cqw; left: -0.8cqw; width: 2.6cqw; height: 2.6cqw; border-radius: 50%; background: #FFD86A; border: .4cqw solid #7A1A10; }
