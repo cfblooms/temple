@@ -9,6 +9,7 @@ import hongbaoUrl from './assets/cai/hongbao.webp';
 import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
 import { tossJiao } from './jiaotoss.js';
+import { initCaiku } from './caiku.js';
 import { wallet, EARN } from './wallet.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -84,7 +85,7 @@ export const CAI_SVG = (bg) => `
 </svg>`;
 
 export function initCaishen(api) {
-  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam } = api;
+  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, lunar } = api;
   const host = $('#caiHost');
   host.innerHTML = CAI_SVG(bgUrl);
   const svg = host.querySelector('svg');
@@ -292,7 +293,11 @@ export function initCaishen(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，理財投資請量力而為。</p>`);
   }
 
-  const ACTS = { ingot: hintRub, coin: () => { if (!flying) { aim.setAttribute('opacity', '.9'); setTimeout(() => aim.setAttribute('opacity', '0'), 900); say('按住下方的金幣，往左上方的聚寶盆甩出去！'); } }, loan: openLoan, qian: openQian, deity: greetGod };
+  /* ----- 補財庫（src/caiku.js） ----- */
+  const ku = initCaiku({ svg, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, lunar,
+    hideCoin: (on) => { coin.style.display = on ? 'none' : ''; } });
+
+  const ACTS = { vault: ku.openVault, ingot: hintRub, coin: () => { if (!flying) { aim.setAttribute('opacity', '.9'); setTimeout(() => aim.setAttribute('opacity', '0'), 900); say('按住下方的金幣，往左上方的聚寶盆甩出去！'); } }, loan: openLoan, qian: openQian, deity: greetGod };
   svg.addEventListener('click', (e) => { const h = e.target.closest('[data-cai="deity"]'); if (h) greetGod(); });
   svg.querySelector('[data-cai="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
   $('#caiBar').addEventListener('click', (e) => { const b = e.target.closest('button[data-cai]'); if (b) ACTS[b.dataset.cai](); });
@@ -310,5 +315,6 @@ export function initCaishen(api) {
     hasQianToday: () => !!cai.qian && cai.qian.date === dayKey(),
     setQian(no) { cai.qian = { date: dayKey(), no }; save(); },
     openQian,
+    leave() { ku.leave(); },
   };
 }

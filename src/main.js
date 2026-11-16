@@ -116,8 +116,8 @@ function lunar(d = new Date()) {
 }
 const L = lunar();
 const isYa = !!L && (L.day === 2 || L.day === 16); // 初二、十六做牙
-// 節慶廟（方案三）：春節 正月初一～十五、土地公與濟公生 二月初二（頭牙）、文昌生 二月初三、媽祖生 三月廿三、中秋 八月十五、三太子 九月初九、觀音 二月／六月／九月十九、註生娘娘 三月二十、關公 六月廿四、尾牙 臘月十六（太歲殿的正月安太歲季跟春節同一段）。中元不換紅燈籠。
-const FESTS = [[1, 1, 15, '春節'], [2, 2, 2, '土地公・濟公聖誕'], [2, 3, 3, '文昌帝君聖誕'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕'], [2, 19, 19, '觀音菩薩聖誕'], [6, 19, 19, '觀音菩薩成道日'], [9, 19, 19, '觀音菩薩出家日'], [3, 20, 20, '註生娘娘聖誕'], [6, 24, 24, '關聖帝君聖誕'], [7, 18, 18, '瑤池金母聖誕'], [12, 16, 16, '尾牙']];
+// 節慶廟（方案三）：春節 正月初一～十五、土地公與濟公生 二月初二（頭牙）、文昌生 二月初三、媽祖生 三月廿三、中秋 八月十五、三太子 九月初九、觀音 二月／六月／九月十九、註生娘娘 三月二十、關公 六月廿四、趙公明 三月十五、財神爺 七月廿二、尾牙 臘月十六（太歲殿的正月安太歲季跟春節同一段）。中元不換紅燈籠。
+const FESTS = [[1, 1, 15, '春節'], [2, 2, 2, '土地公・濟公聖誕'], [2, 3, 3, '文昌帝君聖誕'], [3, 23, 23, '媽祖聖誕'], [8, 15, 15, '中秋'], [9, 9, 9, '三太子聖誕'], [2, 19, 19, '觀音菩薩聖誕'], [6, 19, 19, '觀音菩薩成道日'], [9, 19, 19, '觀音菩薩出家日'], [3, 20, 20, '註生娘娘聖誕'], [6, 24, 24, '關聖帝君聖誕'], [7, 18, 18, '瑤池金母聖誕'], [3, 15, 15, '趙公明元帥聖誕'], [7, 22, 22, '財神爺聖誕'], [12, 16, 16, '尾牙']];
 const fest = L && !L.leap ? FESTS.find(([m, a, b]) => L.mon === m && L.day >= a && L.day <= b) : null;
 let festive = !!fest;
 // 每座殿：背景、人偶跪的高度（拜墊）、香爐的上下位移。點燭、上香、擲筊、抽籤共用同一套。
@@ -835,7 +835,7 @@ function renderTray() {
   const main = hall === 'main', done = main ? offeredToday() : [], full = shrineList().length >= SHRINE_MAX;
   const basics = main && done.length < OFFERS.length ? OFFERS.map((o) => `<button type="button" class="offer-item${done.includes(o.id) ? ' done' : ''}" data-offer="${o.id}" aria-label="把${o.name}擺上供桌">
       <img src="${o.img}" alt="" draggable="false"><b>${o.name}</b><small>${o.mean}</small></button>`).join('') : '';
-  const bag = pantry.list().map((it) => `<button type="button" class="offer-item bag${full ? ' done' : ''}${it.fav.includes(hall) ? ' fav' : ''}" data-item="${it.id}" aria-label="把${it.name}擺上供桌，還有 ${pantry.count(it.id)} 份">
+  const bag = pantry.list().filter((it) => !it.tags.includes('kuqian')).map((it) => `<button type="button" class="offer-item bag${full ? ' done' : ''}${it.fav.includes(hall) ? ' fav' : ''}" data-item="${it.id}" aria-label="把${it.name}擺上供桌，還有 ${pantry.count(it.id)} 份">
       <img src="${it.img}" alt="" draggable="false"><b>${it.name}</b><small>${it.fav.includes(hall) ? '最愛' : it.mean}</small><i class="offer-n">${pantry.count(it.id)}</i></button>`).join('');
   offerUI.tray.innerHTML = `<p class="offer-tip">${full ? `今天這張供桌已經擺了 ${SHRINE_MAX} 樣買來的供品` : '按住供品拖到供桌上，或點一下'}</p>
     <div class="offer-items">${basics}${bag}<button type="button" class="offer-item shop-tile" id="offerShop" aria-label="去廟口供品店買供品"><span class="shop-ico" aria-hidden="true">店</span><b>供品店</b><small>福氣幣 ${wallet.balance()}</small></button></div>
@@ -1190,7 +1190,7 @@ function showTg() { switchHall('tg'); tg.enter(); }
 const SHOW = { main: showHall, cai: showCai, yue: showYue, tudi: showTudi, wen: showWen, ji: showJi, san: showSan, gy: showGy, gg: showGg, zs: showZs, ts: showTs, mu: showMu, ml: showMl, tg: showTg };
 $('#btnMap').addEventListener('click', showMap);
 $('#routeBar').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) openStep(b.dataset.step); });
-const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, lunar: () => L });
 const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const tudi = initTudigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const wen = initWenchang({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
