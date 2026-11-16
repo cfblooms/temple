@@ -27,7 +27,6 @@ import { initFahui, fahuiNews } from './fahui.js';
 import { initJingxin } from './jingxin.js';
 import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
-import { wallet } from './wallet.js';
 import { tossJiao } from './jiaotoss.js';
 import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
