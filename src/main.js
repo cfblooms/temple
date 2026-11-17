@@ -1016,9 +1016,9 @@ const AREAS = [
   { id: 'wenchang', name: '文昌閣', x: 14.4, y: 31.3, w: 9, main: true, info: '文昌閣：求考運，准考證順時針過香爐三圈。' },
   { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, main: true, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
   { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
-  { id: 'banquet', name: '流水席辦桌', x: 50.3, y: 77.7, w: 21.5, main: true, info: '流水席紅圓桌：拜完一起吃平安宴。' },
-  { id: 'jinting', name: '環保金亭', x: 71.1, y: 78.7, w: 18.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
-  { id: 'pond', name: '許願放生池', x: 85, y: 81.1, w: 12, main: true, info: '許願放生池：每天餵魚、放小烏龜、放蓮花水燈，池子會一天天變熱鬧。' },
+  { id: 'banquet', name: '流水席辦桌', x: 50.1, y: 77.7, w: 20.5, main: true, info: '流水席紅圓桌：拜完一起吃平安宴。' },
+  { id: 'jinting', name: '環保金亭', x: 68.6, y: 79.1, w: 12.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
+  { id: 'pond', name: '許願放生池', x: 86.2, y: 81.1, w: 12, main: true, info: '許願放生池：每天餵魚、放小烏龜、放蓮花水燈，池子會一天天變熱鬧。' },
   { id: 'fahui', name: '法會報名處', x: 19, y: 47.5, w: 15, main: true, info: '法會報名處：報名水懺、梁皇寶懺、禮斗法會，寫上家人的名字。' },
   { id: 'jieqian', name: '廟公解籤處', x: 64, y: 53, w: 14, main: true, info: '廟公解籤處：問事、抽籤，請廟公阿伯用白話解給你聽。' },
   { id: 'shoujing', name: '青衣阿嬤收驚', x: 17.6, y: 82.8, w: 22.5, main: true, info: '青衣阿嬤收驚攤：阿嬤持香幫你收驚安神。' },
@@ -1117,10 +1117,10 @@ function showMap() {
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
   const fn = fahuiNews(state, dayKey()); document.querySelector('.area[data-area="fahui"]')?.classList.toggle('due', fn.due);
-  if (!routeDay()) { say('這是心靈大廟全區，<b>紅色標籤</b>的地方都可以進去：上面是各殿神明，下面廟埕有<b>法會報名處</b>、<b>廟公解籤處</b>、<b>許願放生池</b>、<b>酬神戲台</b>、<b>流水席辦桌</b>、<b>青衣阿嬤收驚</b>、<b>鵝頸橋打小人</b>，最上面的<b>後院靜心閣</b>可以抄經、敲木魚。每逢初一、十五和節日，還有<b>全廟巡禮</b>。' + (fn.line ? '<br>' + fn.line : '')); return; }
-  say(!r.done.length ? '今天有<b>全廟巡禮</b>！像真的去廟裡一樣，照下面的路線走：先拜正殿，再到財神閣、月老閣、福德祠，最後到金亭化金紙，走完有加碼。'
-    : next ? `已經拜了 ${r.done.length} 站，下一站是<b>${next.name}</b>（${next.how}）。點下面的路線或地圖上的紅色標籤過去。`
-    : '今天的參拜路線都走完了，圓滿！想再進去哪座殿坐坐都可以。');
+  if (!routeDay()) { say(fn.line || '點<b>紅色標籤</b>就能進去逛。初一、十五和節日有<b>全廟巡禮</b>。'); return; }
+  say(!r.done.length ? '今天有<b>全廟巡禮</b>！照下面的路線一站一站拜，走完有加碼。'
+    : next ? `已拜 ${r.done.length} 站，下一站：<b>${next.name}</b>（${next.how}）。`
+    : '今天的巡禮都走完了，圓滿！');
 }
 
 // 每座殿各自記得蠟燭、香的狀態（這次參拜的，不存檔）
