@@ -164,7 +164,7 @@ const duster = () => `<rect x="-24" y="-22" width="48" height="94" fill="#000" o
 
 const songshen = {
   play(st, o) {
-    const ZJ_DY = hasArt('ss-zaojun') ? -3 : 4; // Gemini 灶君圖的嘴巴比畫面中心高一點
+    const ZJ_DY = hasArt('ss-zaojun') ? -14 : 4; // Gemini 灶君圖的嘴巴比畫面中心高一點
     const PRINT = [180, 200], MOUTH = [180, 200 + ZJ_DY], JAR = [72, 404], JAR_MOUTH = [72, 386];
     const BR_REST = [292, 400], DU_REST = [292, 515];
     const DUST = [[54, 452], [128, 440], [198, 460], [250, 446], [318, 470], [116, 300], [246, 120]];
