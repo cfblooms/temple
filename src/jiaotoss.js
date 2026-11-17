@@ -1,6 +1,6 @@
 // 自己擲筊：手指按住筊杯在心裡稟報，再往上一甩把筊丟出去。沒有「幫我擲」，一定要自己甩。
 // 全螢幕蓋在最上層（連底部抽屜也蓋過去），所有殿共用（正殿、各殿、月老求紅線、財神發財金）。
-// 筊杯一按住就浮在手指上方，手指不會擋到筊；放開時看手指往上的速度，夠快才算擲出去。
+// 筊杯一按住就浮在手指上方，手指不會擋到筊；手指往上滑超過一點點就直接丟出去，不用等放開。
 import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
 import * as sfx from './audio.js';
@@ -8,8 +8,7 @@ import * as sfx from './audio.js';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const NAME = { sheng: '聖筊', xiao: '笑筊', yin: '陰筊' };
 const LIFT = 120; // 筊杯浮在手指上方多少 px
-const HOLD_MIN = 350; // 至少按住這麼久（稟報）才能甩
-const READY = 550; // 按住多久之後提示「可以甩了」
+const READY = 450; // 按住多久之後提示「可以甩了」
 let el = null;
 
 function build() {
@@ -23,7 +22,7 @@ function build() {
     <p class="jt-tip" aria-live="polite"></p>
     <div class="jt-floor"></div>
     <div class="jt-pair"><img class="jt-a" alt="" draggable="false"><img class="jt-b" alt="" draggable="false"></div>
-    <div class="jt-swipe" aria-hidden="true"><i></i><span>按住・往上甩</span></div>
+    <div class="jt-swipe" aria-hidden="true"><i></i><span>按住・往上滑</span></div>
     <p class="jt-result"></p>
     <div class="jt-row"><button type="button" class="jt-cancel">先不擲</button></div>`;
   document.body.appendChild(el);
@@ -42,7 +41,7 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
   a.src = jiaoRound; b.src = jiaoRound; a.className = 'jt-a round'; b.className = 'jt-b round';
   pair.className = 'jt-pair'; res.textContent = ''; res.className = 'jt-result';
   row.hidden = false; cancelBtn.hidden = !cancel; swipe.hidden = false;
-  const baseTip = `${tip}<br><b>按住筊杯稟報，再往上一甩</b>`;
+  const baseTip = `${tip}<br><b>手指按住，往上一滑就丟出去</b>`;
   tipEl.innerHTML = baseTip;
   el.hidden = false;
   el.focus({ preventScroll: true });
@@ -61,7 +60,7 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
     let hold = null, samples = [], done = false, timer = 0, kb = false;
     const onResize = () => { if (!hold && !done) place(rest(), false); };
     const cleanup = () => {
-      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
+      el.removeEventListener('touchmove', noScroll); el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
       el.removeEventListener('keydown', keyDown); el.removeEventListener('keyup', keyUp);
       removeEventListener('resize', onResize);
@@ -75,7 +74,7 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
     const grab = () => {
       hold = performance.now();
       pair.classList.add('hold'); swipe.hidden = true; sfx.knock(); sfx.buzz(8);
-      timer = setTimeout(() => { if (hold) { tipEl.innerHTML = '稟報好了，<b>手指往上甩出去！</b>'; pair.classList.add('ready'); sfx.buzz(10); } }, READY);
+      timer = setTimeout(() => { if (hold) { tipEl.innerHTML = '稟報好了，<b>手指往上一滑！</b>'; pair.classList.add('ready'); sfx.buzz(10); } }, READY);
     };
     const release = () => {
       hold = null; clearTimeout(timer);
@@ -83,6 +82,7 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
     };
     const miss = (html) => { tipEl.innerHTML = html; place(rest(), true); swipe.hidden = false; };
 
+    const noScroll = (e) => { if (!e.target.closest('button')) e.preventDefault(); }; // 不讓頁面或外層視窗被一起拖動
     const down = (e) => {
       if (done || hold || e.target.closest('button')) return;
       e.preventDefault(); el.setPointerCapture(e.pointerId);
@@ -90,27 +90,31 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
       const now = performance.now(); samples = [[e.clientX, e.clientY, now]];
       place({ x: e.clientX, y: e.clientY - LIFT }, true);
     };
+    // 看最近 0.3 秒：手指從最低點往上移了多少。一滑到門檻就直接丟出去，不用等放開（放開前手指停一下、或系統搶走手勢也不怕）
+    const rise = () => {
+      const last = samples[samples.length - 1]; let low = last;
+      for (const sm of samples) if (sm[1] > low[1]) low = sm;
+      const dy = low[1] - last[1];
+      return { dy, vy: -dy / (Math.max(16, last[2] - low[2]) / 1000) };
+    };
+    const track = (e) => {
+      const now = performance.now(); samples.push([e.clientX, e.clientY, now]);
+      while (samples.length > 2 && now - samples[0][2] > 300) samples.shift();
+    };
     const move = (e) => {
       if (!hold || kb) return;
-      const now = performance.now(); samples.push([e.clientX, e.clientY, now]);
-      while (samples.length > 2 && now - samples[0][2] > 250) samples.shift();
+      track(e);
       place({ x: e.clientX, y: e.clientY - LIFT }, false);
+      const r = rise();
+      if (r.dy >= 45) { release(); finish(true, Math.min(r.vy, -700)); }
     };
     const up = (e) => {
       if (!hold || kb) return;
-      const held = performance.now() - hold;
-      const now = performance.now(); samples.push([e.clientX, e.clientY, now]);
-      while (samples.length > 2 && now - samples[0][2] > 250) samples.shift();
+      if (e.type === 'pointerup') track(e);
       release();
-      // 看最近 0.25 秒：從起點到最高點往上移了多少、多快（放開前手指停一下也算）
-      const s0 = samples[0]; let top = s0;
-      for (const sm of samples) if (sm[1] < top[1]) top = sm;
-      const dy = top[1] - s0[1], vy = dy / (Math.max(16, top[2] - s0[2]) / 1000);
-      const flick = dy < -70 || (dy < -28 && vy < -500);
-      if (e.type === 'pointercancel') { miss(baseTip); return; }
-      if (!flick) { miss(held < HOLD_MIN ? '先<b>按住</b>筊杯，在心裡把話說完，再往上甩。' : '手指<b>往上快速一甩</b>再放開，把筊杯丟出去。'); return; }
-      if (held < HOLD_MIN) { miss('先<b>按住</b>筊杯稟報一下，再往上甩。'); return; }
-      finish(true, vy);
+      const r = rise();
+      if (r.dy >= 18) { finish(true, Math.min(r.vy, -700)); return; }
+      miss('手指按住，<b>往上一滑</b>就丟出去了。');
     };
     // 鍵盤：按住空白鍵（或 Enter）稟報，放開就擲
     const keyDown = (e) => {
@@ -122,11 +126,10 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
     const keyUp = (e) => {
       if (!kb || (e.key !== ' ' && e.key !== 'Enter')) return;
       e.preventDefault(); kb = false;
-      const held = performance.now() - hold; release();
-      if (held < HOLD_MIN) { miss('先<b>按住</b>空白鍵稟報，再放開把筊杯擲出去。'); return; }
+      release();
       finish(true);
     };
-    el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move);
+    el.addEventListener('touchmove', noScroll, { passive: false }); el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move);
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
     el.addEventListener('keydown', keyDown); el.addEventListener('keyup', keyUp);
     addEventListener('resize', onResize);
