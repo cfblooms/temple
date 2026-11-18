@@ -62,7 +62,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* speech strip */
 .say {
-  position: relative; z-index: 30; flex: none;
+  position: relative; flex: none;
   display: flex; align-items: flex-start; gap: 7px; height: calc(2 * 1.4em + 11px); overflow: hidden; /* 固定兩行高，換句話時下面的場景不會跳；太長點一下展開，蓋在場景上 */
   background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 4px 10px;
   font-size: 13px; line-height: 1.4;
@@ -70,7 +70,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .say .say-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; flex: 1; }
 .say.more { cursor: pointer; padding-right: 24px; }
 .say.more::after { content: '▾'; position: absolute; right: 8px; bottom: 3px; color: var(--red); font-size: 12px; }
-.say.open { height: auto; box-shadow: 0 8px 20px rgb(60 15 10 / .3); }
+.say.open { z-index: 30; height: auto; box-shadow: 0 8px 20px rgb(60 15 10 / .3); }
 .say.open .say-text { display: block; -webkit-line-clamp: unset; }
 .say.open::after { content: '▴'; }
 .say-who { flex: none; background: var(--red); color: #FFF4E0; font-size: 11px; border-radius: 6px; padding: 1px 6px; margin-top: 2px; }
@@ -422,7 +422,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .ts-zod .chip { padding: 6px 0; position: relative; }
 .ts-zod .chip i { position: absolute; top: -6px; right: -4px; font-style: normal; font-size: 10px; background: var(--red); color: #FFF; border-radius: 999px; padding: 0 4px; }
 .ts-list { list-style: none; padding: 0; margin: 6px 0 10px; display: grid; gap: 6px; }
-.ts-list li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; color: #3B1F17; }
+.ts-list li { display: flex; flex-wrap: wrap; gap: 2px 10px; align-items: baseline; white-space: nowrap; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; color: #3B1F17; }
 @media (prefers-reduced-motion: reduce) { .zs-offer.pop, #zPlanted.pop, .zs-prop.pop image, .ts-prop.pop image { animation: none; } }
 .gg-book { cursor: pointer; }
 
@@ -480,6 +480,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .icon-btn.map-btn svg { width: 16px; height: 16px; }
 /* ---------- 節慶小遊戲 ---------- */
 .fest-chip { position: absolute; top: 64px; left: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 5px; border: 0; border-radius: 999px; background: rgb(255 246 232 / .92); color: #6A2A1A; font-size: 12px; box-shadow: 0 2px 6px rgb(0 0 0 / .3); }
+.app:has(#fhHost:not([hidden])) .fest-chip { display: none; } /* 法會壇上方有三個法會分頁，節慶燈籠會蓋到 */
 .fest-chip svg { width: 22px; height: 22px; }
 .fest-chip.today { background: #E0443E; color: #FFF4E0; animation: beckonFest 1.8s ease-in-out infinite; }
 @keyframes beckonFest { 50% { box-shadow: 0 0 0 6px rgb(255 210 120 / .5), 0 2px 6px rgb(0 0 0 / .3); } }
