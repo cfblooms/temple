@@ -160,8 +160,14 @@ function say(text, who = 'temple') {
   const el = $('#say'), w = $('#sayWho');
   w.textContent = WHO[who][0]; w.className = 'say-who ' + WHO[who][1];
   $('#sayText').innerHTML = text;
-  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  el.classList.remove('pop', 'open'); void el.offsetWidth; el.classList.add('pop');
+  sayFit();
 }
+// 廟公只佔兩行，話太長就出現 ▾，點一下展開（蓋在場景上，場景不會被推下去）
+function sayFit() { const t = $('#sayText'); $('#say').classList.toggle('more', t.scrollHeight > t.clientHeight + 2 || $('#say').classList.contains('open')); }
+$('#say').addEventListener('click', () => { const el = $('#say'); if (el.classList.contains('more')) el.classList.toggle('open'); });
+addEventListener('resize', () => { $('#say').classList.remove('open'); sayFit(); });
+document.fonts?.ready.then(sayFit);
 
 /* ---------- 場景 ---------- */
 $('#sceneHost').innerHTML = SCENE_SVG(hallImg());
