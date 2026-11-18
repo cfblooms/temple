@@ -301,7 +301,8 @@ function burnBoat(st, o) {
   st.buttons([]);
   const tabs = myTablets(o.state);
   // 法會報名處報的超薦蓮位也一起載走
-  const fh = Object.values(o.state.fahui || {}).flatMap((r) => (r?.names || []).filter((n) => n.kind === 'cj').map((n) => n.name)).filter(Boolean);
+  const F = o.state.fahui || {};
+  const fh = [...Object.values(F.reg || {}), ...(F.done || [])].flatMap((r) => (r?.names || []).filter((n) => n.kind === 'cj').map((n) => n.name)).filter(Boolean);
   const all = [...new Set([...tabs.map((t) => t.name), ...fh])];
   const names = all.length ? all : ['歷代祖先'];
   const FW = 210, FH = 268, FC = [180, 330], MOUTH = [180, FC[1] + 88], REST = [180, 560];
