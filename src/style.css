@@ -38,32 +38,42 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 .app {
   height: 100%; max-width: 460px; margin: 0 auto;
-  display: flex; flex-direction: column; gap: 8px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 10px 8px;
+  display: flex; flex-direction: column; gap: 5px;
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(8px, env(safe-area-inset-right, 0px));
+  padding-block: 6px 6px;
 }
+@media (min-width: 440px) { .app { gap: 8px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 10px 8px; } }
 
 /* header */
-.top { display: flex; align-items: center; gap: 8px; }
-.me { display: flex; align-items: center; gap: 6px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 3px; }
+.top { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; white-space: nowrap; min-height: 34px; }
+.me { flex: none; display: flex; align-items: center; gap: 6px; background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; padding: 3px 12px 3px 3px; }
 .me img { width: 34px; height: 34px; border-radius: 50%; background: var(--chip); object-fit: cover; }
-.me-name { max-width: 6.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
-.lunar { flex: 1; min-width: 0; text-align: center; font-family: var(--font-serif); font-weight: 600; font-size: 13px; color: var(--muted); line-height: 1.25; }
+.me-name { max-width: 5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.lunar { flex: 1; min-width: 0; text-align: center; font-family: var(--font-serif); font-weight: 600; font-size: 12px; color: var(--muted); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lunar b { display: block; overflow: hidden; text-overflow: ellipsis; }
 .lunar b { color: var(--red); font-weight: 900; }
-.top-right { display: flex; align-items: center; gap: 6px; }
+.top-right { flex: none; display: flex; align-items: center; gap: 5px; }
 .fish { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .fish svg { width: 22px; height: 13px; }
-.icon-btn { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--paper); font-size: 14px; display: grid; place-items: center; padding: 0; }
+.icon-btn { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--paper); font-size: 14px; display: grid; place-items: center; padding: 0; }
+@media (max-width: 439px) { .me { padding: 2px; } .me-name { display: none; } .fish svg { width: 16px; height: 10px; } .fish { gap: 2px; font-size: 13px; } }
 .icon-btn[aria-pressed="true"] { opacity: .45; text-decoration: line-through; }
 
 /* speech strip */
 .say {
-  display: flex; align-items: flex-start; gap: 8px; min-height: calc(3 * 1.45em + 17px); /* 固定三行高，換句話時下面的場景不會跳 */
-  background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 7px 12px;
-  font-size: 14px; line-height: 1.45;
+  position: relative; z-index: 30; flex: none;
+  display: flex; align-items: flex-start; gap: 7px; height: calc(2 * 1.4em + 11px); overflow: hidden; /* 固定兩行高，換句話時下面的場景不會跳；太長點一下展開，蓋在場景上 */
+  background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 4px 10px;
+  font-size: 13px; line-height: 1.4;
 }
-.say-who { flex: none; background: var(--red); color: #FFF4E0; font-size: 12px; border-radius: 6px; padding: 1px 7px; margin-top: 1px; }
+.say .say-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; flex: 1; }
+.say.more { cursor: pointer; padding-right: 24px; }
+.say.more::after { content: '▾'; position: absolute; right: 8px; bottom: 3px; color: var(--red); font-size: 12px; }
+.say.open { height: auto; box-shadow: 0 8px 20px rgb(60 15 10 / .3); }
+.say.open .say-text { display: block; -webkit-line-clamp: unset; }
+.say.open::after { content: '▴'; }
+.say-who { flex: none; background: var(--red); color: #FFF4E0; font-size: 11px; border-radius: 6px; padding: 1px 6px; margin-top: 2px; }
 .say-who.cat { background: #E07A22; }
 .say-who.god { background: var(--gold); color: #2B1508; }
 .say-text { min-width: 0; }
@@ -96,7 +106,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .area .soon { display: block; font-size: 1.5cqw; color: #A07A60; }
 .hall-hit { position: absolute; left: 33%; top: 33%; width: 36%; height: 17%; background: transparent; border: 0; border-radius: 12px; }
 .plaque { position: absolute; left: 51.1%; top: 85.3%; transform: translate(-50%, -50%); width: 14%; padding: .25cqw 0; background: #5A2318; color: #FFE29A; border: .3cqw solid #E6B85C; border-radius: .6cqw; font-size: 1.9cqw; letter-spacing: .4cqw; text-align: center; pointer-events: none; }
-.scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.5581); aspect-ratio: 360 / 645; max-width: 100%; border-radius: 26px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
+.scene-wrap { position: relative; width: min(100cqw, 100cqh * 0.5581); aspect-ratio: 360 / 645; max-width: 100%; border-radius: 18px; overflow: hidden; box-shadow: 0 6px 24px rgb(60 15 10 / .25); }
 #sceneHost, #sceneHost svg, #caiHost, #caiHost svg, #yueHost, #yueHost svg, #tudiHost, #tudiHost svg, #wenHost, #wenHost svg, #jiHost, #jiHost svg, #sanHost, #sanHost svg, #gyHost, #gyHost svg, #ggHost, #ggHost svg, #zsHost, #zsHost svg, #tsHost, #tsHost svg, #muHost, #muHost svg, #mlHost, #mlHost svg, #tgHost, #tgHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hit { cursor: pointer; outline: none; }
@@ -119,15 +129,15 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .deity-halo { transition: opacity .6s; }
 
 /* action bar */
-.bar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding-bottom: env(safe-area-inset-bottom, 0px); }
+.bar { flex: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; padding-bottom: env(safe-area-inset-bottom, 0px); }
 .bar button {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  background: var(--paper); border: 1.5px solid var(--line); border-radius: 14px; padding: 6px 0 5px; font-size: 12px;
+  background: var(--paper); border: 1.5px solid var(--line); border-radius: 12px; padding: 4px 0 3px; font-size: 12px; min-width: 0;
   transition: transform .12s;
 }
 .bar button span { white-space: nowrap; }
 .bar button:active { transform: translateY(2px); }
-.bar button svg { width: 26px; height: 26px; }
+.bar button svg { width: 22px; height: 22px; }
 .bar button.next { border-color: var(--gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 45%, transparent); }
 
 /* bottom sheet */
@@ -465,7 +475,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @keyframes sjIdle { 0%, 100% { transform: rotate(-1.4deg); } 50% { transform: rotate(1.4deg) translateY(-1.5px); } }
 @media (prefers-reduced-motion: reduce) { .sj-granny-idle { animation: none; } }
 /* 地圖按鈕：做成看得懂的「逛廟」膠囊 */
-.icon-btn.map-btn { width: auto; padding: 0 12px 0 9px; gap: 4px; display: inline-flex; align-items: center; border-radius: 17px; background: var(--red); border-color: var(--red); color: #FFF4E0; font-weight: 700; font-size: 13px; }
+.icon-btn.map-btn { width: auto; padding: 0 9px 0 7px; white-space: nowrap; gap: 4px; display: inline-flex; align-items: center; border-radius: 17px; background: var(--red); border-color: var(--red); color: #FFF4E0; font-weight: 700; font-size: 13px; }
 .icon-btn.map-btn svg { width: 16px; height: 16px; }
 /* ---------- 節慶小遊戲 ---------- */
 .fest-chip { position: absolute; top: 64px; left: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 5px; border: 0; border-radius: 999px; background: rgb(255 246 232 / .92); color: #6A2A1A; font-size: 12px; box-shadow: 0 2px 6px rgb(0 0 0 / .3); }
