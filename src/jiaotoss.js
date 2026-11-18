@@ -139,6 +139,8 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
   // 從手指放開的地方飛上去：甩得越快飛越高。有 faces 就翻轉落地給你看結果，沒有就飛出畫面上方。
   function fly(vy) {
     row.hidden = true; swipe.hidden = true; tipEl.textContent = '';
+    // 平面筊平常用 CSS rotate 轉 90 度；但 rotate 屬性會連動畫的位移一起轉，筊會飛到旁邊去。飛行時先拿掉，轉角改算進動畫裡。
+    pair.classList.add('flying');
     sfx.pop();
     const power = Math.max(0.6, Math.min(1.25, -vy / 1400));
     const r = (x) => (Math.random() - .5) * x;
@@ -165,7 +167,8 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
         { transform: `translate(${dxLand + dx * 1.08}px,${dyLand - 14}px) rotate(${rot + 8}deg) scale(1)`, offset: .92 },
         { transform: `translate(${dxLand + dx * 1.1}px,${dyLand}px) rotate(${rot + 10}deg) scale(1)` },
       ], { duration: reduce ? 200 : 1100, easing: 'cubic-bezier(.3,.1,.4,1)', fill: 'forwards' });
-      const anA = run(a, -30 + r(20), 360 + r(80)), anB = run(b, 30 + r(20), -360 + r(80));
+      const q = (i) => (faces[i] === 'flat' ? 90 : 0);
+      const anA = run(a, -30 + r(20), 360 + r(80) + q(0)), anB = run(b, 30 + r(20), -360 + r(80) + q(1));
       setTimeout(() => {
         clearInterval(flip);
         [[a, faces[0], 'jt-a'], [b, faces[1], 'jt-b']].forEach(([n, f, c]) => { n.src = img(f); n.className = `${c} ${f}`; });

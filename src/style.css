@@ -272,7 +272,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @media (prefers-reduced-motion: reduce) { .yue-plaque, .yue-plaque.pop, .yue-candy.pop { animation: none; } }
 
 /* ---------- 自己擲筊 ---------- */
-.jt { position: fixed; inset: 0; z-index: 60; background: radial-gradient(ellipse at 50% 70%, rgb(60 20 10 / .55), rgb(20 8 4 / .82)); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.jt { position: fixed; inset: 0; z-index: 60; background: radial-gradient(ellipse at 50% 70%, rgb(60 20 10 / .86), rgb(20 8 4 / .95)); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px)); touch-action: none; user-select: none; -webkit-user-select: none; }
 .jt[hidden] { display: none; }
 .jt-tip { position: absolute; top: 16%; left: 16px; right: 16px; text-align: center; color: #FFF1DA; font-size: 18px; line-height: 1.6; margin: 0; text-shadow: 0 1px 3px rgb(0 0 0 / .5); }
 .jt-tip b { color: #FFD77A; }
@@ -280,6 +280,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-pair { position: absolute; left: 0; top: 0; display: flex; gap: 14px; align-items: center; justify-content: center; height: 120px; will-change: transform; pointer-events: none; }
 .jt-pair img { width: 84px; height: auto; filter: drop-shadow(0 6px 6px rgb(0 0 0 / .45)); -webkit-user-drag: none; }
 .jt-pair img.flat { width: 58px; rotate: 90deg; }
+.jt-pair.flying img.flat { rotate: none; }
 .jt-pair.hold img { animation: jtShake .18s ease-in-out infinite alternate; }
 .jt-pair.ready { filter: drop-shadow(0 0 14px #FFD77A); }
 @keyframes jtShake { from { translate: -2px 0; } to { translate: 2px 1px; } }
@@ -332,7 +333,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @keyframes trayUp { from { transform: translateY(110%); } }
 .offer-items { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .offer-tip { margin: 0 0 6px; text-align: center; font-size: 13px; color: #8A4A2A; }
-.offer-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 118px; justify-content: center; padding: 8px 2px; border: 2px solid #E9CF96; border-radius: 16px; background: #FFFDF6; color: var(--ink); font: inherit; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+.offer-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; min-height: 118px; justify-content: center; padding: 8px 2px; border: 2px solid #E9CF96; border-radius: 16px; background: #FFFDF6; color: #3B1F17; font: inherit; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 .offer-item img { width: 100%; max-width: 72px; aspect-ratio: 1; height: auto; object-fit: contain; pointer-events: none; }
 .offer-item b { font-size: 17px; }
 .offer-item small { font-size: 12px; color: #9A6A48; }
@@ -390,7 +391,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .san-offer, .gy-lamp { transform-box: fill-box; transform-origin: 50% 100%; }
 .san-offer.pop, .gy-lamp.pop { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 .san-snacks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 4px; }
-.san-snack { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border: 2px solid #E8C48A; border-radius: 14px; background: #FFF9EE; font: inherit; color: var(--ink); cursor: pointer; }
+.san-snack { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border: 2px solid #E8C48A; border-radius: 14px; background: #FFF9EE; font: inherit; color: #3B1F17; cursor: pointer; }
 .san-snack img { height: 64px; width: auto; }
 .san-snack.done { opacity: .55; }
 /* 觀音殿 */
@@ -407,12 +408,12 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-blade.held, .zs-prop.held, .ts-prop.held { cursor: grabbing; filter: drop-shadow(0 6px 4px rgb(40 15 5 / .35)); }
 .gg-blade:focus:not(:focus-visible), .zs-prop:focus:not(:focus-visible), .ts-prop:focus:not(:focus-visible) { outline: none; }
 .gg-word { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 12px; fill: #2A1A12; }
-.gg-quote { margin: 8px 0 12px; padding: 14px 16px; border-left: 4px solid var(--red); background: #FFF6E4; font-family: 'Noto Serif TC', serif; font-size: 18px; line-height: 1.6; }
+.gg-quote { margin: 8px 0 12px; padding: 14px 16px; border-left: 4px solid var(--red); background: #FFF6E4; font-family: 'Noto Serif TC', serif; font-size: 18px; line-height: 1.6; color: #3B1F17; }
 .zs-offer, #zPlanted, .zs-prop, .ts-prop { transform-box: fill-box; transform-origin: 50% 100%; }
 .zs-offer.pop, #zPlanted.pop { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 .zs-prop.pop image, .ts-prop.pop image { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); transform-box: fill-box; transform-origin: 50% 100%; }
 .zs-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 10px; }
-.zs-flower { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border: 2px solid #E8C48A; border-radius: 14px; background: #FFF9EE; font: inherit; color: var(--ink); cursor: pointer; }
+.zs-flower { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; border: 2px solid #E8C48A; border-radius: 14px; background: #FFF9EE; font: inherit; color: #3B1F17; cursor: pointer; }
 .zs-flower img { height: 72px; width: auto; }
 .zs-flower.on { border-color: var(--red); background: #FFEDE6; }
 .ts-cab-title { font-family: 'Noto Serif TC', serif; font-weight: 900; font-size: 9px; fill: #FFE3A0; letter-spacing: 2px; pointer-events: none; }
@@ -421,7 +422,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .ts-zod .chip { padding: 6px 0; position: relative; }
 .ts-zod .chip i { position: absolute; top: -6px; right: -4px; font-style: normal; font-size: 10px; background: var(--red); color: #FFF; border-radius: 999px; padding: 0 4px; }
 .ts-list { list-style: none; padding: 0; margin: 6px 0 10px; display: grid; gap: 6px; }
-.ts-list li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; }
+.ts-list li { display: flex; gap: 10px; align-items: baseline; padding: 8px 12px; background: #FFF6E4; border-radius: 10px; color: #3B1F17; }
 @media (prefers-reduced-motion: reduce) { .zs-offer.pop, #zPlanted.pop, .zs-prop.pop image, .ts-prop.pop image { animation: none; } }
 .gg-book { cursor: pointer; }
 
@@ -604,7 +605,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .fs-meter { height: 10px; border-radius: 5px; background: #EADFCB; overflow: hidden; margin: 4px 0; }
 .fs-meter i { display: block; height: 100%; background: linear-gradient(90deg, #6BAE5A, #FFD24A); }
 /* ---------- 福氣幣與廟口供品店 ---------- */
-.fu { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 2px; min-height: 28px; border: 1.5px solid #E9CF96; border-radius: 999px; background: #FFF4D8; color: var(--ink); font: inherit; font-variant-numeric: tabular-nums; }
+.fu { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px 2px 2px; min-height: 28px; border: 1.5px solid #E9CF96; border-radius: 999px; background: #FFF4D8; color: #3B1F17; font: inherit; font-variant-numeric: tabular-nums; }
 .fu.bump { animation: fuBump .5s ease; }
 @keyframes fuBump { 40% { transform: scale(1.18); } }
 .fu-coin { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #FFE79A, #E8B23A 60%, #B9801E); color: #8A1E14; font-style: normal; font-family: var(--font-serif); font-weight: 900; font-size: 12px; box-shadow: inset 0 0 0 1.5px #C8912F; }
@@ -626,7 +627,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .shop-bag { font-size: 13px; color: #9A6A48; }
 .shop-tip { margin: 0 0 10px; font-size: 13px; line-height: 1.5; color: #7A5A48; }
 .shop-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.shop-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 18px 4px 8px; border: 2px solid #E9CF96; border-radius: 14px; background: #FFFDF6; text-align: center; }
+.shop-item { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 18px 4px 8px; border: 2px solid #E9CF96; border-radius: 14px; background: #FFFDF6; text-align: center; color: #3B1F17; }
 .shop-item.here { border-color: #E0443E; background: #FFF1EC; }
 .shop-item img { width: 64px; height: 64px; object-fit: contain; }
 .shop-item b { font-size: 15px; }
@@ -724,7 +725,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @keyframes tgTurn { from { opacity: 0; } to { opacity: 1; } }
 #kCloudL, #kCloudR { transform-box: view-box; }
 .tg-list { list-style: none; padding: 0; margin: 6px 0 10px; display: grid; gap: 6px; }
-.tg-list li { padding: 8px 12px; background: #FFF6E4; border-radius: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; }
+.tg-list li { padding: 8px 12px; background: #FFF6E4; border-radius: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: baseline; color: #3B1F17; }
 .tg-list small { color: #9A7A60; }
 .tg-list b { color: var(--red); }
 @media (prefers-reduced-motion: reduce) { .tg-prop.pop image, .tg-prop.pop > g, #kSky.tg-turn { animation: none; } }
