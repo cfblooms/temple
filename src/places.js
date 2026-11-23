@@ -148,14 +148,17 @@ const XD_PAY = 5;
 export function initSleep(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, dayKey, cam } = api;
   const xd = state.xd || (state.xd = { last: '', streak: 0, total: 0 });
-  const MIRROR = [190, 244], BELL = [262, 486], CLOTH_REST = [76, 590];
+  // 有 Gemini 背景時，心鏡在右邊一點、小一點
+  const ART_BG = !!A('xd-bg'), MS = ART_BG ? .8 : 1;
+  const MIRROR = ART_BG ? [228, 222] : [190, 244], BELL = [262, 486], CLOTH_REST = [76, 590];
+  const DU = DUST.map(([x, y]) => [MIRROR[0] + (x - 190) * MS, MIRROR[1] + (y - 244) * MS]);
   const svg = mount($('#xdHost'), `${bgOr('xd', `${BG('#2C2848', '#16132A', 'xdBg')}
     ${Array.from({ length: 14 }, (_, i) => `<circle cx="${(i * 67) % 340 + 10}" cy="${(i * 41) % 130 + 20}" r="${i % 3 ? 1.2 : 1.8}" fill="#FFF3C0" opacity=".7"/>`).join('')}
     <rect x="0" y="420" width="360" height="225" fill="#3A2E3A"/><rect x="20" y="430" width="320" height="18" rx="4" fill="#5A4250"/>
     <g transform="translate(${MIRROR[0]} ${MIRROR[1]})"><circle r="104" fill="#8A6A3A"/><circle r="94" fill="#C8B080"/><circle r="88" fill="#9EB8D0"/></g>`)}
-    <g transform="translate(${MIRROR[0]} ${MIRROR[1]})"><circle id="xdGlow" r="88" fill="#E8F4FF" opacity="0"/><path d="M-50 -50 Q-20 -70 10 -60" stroke="#FFF" stroke-width="6" opacity=".35" fill="none" stroke-linecap="round"/></g>
+    <g transform="translate(${MIRROR[0]} ${MIRROR[1]}) scale(${MS})"><circle id="xdGlow" r="88" fill="#E8F4FF" opacity="0"/><path d="M-50 -50 Q-20 -70 10 -60" stroke="#FFF" stroke-width="6" opacity=".35" fill="none" stroke-linecap="round"/></g>
     <text x="${MIRROR[0]}" y="${MIRROR[1] + 128}" text-anchor="middle" class="place-small" fill="#E8E0FF">心鏡</text>
-    <g id="xdDust">${DUST.map(([x, y], i) => `<g class="xd-dust" transform="translate(${x} ${y})"><circle r="${16 + (i % 3) * 4}" fill="#6A6070" opacity=".85"/><circle cx="5" cy="-4" r="${7 + (i % 2) * 3}" fill="#7A7080" opacity=".8"/></g>`).join('')}</g>
+    <g id="xdDust">${DU.map(([x, y], i) => `<g class="xd-dust" transform="translate(${x} ${y}) scale(${MS})"><circle r="${16 + (i % 3) * 4}" fill="#6A6070" opacity=".85"/><circle cx="5" cy="-4" r="${7 + (i % 2) * 3}" fill="#7A7080" opacity=".8"/></g>`).join('')}</g>
     <g transform="translate(96 472)"><ellipse cx="0" cy="10" rx="20" ry="5" fill="#2A1A10" opacity=".5"/><path d="M-14 8 Q0 18 14 8 L10 -2 L-10 -2Z" fill="#C8963E"/><g id="xdLamp"><ellipse cx="0" cy="-22" rx="22" ry="26" fill="#FFE29A" opacity=".22"/><path d="M0 -26 C6 -18 6 -10 0 -6 C-6 -10 -6 -18 0 -26Z" fill="#FFB43A"/></g></g>
     <g id="xdBell" class="place-hit" tabindex="0" role="button" aria-label="敲磬">${pic('xd-bell', BELL[0] - 60, BELL[1] - 40, 120, 90, `<ellipse cx="${BELL[0]}" cy="${BELL[1] + 30}" rx="50" ry="12" fill="#8A2A2A"/><path d="M${BELL[0] - 40} ${BELL[1] - 10} Q${BELL[0]} ${BELL[1] + 50} ${BELL[0] + 40} ${BELL[1] - 10}Z" fill="#B8863A"/><ellipse cx="${BELL[0]}" cy="${BELL[1] - 10}" rx="40" ry="9" fill="#6A4A20"/><ellipse cx="${BELL[0]}" cy="${BELL[1] - 11}" rx="34" ry="6" fill="#3A2A12"/>`)}<rect x="${BELL[0] - 60}" y="${BELL[1] - 40}" width="120" height="90" fill="#000" opacity="0"/></g>
     <g id="xdMallet" transform="translate(320 470) rotate(30)">${pic('xd-mallet', -12, -60, 24, 68, '<rect x="-3" y="-44" width="6" height="50" rx="3" fill="#7A4A22"/><rect x="-9" y="-56" width="18" height="16" rx="5" fill="#E0D0B0"/>')}</g>
@@ -165,7 +168,7 @@ export function initSleep(api) {
     <rect id="xdDark" width="360" height="645" fill="#05040C" opacity="0" pointer-events="none"/>
     <text id="xdBreath" x="190" y="256" text-anchor="middle" class="xd-breath" opacity="0"></text>`, 'xd-svg');
   const S = (id) => svg.querySelector('#' + id);
-  const dust = [...svg.querySelectorAll('.xd-dust')].map((el, i) => ({ el, x: DUST[i][0], y: DUST[i][1], a: .85 }));
+  const dust = [...svg.querySelectorAll('.xd-dust')].map((el, i) => ({ el, x: DU[i][0], y: DU[i][1], a: .85 }));
   let phase = 'idle', hits = 0, lastHit = 0, run = 0, cloth = [...CLOTH_REST];
   const moveCloth = (x, y) => { cloth = [x, y]; put(S('xdCloth'), x, y); };
   function reset() {
@@ -263,11 +266,13 @@ export function initBoard(api) {
   const stopXY = (i) => (i === RJ_STOPS.length - 1 ? [70, 150] : RJ_PATH[i]);
   const svg = mount($('#rjHost'), `${bgOr('rj', `${BG('#F6E6C8', '#E6C894', 'rjBg')}
     <rect x="18" y="60" width="324" height="520" rx="14" fill="#8A2A22"/><rect x="30" y="72" width="300" height="496" rx="8" fill="#FFF6E2"/>`)}
-    <text x="180" y="108" text-anchor="middle" class="place-sign">三月瘋媽祖・隨香看板</text>
+    ${A('rj-bg') ? '' : '<text x="180" y="108" text-anchor="middle" class="place-sign">三月瘋媽祖・隨香看板</text>'}
+    <g transform="${A('rj-bg') ? 'translate(42 50) scale(.82)' : ''}">
     <path d="M${RJ_PATH.map((p) => p.join(' ')).join(' L')} L70 150" fill="none" stroke="#E8C690" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
     <path id="rjDone" fill="none" stroke="#E0443E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
     ${RJ_STOPS.slice(0, -1).map((s, i) => `<g transform="translate(${RJ_PATH[i][0]} ${RJ_PATH[i][1]})"><circle r="8" fill="#FFF6E2" stroke="#C8302A" stroke-width="3" class="rj-stop" id="rjS${i}"/><text x="${RJ_PATH[i][0] > 200 ? -14 : 14}" y="4" text-anchor="${RJ_PATH[i][0] > 200 ? 'end' : 'start'}" class="place-small">${s.name}</text></g>`).join('')}
     <g id="rjSedan">${pic('rj-sedan', -22, -38, 44, 44, '<ellipse cx="0" cy="4" rx="16" ry="4" fill="#000" opacity=".2"/><rect x="-11" y="-22" width="22" height="22" rx="3" fill="#E0443E" stroke="#8A2A22" stroke-width="1.6"/><path d="M-15 -22 L0 -32 L15 -22Z" fill="#F3C64A" stroke="#8A2A22" stroke-width="1.4"/><rect x="-6" y="-17" width="12" height="10" fill="#FFE08A"/><path d="M-20 -4h40" stroke="#7A4A22" stroke-width="3" stroke-linecap="round"/>')}</g>
+    </g>
     <text id="rjKm" x="180" y="610" text-anchor="middle" class="rj-km"></text>
     <text id="rjNext" x="180" y="634" text-anchor="middle" class="place-small"></text>`, 'rj-svg');
   const S = (id) => svg.querySelector('#' + id);
@@ -441,20 +446,22 @@ const SPOTS = [[150, 216], [210, 210], [130, 290], [232, 292], [180, 330], [120,
 export function initWash(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, dayKey, cam, me } = api;
   const wa = state.wash || (state.wash = { last: '', streak: 0, total: 0 });
-  const TROUGH = [180, 548], REST = [306, 560];
+  const TROUGH = A('wa-bg') ? [122, 497] : [180, 548], REST = [306, 560];
+  const WO = A('wa-bg') ? [40, -22] : [0, 0]; // 有背景圖時人往右上移，不要跪在石槽上
+  const SP = SPOTS.map(([x, y]) => [x + WO[0], y + WO[1]]);
   const svg = mount($('#waHost'), `${bgOr('wa', `${BG('#E2EEDC', '#C8D8B8', 'waBg')}
     <path d="M0 140 Q60 90 120 140 T240 140 T360 130 V0 H0Z" fill="#8AB878" opacity=".5"/>
     ${[40, 320].map((x) => `<g transform="translate(${x} 70)"><path d="M0 0 v120" stroke="#6A4A2A" stroke-width="6"/>${[0, 1, 2, 3, 4].map((i) => `<path d="M0 ${i * 8} q${x < 180 ? 20 : -20} 40 ${x < 180 ? 10 : -10} 110" stroke="#7AAA5A" stroke-width="2.4" fill="none" opacity=".8"/>`).join('')}</g>`).join('')}
     <rect x="0" y="470" width="360" height="175" fill="#B8B0A0"/>
     <g transform="translate(${TROUGH[0]} ${TROUGH[1]})"><rect x="-120" y="-30" width="240" height="62" rx="18" fill="#8A8478" stroke="#5A5448" stroke-width="3"/><rect x="-106" y="-22" width="212" height="26" rx="10" fill="#7AB8C8"/><path d="M-90 -12q20 -6 40 0t40 0t40 0t40 0" stroke="#BFE6F2" stroke-width="2" fill="none"/></g>`)}
-    <g id="waMe"><ellipse cx="180" cy="468" rx="80" ry="12" fill="#000" opacity=".15"/><image id="waMeImg" x="70" y="170" width="220" height="300" preserveAspectRatio="xMidYMax meet"/></g>
-    <g id="waSpots">${SPOTS.map(([x, y], i) => `<g class="wa-spot" transform="translate(${x} ${y})"><circle r="${12 + (i % 3) * 3}" fill="#5A5048" opacity=".55"/><circle cx="4" cy="-3" r="6" fill="#4A4038" opacity=".5"/></g>`).join('')}</g>
+    <g id="waMe" transform="translate(${WO[0]} ${WO[1]})"><ellipse cx="180" cy="468" rx="80" ry="12" fill="#000" opacity=".15"/><image id="waMeImg" x="70" y="170" width="220" height="300" preserveAspectRatio="xMidYMax meet"/></g>
+    <g id="waSpots">${SP.map(([x, y], i) => `<g class="wa-spot" transform="translate(${x} ${y})"><circle r="${12 + (i % 3) * 3}" fill="#5A5048" opacity=".55"/><circle cx="4" cy="-3" r="6" fill="#4A4038" opacity=".5"/></g>`).join('')}</g>
     <g transform="translate(${TROUGH[0]} ${TROUGH[1]})"><text y="24" text-anchor="middle" class="place-small" fill="#FFF4E0">抹草水</text></g>
-    <g id="waWet" transform="translate(326 300)"><rect width="16" height="80" rx="8" fill="#FFF" stroke="#5A8A9A" stroke-width="2"/><rect id="waWetF" x="2" y="78" width="12" height="0" rx="6" fill="#7AB8C8"/></g>
+    <g id="waWet" transform="translate(${A('wa-bg') ? 18 : 326} 300)"><rect width="16" height="80" rx="8" fill="#FFF" stroke="#5A8A9A" stroke-width="2"/><rect id="waWetF" x="2" y="78" width="12" height="0" rx="6" fill="#7AB8C8"/></g>
     <g id="waBranch" class="place-hit" tabindex="0" role="button" aria-label="拿楊柳枝">${pic('wa-branch', -40, -96, 80, 104, `<path d="M0 0 L-4 -70" stroke="#7A5A32" stroke-width="4" stroke-linecap="round"/>${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M-2 ${-30 - i * 7} q${i % 2 ? 14 : -14} 6 ${i % 2 ? 18 : -18} 22" stroke="#6AA84A" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')}<path d="M6 -8 q10 -6 14 -18 M-6 -10 q-10 -4 -14 -16" stroke="#3E8A4A" stroke-width="4" fill="none"/>`)}<g id="waDrip" opacity="0">${[0, 1, 2].map((i) => `<circle cx="${-10 + i * 10}" cy="${-14 + i * 5}" r="2.6" fill="#7AB8C8"/>`).join('')}</g><rect x="-34" y="-84" width="68" height="100" fill="#000" opacity="0"/></g>
     <text id="waTip" x="180" y="626" text-anchor="middle" class="place-small"></text>`, 'wa-svg');
   const S = (id) => svg.querySelector('#' + id);
-  const spots = [...svg.querySelectorAll('.wa-spot')].map((el, i) => ({ el, x: SPOTS[i][0], y: SPOTS[i][1], a: 1 }));
+  const spots = [...svg.querySelectorAll('.wa-spot')].map((el, i) => ({ el, x: SP[i][0], y: SP[i][1], a: 1 }));
   let wet = 0, pos = [...REST], phase = 'idle', lastSp = 0;
   const paintWet = () => { const h = 76 * wet; S('waWetF').setAttribute('y', (78 - h).toFixed(1)); S('waWetF').setAttribute('height', h.toFixed(1)); S('waDrip').setAttribute('opacity', wet > .05 ? '1' : '0'); };
   function reset() {
