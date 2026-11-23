@@ -3,7 +3,7 @@
 // → 4 神轎來了，跪在路上鑽轎腳 → 5 媽祖停在你的香案前，給你一張平安符。
 // 手勢規則：拿起來的東西浮在手指上方；做動作時鏡頭拉近那一塊。
 // 有 Gemini 圖（src/assets/fest/mz-*.webp、bg-mazu.webp）就自動換掉下面的手繪 SVG。
-import { art, rand, place } from './core.js';
+import { art, hasArt, rand, place } from './core.js';
 import { backdrop } from './games-1.js';
 import { CHARS } from '../chars.js';
 import burnerUrl from '../assets/burner.webp';
@@ -156,7 +156,7 @@ export const mazu = {
   play(st, o) {
     const me = o.me;
     const others = CHARS.filter((c) => c.id !== me.id && c.kneel);
-    const npc = others[Math.floor(Math.random() * others.length)];
+    const crowd = [...others].sort(() => Math.random() - .5).slice(0, 3), npc = crowd[0];
     const kneelImg = (c, s = 1) => `<image href="${c.kneel}" x="${-60 * s}" y="${-130 * s}" width="${120 * s}" height="${130 * s}" preserveAspectRatio="xMidYMax meet"/>`;
     st.set(`${backdrop('mazu', { wall: ['#BFE0F2', '#F8E2C0'], table: 430, tableColor: ['#C8BCA8', '#A89A84'], extra: `
         ${[[0, 150, '#E8C8A0'], [96, 120, '#F0D8B8'], [214, 160, '#E4BC98'], [300, 130, '#F2D2AE']].map(([x, h, c]) => `<rect x="${x}" y="${430 - h - 120}" width="${x === 300 ? 60 : 110}" height="${h + 120}" fill="${c}" stroke="#C8A27A"/><rect x="${x + 14}" y="${430 - h - 96}" width="30" height="34" fill="#9CC6DA" opacity=".8"/><rect x="${x + 56}" y="${430 - h - 96}" width="30" height="34" fill="#9CC6DA" opacity=".8"/><rect x="${x}" y="${430 - 70}" width="${x === 300 ? 60 : 110}" height="12" fill="#C8302A"/>`).join('')}
@@ -168,6 +168,7 @@ export const mazu = {
       ${OFFER.map((it) => `<ellipse id="slot-${it.id}" cx="${it.slot[0]}" cy="${it.slot[1] + it.h / 2 - 2}" rx="${it.w / 2 + 2}" ry="5" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="4 3" data-nophoto/>`).join('')}
       ${OFFER.map((it) => `<g id="of-${it.id}" class="fest-hit" filter="url(#fToy)">${hit(Math.max(48, it.w + 10), Math.max(48, it.h + 10))}${img(it.url, it.w, it.h)}</g>`).join('')}
       <g id="npc" style="display:none"><ellipse rx="40" ry="7" fill="#000" opacity=".15"/>${kneelImg(npc, .9)}</g>
+      ${crowd.slice(1).map((c, i) => `<g id="npc${i + 1}" style="display:none"><ellipse rx="36" ry="6" fill="#000" opacity=".15"/>${kneelImg(c, .8)}</g>`).join('')}
       <g id="av"><ellipse rx="46" ry="8" fill="#000" opacity=".15"/>${kneelImg(me)}</g>
       <g id="sedanLayer"></g>
       <g id="props"></g>
@@ -403,23 +404,60 @@ export const mazu = {
     }
 
     /* ================= 4. 鑽轎腳 ================= */
+    // 神轎來之前：放一串鞭炮迎接（按住香，把香頭碰到鞭炮下面的引信）
     function phaseSedan() {
+      const FC = [40, 300], FUSE = [40, 432], REST = [196, 520];
+      $('#props').insertAdjacentHTML('beforeend', `<g id="fcG"><path d="M${FC[0] - 18} 160 Q${FC[0]} 150 ${FC[0] + 30} 170" stroke="#5E9A4A" stroke-width="5" fill="none"/><line x1="${FC[0]}" y1="168" x2="${FC[0]}" y2="186" stroke="#7A3A1A" stroke-width="2"/>
+        <g id="fcStr" transform="translate(${FC[0]} ${FC[1]})">${hasArt('cj-firecracker') ? art('cj-firecracker', 60, 260, '') : `${Array.from({ length: 16 }, (_, i) => `<rect x="${i % 2 ? 2 : -14}" y="${-120 + i * 15}" width="12" height="20" rx="3" fill="#E0443E" stroke="#9A2420"/>`).join('')}`}</g>
+        <circle id="fcFuse" cx="${FUSE[0]}" cy="${FUSE[1]}" r="14" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 4"/></g>
+        <g id="fcStick" class="fest-hit" filter="url(#fToy)">${hit(40, 110)}<rect x="-2.5" y="-50" width="5" height="100" rx="2" fill="#B0703E"/><circle cy="-52" r="9" fill="url(#fGlow)"/><circle cy="-52" r="3" fill="#FF6A2A"/></g>`);
+      const stick = $('#fcStick'); place(stick, ...REST);
+      st.zoom(110, 400, 280);
+      st.say('聽到鑼聲了，神轎快到了！先<b>放鞭炮</b>迎接媽祖：按住點著的香，把香頭碰到鞭炮<b>下面的引信</b>。', 'temple');
+      setTip('香頭碰到鞭炮的引信');
+      let lit = false;
+      const light = () => {
+        if (lit) return; lit = true; stick.remove(); $('#fcFuse').remove(); setTip(''); st.buttons([]);
+        const str = $('#fcStr');
+        for (let i = 0; i < 22; i++) st.later(i * 110, () => {
+          const y = FUSE[1] - i * 12;
+          st.burst('paper', FC[0] + rand(-10, 10), y, 6, { color: i % 2 ? '#E0443E' : '#F3C64A', speed: 90, life: .9 });
+          st.emit('smoke', FC[0] + rand(-12, 12), y, { vx: rand(-20, 20), vy: -20, life: 1.4, s0: .8, s1: 2, fade: true });
+          st.sfx.pop(); st.sfx.buzz?.(8);
+          str.setAttribute('transform', `translate(${FC[0] + rand(-2, 2)} ${FC[1]})`);
+          str.style.clipPath = `inset(0 0 ${Math.min(100, (i + 1) / 22 * 100).toFixed(0)}% 0)`;
+        });
+        st.later(22 * 110 + 300, () => { st.floatText('劈哩啪啦，迎媽祖！', 140, 260, '#FFE08A'); st.later(700, sedanCome); });
+      };
+      st.hold(stick, {
+        magnet: () => (lit ? null : [FUSE[0], FUSE[1] + 52, 46]),
+        onMove(x, y) { if (lit) return; place(stick, x, y); if (Math.hypot(x - FUSE[0], y - 52 - FUSE[1]) < 16) light(); },
+        onUp(x, y) { if (!lit) flyTo(st, stick, [x, y], REST, 260); },
+        liftBy: .6,
+      });
+      st.buttons([{ label: '幫我點', on: light }]);
+    }
+    function sedanCome() {
+      // 路中間跪了一排信徒，一起等鑽轎腳
+      const row = [[320, 600, $('#npc')], [112, 612, $('#npc1')], [30, 604, $('#npc2')]].filter((r) => r[2]);
+      row.forEach(([x, y, el]) => { el.style.display = ''; place(el, x, y); });
       st.say('媽祖的<b>神轎</b>來了！大家都跪到路中間等著鑽轎腳。轎子到你頭上時<b>按住畫面</b>趴低，轎子過去再放開。', 'temple');
       setTip('轎子靠近時按住畫面趴低');
-      const npcEl = $('#npc'); npcEl.style.display = '';
-      const npcAt = [320, 600]; place(npcEl, ...npcAt);
+      const npcEl = $('#npc');
       st.tween(600, (k, e) => { av.x = AV[0] + (AV_ROW[0] - AV[0]) * e; av.y = AV[1] + (AV_ROW[1] - AV[1]) * e; });
       const sed = actor(`${bearer(-112)}${bearer(112)}${art('mz-sedan', 240, 222, sedanFallback)}`, 520, { y: SED_Y, speed: 95, sway: 1.5, bob: 3, layer: $('#sedanLayer') });
       st.sfx.chime();
-      let warned = false, passed = false, npcLow = 0, early = false;
+      let warned = false, passed = false, early = false;
       const offTouch = st.touch({ down() { lowHeld = true; }, up() { lowHeld = false; } });
       st.zoom(240, 480, 330, 700);
       tickHook = (dt) => {
         av.want = lowHeld ? 1 : 0;
-        // 旁邊的信徒自己會趴
-        const nOver = Math.abs(sed.x - npcAt[0]) < 150;
-        npcLow += ((nOver ? 1 : 0) - npcLow) * Math.min(1, dt * 8);
-        npcEl.setAttribute('transform', `translate(${npcAt[0]} ${npcAt[1] + npcLow * 24}) rotate(${(npcLow * -8).toFixed(1)}) scale(1 ${(1 - npcLow * .38).toFixed(3)})`);
+        // 旁邊的信徒自己會趴（轎子一個一個從大家頭上過去）
+        row.forEach((r) => {
+          const nOver = Math.abs(sed.x - r[0]) < 150;
+          r.low = (r.low || 0) + ((nOver ? 1 : 0) - (r.low || 0)) * Math.min(1, dt * 8);
+          r[2].setAttribute('transform', `translate(${r[0]} ${r[1] + r.low * 24}) rotate(${(r.low * -8).toFixed(1)}) scale(1 ${(1 - r.low * .38).toFixed(3)})`);
+        });
         over = Math.abs(sed.x - av.x) < 135;
         // 轎子到頭上卻還沒趴低：轎班停下來等你
         sed.hold = over && av.low < .7 && sed.x > av.x;
@@ -433,6 +471,7 @@ export const mazu = {
       };
       sed.go(TABLE[0] + 20, () => {
         tickHook = null; offTouch(); lowHeld = false; av.want = 0;
+        row.slice(1).forEach((r) => { r[2].style.display = 'none'; });
         phaseAmulet(sed, npcEl);
       });
     }

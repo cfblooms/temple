@@ -255,18 +255,19 @@ const dongzhi = {
       st.$('#kitchen').style.display = 'none';
       const pot = st.$('#cook > g'); pot.style.display = 'none';
       st.add(`<g id="altar">
+        ${hasArt('bg-dongzhi-altar') ? `<g transform="translate(180 322.5)">${art('bg-dongzhi-altar', 360, 645, '')}</g>` : `
         <rect width="360" height="645" fill="#8E3324"/>
         <rect width="360" height="300" fill="#B5432E"/><path d="M0 300h360" stroke="#E2B04A" stroke-width="4"/>
         <g transform="translate(180 54)"><rect x="-70" y="-24" width="140" height="44" rx="6" fill="#E0443E" stroke="#E2B04A" stroke-width="2"/><text y="8" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text></g>
         <path d="M18 316h324l-10 30H28z" fill="#6E2A14"/><rect x="28" y="346" width="304" height="140" fill="#7E3418"/>
-        <rect x="28" y="346" width="304" height="8" fill="#9C4A24"/>
+        <rect x="28" y="346" width="304" height="8" fill="#9C4A24"/>`}
         <g transform="translate(${GOD[0]} 214)"><ellipse cy="96" rx="58" ry="10" fill="#000" opacity=".2"/><image href="${mazuUrl}" x="-56" y="-104" width="112" height="204" preserveAspectRatio="xMidYMax meet"/></g>
         <g transform="translate(${ANC[0]} 236)">${art('dz-tablet', 92, 150, tablet)}</g>
         ${[[GOD[0], '拜神明'], [ANC[0], '拜祖先']].map(([x, t]) => `<g transform="translate(${x} 420)"><rect x="-38" y="-15" width="76" height="30" rx="5" fill="#E0443E" stroke="#E2B04A" stroke-width="2"/><text y="6" text-anchor="middle" class="fest-small" fill="#FFE29A">${t}</text></g>`).join('')}
         <g id="cenG" transform="translate(${GOD[0] + 44} 330)">${censer(false)}</g><g id="cenA" transform="translate(${ANC[0] - 44} 330)">${censer(false)}</g>
         <ellipse id="spotG" cx="${GOD[0]}" cy="${GOD[1] + 4}" rx="44" ry="12" fill="none" stroke="#FFE29A" stroke-width="3" stroke-dasharray="7 6"/>
         <ellipse id="spotA" cx="${ANC[0]}" cy="${ANC[1] + 4}" rx="44" ry="12" fill="none" stroke="#FFE29A" stroke-width="3" stroke-dasharray="7 6"/>
-        <rect y="486" width="360" height="160" fill="#C98A55"/><rect y="486" width="360" height="7" fill="#E8B07A"/>
+        ${hasArt('bg-dongzhi-altar') ? '' : '<rect y="486" width="360" height="160" fill="#C98A55"/><rect y="486" width="360" height="7" fill="#E8B07A"/>'}
         <g id="me" transform="translate(180 470)" opacity="0"><image href="${o.me.kneel}" x="-62" y="-136" width="124" height="136" preserveAspectRatio="xMidYMax meet"/></g>
       </g>`);
       // 碗搬到最上層（蓋在供桌上面）

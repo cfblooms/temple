@@ -245,9 +245,15 @@ const climber = (c) => `<g><ellipse cx="0" cy="30" rx="10" ry="4" fill="#000" op
   <circle cy="-24" r="11" fill="#E8B48A"/><path d="M-11 -28 Q0 -40 11 -28" fill="#2A1A12"/><rect x="-12" y="-30" width="24" height="5" rx="2" fill="#E0443E"/></g>`;
 const flagSvg = `<rect x="-2" y="-40" width="4" height="64" fill="#8A6030"/><path d="M2 -40 L44 -30 L2 -18Z" fill="#E0443E"/><text x="16" y="-26" class="fest-small" fill="#FFE29A" style="font-size:9px">順風</text>`;
 
+// 爬柱的姿勢：有 Gemini 的兩張爬姿（左手在上 -a、右手在上 -b）就輪流換；
+// 沒有的話用原本那張圖，左右翻面＋伸長縮短，看起來像兩手交替往上拉。
+const poseA = (key, c) => (hasArt(key + '-a') ? art(key + '-a', 56, 100, '') : art(key, 40, 96, climber(c)));
+const poseB = (key, c) => (hasArt(key + '-b') ? art(key + '-b', 56, 100, '') : `<g transform="scale(-1 1)">${art(key, 40, 96, climber(c))}</g>`);
+// 爬的動畫狀態：reach 0→1 伸手、1→0 拉上去；alt 換手
+function climbAnim() { return { t: 1, alt: 0, slip: 0, from: 0, to: 0 }; }
 const qianggu = {
   play(st, o) {
-    const ME = 130, RIVAL = 236; // 兩根孤柱的 x
+    const ME = hasArt('qgu-pole') ? 120 : 130, RIVAL = hasArt('qgu-pole') ? 239 : 236; // 兩根孤柱的 x（對齊孤柱圖裡的柱子）
     const worldH = BASE_Y + 80 - (PLAT - STACK_STEPS * 40 - 120);
     let my = 0, rv = 0, beatAt = 0, beatMs = 900, run = 0, tapped = true, over = false, combo = 0, started = false;
     const TOP = PLAT - STACK_STEPS * 40 - 30; // 旗子
@@ -270,22 +276,43 @@ const qianggu = {
       <g id="qgFlagRv" transform="translate(${RIVAL} ${TOP})">${art('qgu-flag', 50, 70, flagSvg)}</g>
       <rect x="0" y="${BASE_Y + 30}" width="360" height="400" fill="#3A2418"/>
       ${Array.from({ length: 14 }, (_, i) => `<circle cx="${12 + i * 26}" cy="${BASE_Y + 50 + (i % 2) * 8}" r="12" fill="#1E120C"/>`).join('')}
-      <g id="qgRv">${art('qgu-rival', 40, 70, climber('#3A6AB8'))}</g>
-      <g id="qgMe">${art('qgu-climber', 40, 70, climber('#E0443E'))}</g>
+      <g id="qgRv"><g class="pa">${poseA('qgu-rival', '#3A6AB8')}</g><g class="pb" style="display:none">${poseB('qgu-rival', '#3A6AB8')}</g></g>
+      <g id="qgMe"><g class="pa">${poseA('qgu-climber', '#E0443E')}</g><g class="pb" style="display:none">${poseB('qgu-climber', '#E0443E')}</g></g>
       <g id="qgRing" pointer-events="none"><circle r="20" fill="none" stroke="#FFE29A" stroke-width="4"/></g>
       <g id="qgTarget" pointer-events="none"><circle r="20" fill="none" stroke="#FFF" stroke-width="2" stroke-dasharray="4 4" opacity=".8"/></g>
     </g>
     <text id="qgJudge" x="180" y="250" text-anchor="middle" class="fest-sign" style="font-size:26px" opacity="0"></text>`);
     const W = st.$('#qgWorld'), meEl = st.$('#qgMe'), rvEl = st.$('#qgRv'), ring = st.$('#qgRing'), target = st.$('#qgTarget'), judge = st.$('#qgJudge');
     let camY = 0;
+    const am = climbAnim(), ar = climbAnim();
+    let rvShown = 0;
+    // 一步爬上去：先伸手（身體拉長），再把身體拉上去（縮回來），換另一隻手
+    const startClimb = (a, from, to) => { a.from = from; a.to = to; a.t = 0; a.alt ^= 1; };
+    const animPose = (el, a, x, dt) => {
+      const up = a.to < a.from ? 0 : 1; // 往上
+      a.t = Math.min(1, a.t + dt / .32); a.slip = Math.max(0, a.slip - dt * 2.5);
+      const k = a.t, reach = k < .45 ? k / .45 : 1 - (k - .45) / .55; // 0→1→0
+      const yy = yOf(a.from + (a.to - a.from) * (k < .45 ? k * .2 : .09 + (k - .45) / .55 * .91));
+      const sy = 1 + reach * .16 * up, sx = 1 - reach * .06 * up;
+      const sway = Math.sin(performance.now() / 260 + x) * 1.6 + a.slip * Math.sin(performance.now() / 30) * 6;
+      el.querySelector('.pa').style.display = a.alt ? 'none' : ''; el.querySelector('.pb').style.display = a.alt ? '' : 'none';
+      el.setAttribute('transform', `translate(${x.toFixed(1)} ${yy.toFixed(1)}) rotate(${sway.toFixed(1)}) translate(0 30) scale(${sx.toFixed(3)} ${sy.toFixed(3)}) translate(0 -30)`);
+      return yy;
+    };
+    let lastDraw = performance.now();
     const draw = () => {
+      const now = performance.now(), dt = Math.min(.05, (now - lastDraw) / 1000); lastDraw = now;
       // 世界往下捲，讓自己的爬手維持在畫面 y≈380
       const want = clamp(380 - yOf(my), 0, 380 - TOP + 40);
       camY += (want - camY) * .18;
       W.setAttribute('transform', `translate(0 ${camY.toFixed(1)})`);
-      place(meEl, ME, yOf(my));
-      place(rvEl, RIVAL, yOf(rv));
-      place(target, ME, yOf(my) - 34); // 手抓的位置
+      if (am.t >= 1) { am.from = am.to = my; }
+      const myY = animPose(meEl, am, ME, dt);
+      // 對手：每爬滿一格做一次伸手拉身
+      if (Math.floor(rv) > rvShown) { startClimb(ar, rvShown, Math.floor(rv)); rvShown = Math.floor(rv); }
+      if (ar.t >= 1) { ar.from = ar.to = rv; }
+      animPose(rvEl, ar, RIVAL, dt);
+      place(target, ME, myY - 44); // 手抓的位置
     };
     draw(); st.progress(0, 4);
     st.zoom(180, 400, 300, 0);
@@ -311,7 +338,7 @@ const qianggu = {
       const dt = lastT ? Math.min(.05, (t - lastT) / 1000) : 0; lastT = t;
       const left = beatAt - t;
       const k = clamp(left / beatMs, 0, 1);
-      ring.setAttribute('transform', `translate(${ME} ${yOf(my) - 34}) scale(${(1 + k * 1.6).toFixed(3)})`);
+      ring.setAttribute('transform', `translate(${ME} ${yOf(my) - 44}) scale(${(1 + k * 1.6).toFixed(3)})`);
       ring.setAttribute('opacity', (1 - k * .6).toFixed(2));
       if (left < -220) { if (!tapped) miss('太慢了'); nextBeat(); }
       // 隔壁隊每拍大約爬 0.75 格
@@ -331,6 +358,7 @@ const qianggu = {
     }
     function climb(n) {
       const was = my; my = Math.min(TOTAL, my + n);
+      startClimb(am, was, my);
       st.burst('spark', ME, yOf(my) - 30, 5);
       if (was < POLE_STEPS && my >= POLE_STEPS) { st.say('爬上<b>孤棚</b>了！接著爬孤棧，越上面越快喔。', 'temple'); st.sfx.chime(); }
       st.progress(my >= TOTAL ? 4 : my >= POLE_STEPS + 4 ? 3 : my >= POLE_STEPS ? 2 : my >= 4 ? 1 : 0, 4);
@@ -340,7 +368,8 @@ const qianggu = {
       combo = 0; tapped = true;
       const floor = my >= POLE_STEPS ? POLE_STEPS : 0; // 上了孤棚就不會再滑下柱子
       const slip = my > floor ? 1 : 0;
-      my = Math.max(floor, my - slip);
+      const was = my; my = Math.max(floor, my - slip);
+      if (slip) { am.from = was; am.to = my; am.t = .45; am.slip = 1; }
       judgeText(slip ? `${why}・滑下來了` : why, '#B8D8FF');
       if (slip) st.burst('steam', ME, yOf(my) - 10, 4, { color: '#FFF', vy: 40 });
       st.sfx.buzz?.([30]);
