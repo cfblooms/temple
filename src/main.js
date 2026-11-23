@@ -24,6 +24,7 @@ import { initMile } from './mile.js';
 import { initJigai } from './jigai.js';
 import { initBanquet } from './banquet.js';
 import { initPond } from './pond.js';
+import { initStudy, initSleep, initBoard, initGate, initWash } from './places.js';
 import { initXiaoren } from './xiaoren.js';
 import { initNightMarket } from './nightmarket.js';
 import { initShoujing } from './shoujing.js';
@@ -192,7 +193,7 @@ let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
 function applyView(v) {
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
-  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fhHost > svg, #jxHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #jqHost > svg, #ysHost > svg').forEach((el) => el.setAttribute('viewBox', box));
+  document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fhHost > svg, #jxHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #jqHost > svg, #ysHost > svg, #zxHost > svg, #xdHost > svg, #rjHost > svg, #smHost > svg, #waHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
 }
 function camera(to, ms = 650) {
@@ -1053,14 +1054,14 @@ const fl = festMod.greetLine(); if (fl) say(`${$('#sayText').innerHTML}<br>${fl}
 const AREAS = [
   { id: 'hall', name: '正殿・進入參拜', x: 51.1, y: 31.3, w: 24, main: true },
   { id: 'backyard', name: '後院靜心閣', x: 51.1, y: 3.7, w: 23, main: true, info: '後院靜心閣：每天抄一段心經或大悲咒，敲木魚念佛號，讓心靜下來。' },
-  { id: 'study', name: '伴讀自習室', x: 70, y: 7.1, w: 19.5, info: '伴讀自習室：番茄鐘燃燭計時，手機橫放就是開運桌面擺飾。' },
-  { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
+  { id: 'study', name: '伴讀自習室', x: 70, y: 7.1, w: 19.5, main: true, info: '伴讀自習室：點一根蠟燭當番茄鐘，燒完就是讀完一段。' },
+  { id: 'sleep', name: '睡前熄燈室', x: 78.7, y: 13.2, w: 13, main: true, info: '睡前熄燈室：睡前一分鐘擦去灰塵濁氣，敲磬三下，螢幕慢慢暗下來。' },
   { id: 'wings', name: '兩廂專科殿堂', x: 50.6, y: 19.2, w: 19.5, main: true, info: '兩廂專科殿堂：十多位神明各有一座殿。' },
   { id: 'jigong', name: '濟公解憂林', x: 25.3, y: 20.5, w: 12.5, main: true, info: '濟公解憂林：讓濟公師父用破芭蕉扇拍散執念，跳出看破人生的語錄。' },
   { id: 'yuelao', name: '月老閣', x: 79.1, y: 20.5, w: 11, main: true, info: '月老閣：抽清醒戀愛籤，和另一半一起綁定連理紅燭。' },
   { id: 'wenchang', name: '文昌閣', x: 14.4, y: 31.3, w: 9, main: true, info: '文昌閣：求考運，准考證順時針過香爐三圈。' },
   { id: 'caishen', name: '財神聚寶閣', x: 87.2, y: 31.3, w: 16, main: true, info: '財神聚寶閣：摸摸大金元寶，今日財氣 +88。' },
-  { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
+  { id: 'board', name: '媽祖遶境看板', x: 76.7, y: 61.1, w: 14, h: 4.4, main: true, info: '媽祖遶境看板：三月瘋媽祖，跟著神轎路線，用走路步數換算隨香公里數。' },
   { id: 'banquet', name: '流水席辦桌', x: 50.1, y: 77.7, w: 20.5, main: true, info: '流水席紅圓桌：拜完一起吃平安宴。' },
   { id: 'jinting', name: '環保金亭', x: 68.6, y: 79.1, w: 12.5, h: 4.4, main: true, info: '環保金亭：把寫好的祈願疏文化成青煙，上達天聽。' },
   { id: 'pond', name: '許願放生池', x: 86.2, y: 81.1, w: 12, main: true, info: '許願放生池：每天餵魚、放小烏龜、放蓮花水燈，池子會一天天變熱鬧。' },
@@ -1071,8 +1072,8 @@ const AREAS = [
   { id: 'yeshi', name: '廟口夜市', x: 68, y: 96.4, w: 13, main: true, info: '廟口夜市：套圈圈、撈金魚、射氣球，贏彩券換點心。' },
   { id: 'shop', name: '廟口供品店', x: 22, y: 57, w: 18, main: true, info: '廟口供品店：用福氣幣買供品。' },
   { id: 'xitai', name: '酬神戲台', x: 22, y: 68.5, w: 16, main: true, info: '酬神戲台：神明生日那天，廟埕搭台演布袋戲。' },
-  { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
-  { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
+  { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, main: true, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
+  { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, main: true, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
 ];
 
 function buildMap() {
@@ -1099,6 +1100,8 @@ function buildMap() {
     if (a.id === 'pond') { showStall('fs'); return; }
     if (a.id === 'xitai') { showStall('xi'); return; }
     if (a.id === 'yeshi') { showStall('ys'); return; }
+    const PLACE = { study: 'zx', sleep: 'xd', board: 'rj', gate: 'sm', wash: 'wa' };
+    if (PLACE[a.id]) { showStall(PLACE[a.id]); return; }
     if (a.id === 'wings') { pickHall(); return; }
     if (a.id === 'shop') { shop.openShop(); return; }
     sfx.knock();
@@ -1283,6 +1286,11 @@ const STALLS = {
   fs: { name: '許願放生池', short: '放生池', mod: initPond(xapi) },
   xi: { name: '酬神戲台', short: '戲台', mod: initXitai(xapi) },
   ys: { name: '廟口夜市', short: '夜市', icon: '', mod: initNightMarket({ ...xapi, godName: (h) => HALLS[h]?.god }) },
+  zx: { name: '伴讀自習室', short: '自習室', mod: initStudy(xapi) },
+  xd: { name: '睡前熄燈室', short: '熄燈室', mod: initSleep(xapi) },
+  rj: { name: '媽祖遶境看板', short: '遶境看板', mod: initBoard(xapi) },
+  sm: { name: '朱紅牌樓山門', short: '山門', mod: initGate({ ...xapi, goHall: () => SHOW.main() }) },
+  wa: { name: '淨身石槽', short: '淨身', mod: initWash(xapi) },
 };
 let stall = null;
 function leaveStall() {
