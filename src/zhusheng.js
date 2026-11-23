@@ -7,6 +7,9 @@ import redUrl from './assets/zs/flower-red.webp';
 import whiteUrl from './assets/zs/flower-white.webp';
 import shoesUrl from './assets/zs/shoes.webp';
 import { makeCarrier } from './carry.js';
+import { makePourer } from './pour.js';
+import canUrl from './assets/tudi/can.webp';
+import { wallet } from './wallet.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -35,7 +38,7 @@ const GREET = [
   '註生娘娘點點頭：「天上的花園裡，每一朵花我都記得。」',
   '註生娘娘說：「別太累了，先把自己照顧好。」',
 ];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 const WHO = ['自己', '另一半', '寶寶', '家人'];
 
 /* ---------- 場景 ---------- */
@@ -45,6 +48,10 @@ const SOIL = [POT[0], POT[1] - POT[2] * .82]; // 花插下去的位置（土面�
 const FLOWER = [24, 52]; // 花的寬、高（原點在花莖底部）
 const F_REST = [300, 600];
 const SHOES = [200, 352, 46, 36];
+// 花要每天澆水才會開：花苞 → 含苞 → 開花 → 滿盆花開
+const GROW_AT = [0, 2, 4, 7], GROW_NAME = ['花苞', '含苞', '開花', '滿盆花開'], GROW_SCALE = [.5, .72, 1, 1];
+const growOf = (d) => (d >= 7 ? 3 : d >= 4 ? 2 : d >= 2 ? 1 : 0);
+const CAN_REST = [44, 598], CAN_SPOUT = [-28, 7], CAN_POUR = [SOIL[0] + 22, SOIL[1] - 50];
 export const ZS_SVG = (bg) => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="註生娘娘殿" class="zs-svg">
   <defs>
@@ -59,10 +66,21 @@ export const ZS_SVG = (bg) => `
   <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-zs="deity" role="button" tabindex="0" aria-label="向註生娘娘問安" x="145" y="245" width="72" height="115" rx="22" fill="transparent"/>
 
   <!-- 花盆（一直在供桌左邊）＋栽好的花 -->
+  <g id="zExtra" style="display:none">
+    <image class="zx" href="${redUrl}" x="${SOIL[0] - 24}" y="${SOIL[1] - FLOWER[1] + 10}" width="${FLOWER[0] * .9}" height="${FLOWER[1] * .9}" transform="rotate(-18 ${SOIL[0]} ${SOIL[1]})" filter="url(#zLit)"/>
+    <image class="zx" href="${redUrl}" x="${SOIL[0] + 2}" y="${SOIL[1] - FLOWER[1] + 10}" width="${FLOWER[0] * .9}" height="${FLOWER[1] * .9}" transform="rotate(18 ${SOIL[0]} ${SOIL[1]})" filter="url(#zLit)"/>
+  </g>
   <image id="zPlanted" href="${redUrl}" x="${SOIL[0] - FLOWER[0] * .65}" y="${SOIL[1] - FLOWER[1] * 1.3 + 8}" width="${FLOWER[0] * 1.3}" height="${FLOWER[1] * 1.3}" style="display:none" filter="url(#zLit)"/>
+  <circle id="zTarget" cx="${SOIL[0]}" cy="${SOIL[1] - 6}" r="22" fill="none" stroke="#BFE8FF" stroke-width="2" stroke-dasharray="5 5" opacity="0" pointer-events="none"/>
   <image class="hit" data-zs="pot" role="button" tabindex="0" aria-label="花盆" href="${potUrl}" x="${POT[0] - POT[2] / 2}" y="${POT[1] - POT[3]}" width="${POT[2]}" height="${POT[3]}" filter="url(#zLit)"/>
   <ellipse id="zRing" cx="${SOIL[0]}" cy="${SOIL[1]}" rx="20" ry="6" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <image id="zShoes" class="zs-offer" href="${shoesUrl}" x="${SHOES[0]}" y="${SHOES[1]}" width="${SHOES[2]}" height="${SHOES[3]}" style="display:none" filter="url(#zLit)"/>
+
+  <!-- 澆花的小水壺（拜墊左前方） -->
+  <ellipse id="zCanShadow" cx="${CAN_REST[0]}" cy="${CAN_REST[1] + 22}" rx="22" ry="4" fill="url(#zContact)"/>
+  <g id="zCan" class="zs-prop" data-zs="can" role="button" tabindex="0" aria-label="澆花水壺" style="display:none" transform="translate(${CAN_REST[0]} ${CAN_REST[1]})">
+    <g id="zCanTilt"><image href="${canUrl}" x="-25" y="-23" width="50" height="46" filter="url(#zLit)"/></g>
+  </g>
 
   <!-- 拿在手上的花（選好才出現） -->
   <g id="zFlower" class="zs-prop" data-zs="flower" role="button" tabindex="0" aria-label="花，拿起來插進花盆" style="display:none" transform="translate(${F_REST[0]} ${F_REST[1]})">
@@ -88,10 +106,18 @@ export function initZhusheng(api) {
 
   /* ----- 栽花 ----- */
   let draft = null; // { c: 'red' | 'white', who }
+  const watered = () => zs.flower?.waterDay === dayKey();
   const paintPlanted = () => {
     const f = zs.flower, el = S('zPlanted');
     el.style.display = f ? '' : 'none';
-    if (f) el.setAttribute('href', f.c === 'white' ? whiteUrl : redUrl);
+    S('zCan').style.display = f ? '' : 'none';
+    S('zExtra').style.display = f && growOf(f.water || 0) === 3 ? '' : 'none';
+    if (!f) return;
+    const url = f.c === 'white' ? whiteUrl : redUrl, g = growOf(f.water || 0), k = GROW_SCALE[g];
+    el.setAttribute('href', url);
+    S('zExtra').querySelectorAll('.zx').forEach((x) => x.setAttribute('href', url));
+    el.style.scale = String(k);
+    el.style.filter = g === 0 ? 'saturate(.55) brightness(.95)' : '';
   };
   paintPlanted();
   const flowerEl = S('zFlower');
@@ -101,20 +127,20 @@ export function initZhusheng(api) {
     onTap: () => say('按住右下角的<b>花</b>拿起來，插進供桌左邊的<b>花盆</b>裡。', 'god'),
     onDrop() {
       flowerEl.style.display = 'none';
-      zs.flower = { c: draft.c, who: draft.who, day: dayKey() }; save(); paintPlanted();
+      zs.flower = { c: draft.c, who: draft.who, day: dayKey(), water: 0, waterDay: '' }; save(); paintPlanted(); can.place();
       const el = S('zPlanted'); el.classList.remove('pop'); void el.getBoundingClientRect(); el.classList.add('pop');
       sfx.chime(); sfx.buzz([15, 40, 15]);
       burst('spark', SOIL[0], SOIL[1] - 20, reduce ? 4 : 16);
       emit('heart', SOIL[0], SOIL[1] - 30); emit('heart', SOIL[0] + 6, SOIL[1] - 40);
       S('zHaloC').setAttribute('opacity', '.75'); setTimeout(() => S('zHaloC').setAttribute('opacity', '.15'), 1800);
-      say(`${draft.c === 'white' ? '白花' : '紅花'}栽好了，為「${esc(draft.who)}」祈福。註生娘娘說：「這盆花我替你照顧，你也要好好照顧自己。」`, 'god');
+      say(`${draft.c === 'white' ? '白花' : '紅花'}的花苞栽好了，為「${esc(draft.who)}」祈福。每天用左下角的小水壺<b>澆一次水</b>，七天會滿盆花開。`, 'god');
       draft = null; cam?.reset(1800);
     },
   });
   function openPlant() {
     const f = zs.flower;
     const body = openSheet('栽一盆花', `
-      ${f ? `<p>花盆裡現在是一朵<b>${f.c === 'white' ? '白花' : '紅花'}</b>，為「${esc(f.who)}」祈福。想換一朵也可以。</p>` : ''}
+      ${f ? `<p>花盆裡現在是<b>${f.c === 'white' ? '白花' : '紅花'}</b>（${GROW_NAME[growOf(f.water || 0)]}，澆水 ${f.water || 0} 天），為「${esc(f.who)}」祈福。換一朵會從花苞重新開始。</p>` : ''}
       <p>民間說每個人在天上都有一盆花。選一朵你喜歡的花，插進供桌上的花盆，為心裡掛念的人祈福。</p>
       <div class="zs-pick">
         <button type="button" class="zs-flower on" data-c="red"><img src="${redUrl}" alt=""><span>紅花</span></button>
@@ -139,6 +165,31 @@ export function initZhusheng(api) {
       say('花在右下角。按住它拿起來，插進供桌左邊的<b>花盆</b>裡。', 'god');
     });
   }
+
+  /* ----- 每天澆花 ----- */
+  function grow() {
+    const f = zs.flower, before = growOf(f.water || 0);
+    f.water = (f.water || 0) + 1; f.waterDay = dayKey(); save();
+    const after = growOf(f.water);
+    paintPlanted();
+    sfx.chime(); sfx.buzz([15, 40, 15]);
+    emit('text', SOIL[0], SOIL[1] - 60, { text: `澆水第 ${f.water} 天`, color: '#CFF0FF', life: 1.8, vy: -22 });
+    if (after !== before) {
+      const el = S('zPlanted'); el.classList.remove('pop'); void el.getBoundingClientRect(); el.classList.add('pop');
+      burst('spark', SOIL[0], SOIL[1] - 24, reduce ? 4 : 16); emit('heart', SOIL[0], SOIL[1] - 40);
+    }
+    if (after === 3 && before !== 3) { wallet.earn(25, '註生娘娘花開滿盆', SOIL[0], SOIL[1] - 70); }
+    const nx = after < 3 ? [GROW_AT[after + 1] - f.water, GROW_NAME[after + 1]] : null;
+    say(after === 3 && before !== 3 ? `滿盆花開了！為「${esc(f.who)}」的祝福開得滿滿的。註生娘娘笑著說：「你的心意，我都收到了。」福氣 +25。`
+      : after !== before ? `花長成<b>${GROW_NAME[after]}</b>了！${nx ? `再澆 ${nx[0]} 天會${nx[1]}。` : ''}`
+      : nx ? `澆好水了。再澆 ${nx[0]} 天，花會<b>${nx[1]}</b>。明天記得再來。` : '澆好水了，花開得好好的。每天來看看它吧。', 'god');
+  }
+  const can = makePourer({
+    cam, svg, el: S('zCan'), tilt: S('zCanTilt'), shadow: S('zCanShadow'), target: S('zTarget'), sfx, emit,
+    rest: CAN_REST, pourAt: CAN_POUR, spout: CAN_SPOUT, isDone: () => !zs.flower || watered(), onDone: grow,
+    onTap: () => (!zs.flower ? openPlant() : watered() ? say(`今天已經澆過水了（第 ${zs.flower.water} 天，${GROW_NAME[growOf(zs.flower.water)]}）。明天再來。`) : say('按住左下角的<b>小水壺</b>，移到供桌上的花盆上面，就會自己倒水。', 'god')),
+  });
+  can.place();
 
   /* ----- 虎頭鞋 ----- */
   const paintShoes = () => { S('zShoes').style.display = zs.shoeDay === dayKey() ? '' : 'none'; };
@@ -171,7 +222,7 @@ export function initZhusheng(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，身體的事請找專業醫師。</p>`);
   }
 
-  const ACTS = { plant: () => (draft ? carrier.auto() : openPlant()), shoes: offerShoes, qian: openQian };
+  const ACTS = { plant: () => (draft ? carrier.auto() : openPlant()), water: () => (zs.flower ? can.auto() : openPlant()), shoes: offerShoes, qian: openQian };
   svg.addEventListener('click', (e) => {
     if (e.target.closest('[data-zs="deity"]')) greetGod();
     else if (e.target.closest('[data-zs="pot"]')) { if (draft) carrier.auto(); else openPlant(); }
@@ -181,9 +232,9 @@ export function initZhusheng(api) {
 
   return {
     enter() {
-      paintPlanted(); paintShoes();
+      paintPlanted(); paintShoes(); can.place();
       const f = zs.flower;
-      say(f ? `歡迎回來。花盆裡的${f.c === 'white' ? '白花' : '紅花'}還開著，為「${esc(f.who)}」祈福。今天也來上一炷香吧。`
+      say(f ? `歡迎回來。花盆裡的${f.c === 'white' ? '白花' : '紅花'}（${GROW_NAME[growOf(f.water || 0)]}）為「${esc(f.who)}」祈福。${watered() ? '今天已經澆過水了。' : '今天還沒澆水，拿左下角的小水壺澆一下吧。'}`
         : '歡迎來到註生娘娘殿。先點燭、上香。按「栽花」選一朵花，插進供桌上的花盆，為心裡掛念的人祈福。', 'god');
     },
     setFestive(on) { S('zBg').setAttribute('href', on ? festUrl : bgUrl); },

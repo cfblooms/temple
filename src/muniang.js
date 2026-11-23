@@ -4,6 +4,7 @@
 import bgUrl from './assets/mu/mu-bg.webp';
 import festUrl from './assets/mu/mu-festival.webp';
 import { makeCarrier } from './carry.js';
+import { wallet } from './wallet.js';
 
 const ART = import.meta.glob('./assets/mu/{crane,peach}.webp', { eager: true, import: 'default' });
 const art = (k) => ART[`./assets/mu/${k}.webp`];
@@ -41,7 +42,7 @@ const REPLY = [
   '紙鶴化成星星飄走了。母娘說：「孩子，你不是一個人。」',
 ];
 const TOPICS = ['工作好累', '家裡的事', '感情', '身體', '說不出來'];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 
 /* ---------- 場景 ---------- */
 // 參考點（跟月老閣同構圖）：母娘臉 (180,245)、供桌桌面 y≈385、拜墊 (184,575)、右邊圓窗外是瑤池 (330,300)
@@ -49,6 +50,13 @@ const FACE = [180, 250];
 const CRANE_REST = [296, 610];
 const POOL = [334, 300];
 const PEACH = [118, 388, 48, 40]; // 蟠桃盤：底部中心、寬、高（供桌左邊）
+// 瑤池裡的紙鶴：每送一隻就留在圓窗外的池子上，一天天變多（右窗先放，滿了放左窗）
+const FLOCK_MAX = 48;
+const flockSlot = (i) => {
+  const side = i < 24 ? 1 : 0, j = side ? i : i - 24;
+  const a = j * 2.39996, r = Math.sqrt((j + .5) / 24);
+  return side ? [300 + Math.cos(a) * r * 24, 328 + Math.sin(a) * r * 14] : [58 + Math.cos(a) * r * 24, 330 + Math.sin(a) * r * 12];
+};
 
 const craneSvg = () => art('crane')
   ? `<image href="${art('crane')}" x="-30" y="-46" width="60" height="46"/>`
@@ -75,6 +83,7 @@ export const MU_SVG = () => `
     <radialGradient id="muPeachG" cx=".45" cy=".35"><stop offset="0" stop-color="#FFF4EC"/><stop offset=".55" stop-color="#FFB6B0"/><stop offset="1" stop-color="#F0707A"/></radialGradient>
     <radialGradient id="muContact"><stop offset="0" stop-color="#2A1A3A" stop-opacity=".4"/><stop offset="1" stop-color="#2A1A3A" stop-opacity="0"/></radialGradient>
   </defs>
+  <g id="muFlock" class="mu-flock" data-mu="flock" role="button" tabindex="0" aria-label="瑤池裡的紙鶴"></g>
   <circle id="muHaloC" cx="${FACE[0]}" cy="${FACE[1]}" r="64" fill="url(#muHalo)" opacity=".18" style="mix-blend-mode:screen"/>
   <rect class="hit" data-mu="deity" role="button" tabindex="0" aria-label="向母娘問安" x="132" y="200" width="112" height="150" rx="24" fill="transparent"/>
   <g id="muPeach" class="mu-offer" transform="translate(${PEACH[0]} ${PEACH[1]})" style="display:none">${peachSvg(PEACH[2], PEACH[3])}</g>
@@ -95,6 +104,15 @@ export function initMuniang(api) {
   const svg = host.querySelector('svg');
   const S = (id) => svg.querySelector('#' + id);
   const mu = state.mu || (state.mu = { talks: 0, talkDay: '', peachDay: '', qian: null });
+  if (mu.cranes === undefined) mu.cranes = mu.talks || 0; // 以前送過的也算
+  function paintFlock(pop = -1) {
+    const n = Math.min(mu.cranes, FLOCK_MAX);
+    const items = Array.from({ length: n }, (_, i) => [i, flockSlot(i)]).sort((a, b) => a[1][1] - b[1][1]);
+    S('muFlock').innerHTML = (n ? `<rect x="272" y="308" width="56" height="40" fill="transparent"/>${mu.cranes > 24 ? '<rect x="30" y="310" width="56" height="38" fill="transparent"/>' : ''}` : '')
+      + items.map(([i, [x, y]]) => `<g class="mu-bird${i === pop ? ' pop' : ''}" style="animation-delay:${(-(i * .37) % 3).toFixed(2)}s" transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${(.2 + (i % 3) * .025).toFixed(3)})${i % 2 ? ' scale(-1 1)' : ''}">${craneSvg()}</g>`).join('');
+    S('muFlock').setAttribute('aria-label', `瑤池裡的紙鶴：${mu.cranes} 隻`);
+  }
+  paintFlock();
 
   const glow = (o = .75, ms = 1600) => { S('muHaloC').setAttribute('opacity', String(o)); setTimeout(() => S('muHaloC').setAttribute('opacity', '.18'), ms); };
   function greetGod() { glow(.7, 1400); burst('spark', FACE[0], FACE[1], reduce ? 3 : 10); say(GREET[Math.floor(Math.random() * GREET.length)], 'god'); }
@@ -127,8 +145,10 @@ export function initMuniang(api) {
         burst('spark', POOL[0], POOL[1], reduce ? 4 : 18); emit('heart', FACE[0], FACE[1] + 20);
         const t = dayKey();
         if (mu.talkDay !== t) { mu.talks = (mu.talks || 0) + 1; mu.talkDay = t; }
-        save();
-        say(`${REPLY[Math.floor(Math.random() * REPLY.length)]}<br><small>這是你第 ${mu.talks} 天跟母娘說心事。</small>`, 'god');
+        mu.cranes = (mu.cranes || 0) + 1; save(); paintFlock(Math.min(mu.cranes, FLOCK_MAX) - 1);
+        const mile = [10, 30, 48].includes(mu.cranes);
+        if (mile) { wallet.earn(mu.cranes === 48 ? 40 : 15, `瑤池紙鶴 ${mu.cranes} 隻`, POOL[0] - 20, POOL[1] - 30); burst('heart', POOL[0], POOL[1], reduce ? 4 : 14); }
+        say(`${REPLY[Math.floor(Math.random() * REPLY.length)]}<br><small>紙鶴停在瑤池上了，現在有 <b>${mu.cranes}</b> 隻。這是你第 ${mu.talks} 天跟母娘說心事。${mile ? `${mu.cranes === 48 ? '兩邊的瑤池都停滿了！' : `滿 ${mu.cranes} 隻了，`}福氣 +${mu.cranes === 48 ? 40 : 15}。` : ''}</small>`, 'god');
         draft = null; cam?.reset(1600);
       }
     };
@@ -183,6 +203,9 @@ export function initMuniang(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，重要的事還是要跟信任的人商量。</p>`);
   }
 
+  const tapFlock = () => { sfx.pop(); say(mu.cranes ? `圓窗外的瑤池上停著 <b>${mu.cranes}</b> 隻紙鶴，每一隻都是你跟母娘說過的心事。${mu.cranes < FLOCK_MAX ? '' : '池子已經停滿了。'}` : '圓窗外是瑤池。按「說心事」摺一隻紙鶴送給母娘，它會飛來這裡。', 'god'); };
+  S('muFlock').addEventListener('click', tapFlock);
+  S('muFlock').addEventListener('keydown', (e) => { if (e.key === 'Enter') tapFlock(); });
   const ACTS = { talk: () => (draft ? carrier.auto() : openTalk()), peach: offerPeach };
   svg.addEventListener('click', (e) => { if (e.target.closest('[data-mu="deity"]')) greetGod(); });
   svg.querySelector('[data-mu="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
@@ -190,7 +213,7 @@ export function initMuniang(api) {
 
   return {
     enter() {
-      paintPeach();
+      paintPeach(); paintFlock();
       say(mu.talks ? `歡迎回到瑤池宮。你已經跟母娘說了 ${mu.talks} 天心事。先點燭、上香，心裡有話就按「說心事」。`
         : '歡迎來到瑤池宮，這裡拜的是母娘（瑤池金母）。先點燭、上香，心累的時候按「說心事」，摺一隻紙鶴送給母娘。', 'god');
     },

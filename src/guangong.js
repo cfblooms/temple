@@ -6,6 +6,8 @@ import bladeUrl from './assets/gg/blade.webp';
 import stripUrl from './assets/gg/strip.webp';
 import bookUrl from './assets/gg/book.webp';
 
+import { wallet } from './wallet.js';
+
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 文字內容（原創） ---------- */
@@ -45,7 +47,7 @@ const GREET = [
   '關老爺放下春秋：「你來了。最近工作還順嗎？」',
   '關老爺目光炯炯：「心裡正，就什麼都不用怕。」',
 ];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 
 /* ---------- 場景 ---------- */
 // 參考點：關公臉 (180,285)、供桌桌面 y≈378、拜墊中心 (184,525)
@@ -88,6 +90,14 @@ export const GG_SVG = (bg) => `
 
 const daysSince = (key) => { const [y, m, d] = key.split('-').map(Number); return Math.round((new Date().setHours(0, 0, 0, 0) - new Date(y, m - 1, d).getTime()) / 864e5); };
 
+// 守諾徽章
+const BADGES = [
+  { n: 7, name: '初心不改', fu: 20, line: '一週沒有回頭，關老爺點頭了。' },
+  { n: 21, name: '習慣養成', fu: 50, line: '二十一天，新習慣已經長在你身上了。' },
+  { n: 100, name: '義薄雲天', fu: 100, line: '一百天說到做到，這就是關老爺說的「義」。' },
+];
+const badgeSvg = (b, on) => `<span class="gg-badge${on ? ' on' : ''}"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3l14 6v10c0 9-6 15-14 18C12 34 6 28 6 19V9z" fill="${on ? '#C2372B' : '#CFC3B4'}" stroke="${on ? '#F2C14E' : '#B0A494'}" stroke-width="2"/><text x="20" y="25" text-anchor="middle" font-size="12" font-weight="700" fill="${on ? '#FFE9A8' : '#fff'}">${b.n}</text></svg><b>${b.name}</b><small>${b.n} 天</small></span>`;
+
 export function initGuangong(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam } = api;
   const host = $('#ggHost');
@@ -97,11 +107,27 @@ export function initGuangong(api) {
   const gg = state.gg || (state.gg = { vow: null, cuts: 0, qian: null });
   const pt = (e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
   const vowDay = () => (gg.vow ? daysSince(gg.vow.start) + 1 : 0);
+  gg.badges = gg.badges || [];
+  const badgeRow = () => `<div class="gg-badges">${BADGES.map((b) => badgeSvg(b, gg.badges.includes(b.n))).join('')}</div>`;
+  // 守諾天數到了就頒徽章（回傳要加在話後面的一句）
+  function checkBadges() {
+    const d = vowDay(); let out = '';
+    for (const b of BADGES) {
+      if (d >= b.n && !gg.badges.includes(b.n)) {
+        gg.badges.push(b.n); save();
+        wallet.earn(b.fu, `關公徽章・${b.name}`, 180, 250);
+        burst('spark', 180, 290, reduce ? 6 : 30); sfx.chime(); setTimeout(() => sfx.chime(), 240);
+        out = `<br>🏅 得到「<b>${b.name}</b>」徽章！${b.line}福氣 +${b.fu}。`;
+      }
+    }
+    return out;
+  }
+  const nextBadge = () => { const d = vowDay(), b = BADGES.find((x) => x.n > d); return b ? `再 ${b.n - d} 天拿「${b.name}」徽章。` : ''; };
 
   function greetGod() {
     S('qHaloC').setAttribute('opacity', '.7'); setTimeout(() => S('qHaloC').setAttribute('opacity', '.15'), 1400);
     burst('spark', 180, 290, reduce ? 3 : 10);
-    say(gg.vow ? `關老爺看了你一眼：「『${esc(gg.vow.text)}』，今天是守諾第 ${vowDay()} 天。我看著呢。」` : GREET[Math.floor(Math.random() * GREET.length)], 'god');
+    say(gg.vow ? `關老爺看了你一眼：「『${esc(gg.vow.text)}』，今天是守諾第 ${vowDay()} 天。我看著呢。」${checkBadges()}` : GREET[Math.floor(Math.random() * GREET.length)], 'god');
   }
 
   /* ----- 寫紙條 ----- */
@@ -114,12 +140,20 @@ export function initGuangong(api) {
   function openVow() {
     const has = gg.vow;
     const body = openSheet(has ? '守諾中' : '寫下要斬斷的事', `
-      ${has ? `<p>你正在戒「<b>${esc(gg.vow.text)}</b>」，今天是<b>守諾第 ${vowDay()} 天</b>。每天回來上香，就是跟關老爺報到。</p><p class="hint">破戒了也沒關係，誠實面對，再斬一次就好。</p>` : ''}
+      ${has ? `<p>你正在戒「<b>${esc(gg.vow.text)}</b>」，今天是<b>守諾第 ${vowDay()} 天</b>。${nextBadge()}</p>${badgeRow()}
+      <p class="hint">破戒了也沒關係。誠實跟關老爺說，從今天重新算，比假裝沒事更有骨氣。${gg.resets ? `（你已經誠實重來 ${gg.resets} 次）` : ''}</p>
+      <div class="row"><button class="btn ghost" id="qReset">我破戒了，誠實重來</button></div><hr class="wen-hr">` : badgeRow()}
       <p>寫下想戒掉的壞習慣，或想切斷的爛事（最多 7 個字）。它會掛在供桌前，拿右下角的<b>青龍刀</b>往下一揮，一刀斬斷。</p>
       <input id="qVow" class="yue-wish" maxlength="7" placeholder="例如：熬夜滑手機、拖延">
       <div class="row"><button class="btn" id="qGo">${has ? '換一件，重新斬' : '寫好了'}</button></div>`);
     const inp = body.querySelector('#qVow');
-    setTimeout(() => inp.focus(), 50);
+    if (!has) setTimeout(() => inp.focus(), 50);
+    body.querySelector('#qReset')?.addEventListener('click', () => {
+      gg.vow.start = dayKey(); gg.resets = (gg.resets || 0) + 1; save(); closeSheet();
+      sfx.knock(); S('qHaloC').setAttribute('opacity', '.6'); setTimeout(() => S('qHaloC').setAttribute('opacity', '.15'), 1400);
+      wallet.earn(3, '誠實重來', 180, 260);
+      say(`關老爺摸摸長鬍子：「敢說實話，就是條漢子。」「${esc(gg.vow.text)}」從今天重新算，<b>守諾第 1 天</b>。拿過的徽章不會收回。福氣 +3。`, 'god');
+    });
     body.querySelector('#qGo').addEventListener('click', () => {
       const t = inp.value.trim().replace(/\s+/g, '');
       if (!t) { inp.focus(); return; }
@@ -222,7 +256,7 @@ export function initGuangong(api) {
     openSheet('翻開春秋', `
       <p class="hint">關老爺夜讀春秋。今天翻到這一句：</p>
       <blockquote class="gg-quote">${BOOK[n]}</blockquote>
-      ${gg.vow ? `<p>你正在戒「${esc(gg.vow.text)}」，今天是守諾第 <b>${vowDay()}</b> 天。</p>` : ''}
+      ${gg.vow ? `<p>你正在戒「${esc(gg.vow.text)}」，今天是守諾第 <b>${vowDay()}</b> 天。${nextBadge()}</p>` : ''}${badgeRow()}
       <p class="hint">每天一句，明天再來翻。</p>`);
   }
 
@@ -252,7 +286,7 @@ export function initGuangong(api) {
   return {
     enter() {
       place();
-      say(gg.vow ? `歡迎回來。「${esc(gg.vow.text)}」，今天是<b>守諾第 ${vowDay()} 天</b>。上一炷香跟關老爺報到吧。`
+      say(gg.vow ? `歡迎回來。「${esc(gg.vow.text)}」，今天是<b>守諾第 ${vowDay()} 天</b>。上一炷香跟關老爺報到吧。${nextBadge()}${checkBadges()}`
         : '歡迎來到關帝殿！先點燭、上香。有想戒掉的壞習慣，按「斬斷」寫下來，拿青龍刀一刀斬斷它。', 'god');
     },
     setFestive(on) { S('qBg').setAttribute('href', on ? festUrl : bgUrl); },

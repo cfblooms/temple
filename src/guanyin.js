@@ -6,6 +6,8 @@ import vaseUrl from './assets/gy/vase.webp';
 import willowUrl from './assets/gy/willow.webp';
 import lotusUrl from './assets/gy/lotus.webp';
 
+import { wallet } from './wallet.js';
+
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 文字內容（原創） ---------- */
@@ -39,7 +41,7 @@ const AFTER = [
   '雲散了，殿裡亮了起來。觀音菩薩說：「下次又變陰天，再來找我灑一灑。」',
 ];
 const CLOUDS = [['焦慮', 92, 236], ['委屈', 272, 226], ['疲累', 70, 318], ['難過', 292, 308], ['害怕', 180, 190]];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 
 /* ---------- 場景 ---------- */
 // 參考點：觀音臉 (180,290)、供桌桌面 y≈378、拜墊中心 (184,525)
@@ -48,6 +50,9 @@ const MOUTH = [VASE[0] + 1, VASE[1] - VASE[3] / 2 + 6]; // 瓶口
 const W_W = 72, W_H = 81; // 楊柳枝大小；原點在枝條上端（手拿的地方）
 const LIFT = 92; // 拿著時，枝條上端在手指上方這麼高，葉子才不會被手指擋住
 const LAMP = [199, 349, 46, 36];
+// 殿前蓮池：每天化開的烏雲變成蓮花，留在池子裡，一天天開滿
+const POND = [300, 604, 54, 20], POND_MAX = 30;
+const pondSlot = (i) => { const a = i * 2.39996, r = Math.sqrt((i + .5) / POND_MAX); return [POND[0] + Math.cos(a) * r * POND[2] * .82, POND[1] + Math.sin(a) * r * POND[3] * .7]; };
 const cloudSvg = (w) => `
   <g class="gy-cloud" data-word="${w}">
     <g class="gy-puff">
@@ -78,6 +83,14 @@ export const GY_SVG = (bg) => `
   <g id="gClouds" pointer-events="none"></g>
   <g id="gBlooms" pointer-events="none"></g>
 
+  <!-- 殿前蓮池（右前方） -->
+  <g id="gPond" class="gy-pond" data-gy="pond" role="button" tabindex="0" aria-label="蓮池">
+    <ellipse cx="${POND[0]}" cy="${POND[1] + 3}" rx="${POND[2] + 4}" ry="${POND[3] + 4}" fill="#B9A58A"/>
+    <ellipse cx="${POND[0]}" cy="${POND[1]}" rx="${POND[2]}" ry="${POND[3]}" fill="#6FB9C2"/>
+    <ellipse cx="${POND[0] - 12}" cy="${POND[1] - 7}" rx="${POND[2] * .55}" ry="${POND[3] * .35}" fill="#BFE9EC" opacity=".55"/>
+    <g id="gPondLotus"></g>
+  </g>
+
   <!-- 淨瓶與楊柳枝（拜墊左前方） -->
   <ellipse cx="${VASE[0]}" cy="${VASE[1] + VASE[3] / 2 - 1}" rx="18" ry="4" fill="url(#gContact)"/>
   <image href="${vaseUrl}" x="${VASE[0] - VASE[2] / 2}" y="${VASE[1] - VASE[3] / 2}" width="${VASE[2]}" height="${VASE[3]}" filter="url(#gLit)"/>
@@ -96,6 +109,20 @@ export function initGuanyin(api) {
   const svg = host.querySelector('svg');
   const S = (id) => svg.querySelector('#' + id);
   const gy = state.gy || (state.gy = { cleared: 0, clearDay: '', lampDay: '', lampFor: '', qian: null });
+  gy.pond = gy.pond || [];
+  const NS = 'http://www.w3.org/2000/svg';
+  // 今天放進池子的是花苞，隔天就開成蓮花
+  function paintPond() {
+    const t = dayKey();
+    const items = gy.pond.map((d, i) => ({ d, i, p: pondSlot(i) })).sort((a, b) => a.p[1] - b.p[1]);
+    S('gPondLotus').innerHTML = items.map(({ d, p: [x, y] }) => {
+      const bud = d === t, w = bud ? 16 : 24, h = w * .76;
+      return `<ellipse cx="${x.toFixed(1)}" cy="${(y + 2).toFixed(1)}" rx="${(w * .5).toFixed(1)}" ry="${(w * .18).toFixed(1)}" fill="#4E9A4A"/>`
+        + `<image href="${lotusUrl}" x="${(x - w / 2).toFixed(1)}" y="${(y - h + 3).toFixed(1)}" width="${w}" height="${h.toFixed(1)}" opacity="${bud ? .85 : 1}"/>`;
+    }).join('');
+    S('gPond').setAttribute('aria-label', `蓮池：${gy.pond.length} 朵蓮花`);
+  }
+  paintPond();
   const pt = (e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
 
   /* ----- 問安 ----- */
@@ -129,10 +156,26 @@ export function initGuanyin(api) {
   const kickC = () => { if (!cAnim && clouds.length) cAnim = requestAnimationFrame(cloudLoop); };
   function bloom(c) {
     c.el.remove(); clouds = clouds.filter((x) => x !== c);
-    const NS = 'http://www.w3.org/2000/svg', img = document.createElementNS(NS, 'image');
+    const img = document.createElementNS(NS, 'image');
     img.setAttribute('href', lotusUrl); img.setAttribute('width', '34'); img.setAttribute('height', '26');
     bloomsG.appendChild(img);
     const t0 = performance.now(), x0 = c.x, y0 = c.y;
+    if (gy.clearDay !== dayKey() && gy.pond.length < POND_MAX) { // 今天第一次化開：蓮花飄進蓮池
+      const i = gy.pond.length; gy.pond.push(dayKey()); save();
+      const [tx, ty] = pondSlot(i);
+      const fly = (t) => {
+        const k = Math.min(1, (t - t0) / 1300), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, s = 1 - .45 * e;
+        img.setAttribute('x', (x0 + (tx - x0) * e - 17 * s).toFixed(1)); img.setAttribute('y', (y0 + (ty - y0) * e - 40 * Math.sin(Math.PI * k) - 20 * s).toFixed(1));
+        img.setAttribute('width', (34 * s).toFixed(1)); img.setAttribute('height', (26 * s).toFixed(1));
+        if (k < 1) requestAnimationFrame(fly); else { img.remove(); paintPond(); emit('spark', tx, ty); }
+      };
+      requestAnimationFrame(fly);
+      sfx.pop(); setTimeout(() => sfx.chime(), 120);
+      burst('spark', c.x, c.y, reduce ? 3 : 10);
+      emit('text', c.x, c.y - 18, { text: `${c.el.dataset.word} 化成蓮花`, color: '#FFE3EE', life: 1.5, vy: -26, size: 13 });
+      if (!clouds.length) allClear();
+      return;
+    }
     const step = (t) => {
       const s = (t - t0) / 1000, k = Math.min(1, s / 2.2);
       img.setAttribute('x', (x0 - 17 + Math.sin(s * 3) * 4).toFixed(1)); img.setAttribute('y', (y0 - 13 - s * 34).toFixed(1));
@@ -146,12 +189,16 @@ export function initGuanyin(api) {
     if (!clouds.length) allClear();
   }
   function allClear() {
-    if (gy.clearDay !== dayKey()) { gy.clearDay = dayKey(); gy.cleared++; save(); }
+    const first = gy.clearDay !== dayKey();
+    if (first) { gy.clearDay = dayKey(); gy.cleared++; save(); }
+    const full = first && gy.pond.length >= POND_MAX && !gy.pondFull;
+    if (full) { gy.pondFull = true; save(); wallet.earn(30, '蓮池開滿了', POND[0], POND[1] - 40); }
     setTimeout(() => {
       sfx.chime(); sfx.buzz([15, 50, 15]);
       S('gHaloC').setAttribute('opacity', '.8'); setTimeout(() => S('gHaloC').setAttribute('opacity', '.15'), 2000);
       burst('spark', 180, 290, reduce ? 4 : 16);
-      say(AFTER[Math.floor(Math.random() * AFTER.length)], 'god');
+      if (full) burst('spark', POND[0], POND[1], reduce ? 6 : 30);
+      say(AFTER[Math.floor(Math.random() * AFTER.length)] + (full ? `<br>蓮池開滿 ${POND_MAX} 朵蓮花了！福氣 +30。` : first ? `<br>五朵蓮花飄進殿前的蓮池，池裡有 ${gy.pond.length} 朵了，明天會開得更漂亮。` : ''), 'god');
       cam?.reset(800);
     }, 600);
   }
@@ -295,6 +342,14 @@ export function initGuanyin(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，真的很難受的時候，記得找身邊的人或專業的人聊聊。</p>`);
   }
 
+  function tapPond() {
+    sfx.pop();
+    const n = gy.pond.length, buds = gy.pond.filter((d) => d === dayKey()).length;
+    say(!n ? '這是殿前的蓮池，現在還空空的。按「灑淨水」把烏雲化成蓮花，蓮花會留在池子裡。'
+      : `蓮池裡有 ${n} 朵蓮花${buds ? `（${buds} 朵是今天的花苞，明天就開）` : ''}。${n >= POND_MAX ? '已經開滿了，像你心裡一樣清清亮亮。' : `再 ${POND_MAX - n} 朵就開滿了。`}`, 'god');
+  }
+  S('gPond').addEventListener('click', tapPond);
+  S('gPond').addEventListener('keydown', (e) => { if (e.key === 'Enter') tapPond(); });
   const ACTS = { water: () => (clouds.length ? autoSprinkle() : gy.clearDay === dayKey() ? autoSprinkle() : startSprinkle()), lamp: openLamp, qian: openQian };
   svg.addEventListener('click', (e) => { if (e.target.closest('[data-gy="deity"]')) greetGod(); });
   svg.querySelector('[data-gy="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
@@ -302,7 +357,7 @@ export function initGuanyin(api) {
 
   return {
     enter() {
-      paintLamp(); placeW();
+      paintLamp(); placeW(); paintPond();
       say(!gy.cleared ? '歡迎來到觀音殿。先點燭、上香。心裡悶悶的時候，按「灑淨水」，用楊柳枝把烏雲化成蓮花。'
         : gy.clearDay === dayKey() ? '又回來了呀。今天的烏雲已經散了，要不要點一盞蓮花燈，或抽支觀音籤？'
         : `歡迎回來，你已經化開 ${gy.cleared} 次烏雲了。今天心裡的天氣怎麼樣？`, 'god');

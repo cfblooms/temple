@@ -13,6 +13,7 @@ import porkUrl from './assets/xr/pork.webp';
 import potUrl from './assets/xr/pot.webp';
 import slipUrl from './assets/xr/slipper.webp';
 import { reduce, sleep, tween, shake, pick, daily, yesterdayKey } from './stall.js';
+import { wallet } from './wallet.js';
 
 const KINDS = [
   ['work', '職場小人'], ['gossip', '背後說閒話的'], ['peach', '爛桃花'], ['friend', '損友'],
@@ -25,7 +26,8 @@ const CHANT = [
   '打你個小人腳，害人踢鐵板',
   '打走小人好運來，貴人通通靠過來',
 ];
-const HITS = 5; // 每一句打幾下
+// 每一句前半段一個字一拍：跟著婆婆唸「打、你、個、小、人、頭」，一字打一下
+const beatsOf = (l) => [...CHANT[l].split('，')[0]];
 const BEAT = 640;
 const GUIREN = [
   ['boss', '好主管', '工作上遇到願意拉你一把的人'], ['mate', '好同事', '有人跟你同一陣線、幫你分擔'],
@@ -103,6 +105,7 @@ const svgOf = () => `
     <text id="xChant" x="180" y="206" text-anchor="middle" class="xr-chant"></text>
     <g id="xDots"></g>
   </g>
+  <text id="xCombo" x="180" y="266" text-anchor="middle" font-size="20" font-weight="700" fill="#FFE08A" stroke="#3A0A04" stroke-width="3.5" paint-order="stroke" opacity="0" pointer-events="none"></text>
   <!-- 拖鞋（浮在小人紙上方，手指不會擋到） -->
   <g id="xSlip" transform="translate(${SLIP_REST[0]} ${SLIP_REST[1]}) rotate(-28)" style="display:none" pointer-events="none">
     <image href="${slipUrl}" x="-32" y="-35" width="63" height="70" transform="rotate(-40)"/>
@@ -141,10 +144,17 @@ export function initXiaoren(api) {
   }
 
   /* ----- 2. 打小人：跟著拍子打 ----- */
-  let hits = 0, line = 0, combo = 0, beat0 = 0, lastHit = 0;
+  let hits = 0, line = 0, combo = 0, beat0 = 0, lastHit = 0, best = 0, perfect = 0, taps = 0, lastBeat = -1;
+  // 婆婆的口訣：打到哪個字，那個字就亮起來（像卡拉 OK）
   function paintChant() {
-    S('xChant').textContent = CHANT[line];
-    S('xDots').innerHTML = Array.from({ length: HITS }, (_, i) => `<circle cx="${180 + (i - (HITS - 1) / 2) * 18}" cy="226" r="5" fill="${i < hits ? '#FFE08A' : 'none'}" stroke="#FFE08A" stroke-width="1.6"/>`).join('');
+    const B = beatsOf(line), rest = CHANT[line].slice(B.length);
+    S('xChant').innerHTML = B.map((c, i) => `<tspan class="${i < hits ? 'on' : i === hits ? 'now' : ''}">${c}</tspan>`).join('') + `<tspan class="rest">${rest}</tspan>`;
+    S('xDots').innerHTML = B.map((_, i) => `<circle cx="${180 + (i - (B.length - 1) / 2) * 18}" cy="226" r="5" fill="${i < hits ? '#FFE08A' : 'none'}" stroke="#FFE08A" stroke-width="1.6"/>`).join('');
+  }
+  function paintCombo() {
+    const c = S('xCombo');
+    c.textContent = combo >= 3 ? `連擊 ×${combo}` : '';
+    c.setAttribute('opacity', combo >= 3 ? '1' : '0');
   }
   function resetPaper() {
     for (let i = 1; i <= 5; i++) S('xC' + i).setAttribute('opacity', '0');
@@ -154,7 +164,7 @@ export function initXiaoren(api) {
   async function startHit() {
     const r = ++run;
     resetPaper(); S('xName').textContent = draft.code.slice(0, 6);
-    hits = 0; line = 0; combo = 0; phase = 'hit';
+    hits = 0; line = 0; combo = 0; best = 0; perfect = 0; taps = 0; lastBeat = -1; phase = 'hit'; paintCombo();
     sfx.pop(); cam?.zoom(180, 380, 250);
     say(`婆婆把「<b>${esc(draft.code)}</b>」寫上小人紙，壓在磚頭上，把舊拖鞋交給你。<br>跟著口訣，光圈縮到最小的時候<b>點畫面</b>打下去！`);
     await sleep(900); if (r !== run) return;
@@ -167,6 +177,8 @@ export function initXiaoren(api) {
     const step = (now) => {
       if (r !== run || phase !== 'hit') { ring.setAttribute('opacity', '0'); t.setAttribute('opacity', '0'); return; }
       const k = ((now - beat0) % BEAT) / BEAT; // 0 → 1，1 的時候剛好是拍點
+      const bi = Math.floor((now - beat0) / BEAT);
+      if (bi !== lastBeat) { lastBeat = bi; if (bi > 0) sfx.drum?.(); } // 婆婆敲的拍子
       ring.setAttribute('r', (24 + (1 - k) * 46).toFixed(1));
       ring.setAttribute('opacity', (.35 + k * .6).toFixed(2));
       // 拖鞋跟著拍子在上面晃
@@ -181,7 +193,8 @@ export function initXiaoren(api) {
     lastHit = now;
     const off = ((now - beat0) % BEAT), d = Math.min(off, BEAT - off);
     const grade = d < 110 ? 2 : d < 210 ? 1 : 0;
-    combo = grade ? combo + 1 : 0;
+    combo = grade ? combo + 1 : 0; best = Math.max(best, combo); taps++; if (grade === 2) perfect++;
+    paintCombo();
     // 拖鞋甩下去
     const slip = S('xSlip');
     await tween(70, (k) => slip.setAttribute('transform', `translate(${SLIP_REST[0] + (SLIP_HIT[0] - SLIP_REST[0]) * k} ${SLIP_REST[1] + (SLIP_HIT[1] - SLIP_REST[1]) * k}) rotate(${-28 + 28 * k})`), (k) => k * k);
@@ -196,7 +209,7 @@ export function initXiaoren(api) {
     emit('text', SLIP_HIT[0] + (Math.random() - .5) * 60, SLIP_HIT[1] - 50, { text: grade === 2 ? (combo > 3 ? `讚！×${combo}` : '讚！') : grade ? '好！' : '啪', color: grade === 2 ? '#FFE08A' : '#FFF4E0', size: grade === 2 ? 18 : 14, life: .8 });
     hits++; paintChant();
     setTimeout(() => tween(160, (k) => slip.setAttribute('transform', `translate(${SLIP_HIT[0] + (SLIP_REST[0] - SLIP_HIT[0]) * k} ${SLIP_HIT[1] + (SLIP_REST[1] - SLIP_HIT[1]) * k}) rotate(${-28 * k})`)), 40);
-    if (hits < HITS) return;
+    if (hits < beatsOf(line).length) return;
     // 唸完一句
     S('xC' + (line + 1))?.setAttribute('opacity', '1');
     hits = 0; line++;
@@ -206,6 +219,13 @@ export function initXiaoren(api) {
   }
   async function finishHit() {
     phase = 'tear'; S('xTap').style.display = 'none'; S('xChantG').setAttribute('opacity', '0'); S('xSlip').style.display = 'none';
+    combo = 0; paintCombo();
+    const acc = Math.round(perfect / Math.max(1, taps) * 100), newBest = best > (xr.bestCombo || 0);
+    if (newBest) xr.bestCombo = best;
+    const bonus = best >= 20 ? 10 : best >= 10 ? 5 : 0;
+    if (bonus) wallet.earn(bonus, `打小人連擊 ×${best}`, 180, 160);
+    save();
+    const rate = best >= 20 ? '婆婆拍手：「你比我還有節奏！」' : best >= 10 ? '婆婆點頭：「拍子打得很準喔。」' : '婆婆笑笑：「下次跟著鼓聲打，會更爽快。」';
     // 小人紙被打爛、揉成一團
     const p = S('xPaper');
     await tween(380, (k) => p.setAttribute('transform', `translate(${PAPER[0]} ${PAPER[1]}) rotate(${k * 18}) scale(${1 - k * .7})`));
@@ -213,7 +233,7 @@ export function initXiaoren(api) {
     burst('spark', SCRAP[0], SCRAP[1] - 10, reduce ? 3 : 14);
     sfx.buzz([20, 40, 30]);
     cam?.zoom(250, 470, 240);
-    say('打完了！小人紙被你打得稀巴爛。<br>接著<b>祭白虎</b>：按住右下角的<b>肥豬肉</b>，塞進紙老虎嘴巴，讓牠吃飽就不會亂咬人。');
+    say(`打完了！最高連擊 <b>×${best}</b>，${acc}% 打在拍子上${newBest ? '，<b>新紀錄</b>' : ''}。${rate}${bonus ? `福氣 +${bonus}。` : ''}<br>小人紙被你打得稀巴爛。接著<b>祭白虎</b>：按住右下角的<b>肥豬肉</b>，塞進紙老虎嘴巴，讓牠吃飽就不會亂咬人。`);
     S('xTiger').style.display = ''; S('xPork').style.display = ''; pork.home();
     S('xTiger').classList.remove('pop'); void S('xTiger').getBoundingClientRect(); S('xTiger').classList.add('pop');
     phase = 'tiger';

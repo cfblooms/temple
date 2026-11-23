@@ -6,6 +6,8 @@ import wheelUrl from './assets/san/wheel.webp';
 import yogurtUrl from './assets/san/yogurt.webp';
 import candyUrl from './assets/san/candy.webp';
 import paciUrl from './assets/san/pacifier.webp';
+import godUrl from './assets/gods/santaizi.webp';
+import { wallet } from './wallet.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -39,7 +41,7 @@ const DONE = [
   '輪子冒出火花，三太子笑得好開心：「轉得好！今天做什麼都有勁！」',
   '三太子拍拍手：「哇，你比哪吒還會轉！出門平安，一路順風！」',
 ];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 const SNACKS = {
   yogurt: { name: '乳酸飲料', img: yogurtUrl, x: 117, y: 341, w: 25, h: 41, say: '乳酸飲料擺上供桌了！三太子插上吸管：「一口乾杯！今天腸胃順、心情也順！」' },
   paci: { name: '奶嘴', img: paciUrl, x: 144, y: 352, w: 29, h: 32, say: '奶嘴擺上去了。三太子臉紅了一下：「我、我已經長大了啦……不過還是謝謝你。」小朋友平安長大，三太子會保佑。' },
@@ -49,7 +51,8 @@ const SNACKS = {
 /* ---------- 場景 ---------- */
 // 參考點：三太子臉 (180,285)、供桌桌面 y≈378、拜墊中心 (184,525)
 const WHEEL = [298, 566, 74]; // 風火輪：中心 x、y、大小
-const NEED = 1080; // 轉滿三圈
+const BPM = 128, BEAT = 60000 / BPM, SONG = 28; // 一首 28 拍
+const LO = 260, HI = 620; // 跟上節拍的轉速（度／秒）：大約兩拍轉一圈
 const RING = 2 * Math.PI * 44;
 export const SAN_SVG = (bg) => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="三太子殿" class="san-svg">
@@ -78,6 +81,22 @@ export const SAN_SVG = (bg) => `
       stroke-dasharray="0 ${RING.toFixed(1)}" transform="rotate(-90 ${WHEEL[0]} ${WHEEL[1]})"/>
     <g id="sWheelRot"><image href="${wheelUrl}" x="${WHEEL[0] - WHEEL[2] / 2}" y="${WHEEL[1] - WHEEL[2] / 2}" width="${WHEEL[2]}" height="${WHEEL[2]}" filter="url(#sLit)"/></g>
   </g>
+  <!-- 節拍燈：每一拍亮一下 -->
+  <circle id="sBeat" cx="${WHEEL[0]}" cy="${WHEEL[1]}" r="52" fill="none" stroke="#7CF3FF" stroke-width="3" opacity="0" pointer-events="none"/>
+  <!-- 衝勁條 -->
+  <g id="sMeter" pointer-events="none" style="display:none">
+    <rect x="96" y="440" width="168" height="16" rx="8" fill="#2A0E2E" opacity=".75"/>
+    <rect id="sMeterFill" x="98" y="442" width="0" height="12" rx="6" fill="#FF4FD8"/>
+    <text id="sMeterT" x="180" y="432" text-anchor="middle" font-family="Huninn, sans-serif" font-size="14" fill="#FFF" stroke="#2A0E2E" stroke-width="3" paint-order="stroke">衝勁</text>
+  </g>
+  <!-- 電音三太子跳舞 -->
+  <g id="sDance" pointer-events="none" style="display:none">
+    <rect x="0" y="0" width="360" height="645" fill="#12001E" opacity=".45"/>
+    <g class="san-lights">
+      <path d="M40 0L120 470H10z" fill="#FF4FD8" opacity=".25"/><path d="M320 0L350 470H240z" fill="#4FE8FF" opacity=".25"/><path d="M180 0L250 470H110z" fill="#FFE24F" opacity=".18"/>
+    </g>
+    <g class="san-dancer"><image href="${godUrl}" x="110" y="250" width="140" height="140"/></g>
+  </g>
 </svg>`;
 
 export function initSantaizi(api) {
@@ -99,48 +118,76 @@ export function initSantaizi(api) {
   /* ----- 風火輪：按住，在輪子旁邊畫圈 ----- */
   const wheel = svg.querySelector('[data-san="wheel"]'), rotG = S('sWheelRot'), ring = S('sRing'), fire = S('sFireC');
   const spunToday = () => san.spinDay === dayKey();
-  let rot = 0, total = 0, omega = 0, grab = null, anim = 0, lastT = 0;
+  // 電音節奏：一首 28 拍，每一拍看你這一拍轉得快不快，剛好就加衝勁；衝勁滿了三太子跳舞
+  let rot = 0, omega = 0, grab = null, anim = 0, lastT = 0;
+  let song = null; // { beat, next, acc, power, combo }
+  const beatC = S('sBeat'), meter = S('sMeter');
   const paint = () => {
     rotG.setAttribute('transform', `rotate(${rot.toFixed(1)} ${WHEEL[0]} ${WHEEL[1]})`);
-    const k = spunToday() ? 1 : Math.min(1, total / NEED);
+    const k = song ? song.power / 100 : spunToday() ? 1 : 0;
     ring.setAttribute('stroke-dasharray', `${(k * RING).toFixed(1)} ${RING.toFixed(1)}`);
-    fire.setAttribute('opacity', Math.min(1, Math.abs(omega) / 900).toFixed(2));
+    fire.setAttribute('opacity', Math.min(1, Math.abs(omega) / 700).toFixed(2));
+    if (song) {
+      S('sMeterFill').setAttribute('width', (164 * song.power / 100).toFixed(1));
+      S('sMeterT').textContent = `衝勁 ${Math.round(song.power)}%${song.combo >= 3 ? `・連續 ${song.combo} 拍` : ''}`;
+    }
   };
   const angAt = (p) => Math.atan2(p.y - WHEEL[1], p.x - WHEEL[0]) * 180 / Math.PI;
-  function addTurn(d) {
-    rot += d;
-    if (spunToday()) return;
-    total += Math.abs(d);
-    if (total >= NEED) finish();
+  function addTurn(d) { rot += d; if (song) song.acc += Math.abs(d); }
+  function startSong() {
+    if (song) return;
+    song = { beat: 0, next: performance.now() + BEAT, acc: 0, power: 0, combo: 0 };
+    meter.style.display = ''; paint();
+    cam?.zoom(WHEEL[0] - 50, WHEEL[1] - 50, 260);
+    say('電音下去！跟著<b>咚、咚</b>的節拍繞圈，大概<b>兩拍轉一圈</b>。轉太慢或太快都不算，剛剛好衝勁才會漲。', 'god');
+    sfx.edm?.(0); kick();
   }
-  function finish() {
-    san.spinDay = dayKey(); san.spins++; save();
+  function stopSong() { song = null; meter.style.display = 'none'; beatC.setAttribute('opacity', '0'); }
+  function onBeat() {
+    const sp = song.acc / (BEAT / 1000); song.acc = 0; song.beat++;
+    const ok = sp >= LO && sp <= HI;
+    if (ok) { song.combo++; song.power = Math.min(100, song.power + 5 + Math.min(song.combo, 4) * .5); }
+    else { song.combo = 0; song.power = Math.max(0, song.power - 2); }
+    sfx.edm?.(song.beat, song.combo >= 6);
+    beatC.setAttribute('stroke', ok ? '#7CF3FF' : '#FF7A7A');
+    beatC.setAttribute('opacity', '.95'); setTimeout(() => beatC.setAttribute('opacity', '0'), 160);
+    if (song.beat % 2 === 0 || !ok) emit('text', WHEEL[0], WHEEL[1] - 64, { text: ok ? (song.combo >= 6 ? '超嗨！' : '剛好！') : sp < LO ? '快一點' : '太快了', color: ok ? '#7CF3FF' : '#FFB0B0', life: .7, vy: -40 });
+    if (ok && Math.random() < .6) { const a = Math.random() * Math.PI * 2; emit('spark', WHEEL[0] + Math.cos(a) * 40, WHEEL[1] + Math.sin(a) * 40); }
+    if (song.power >= 100) { stopSong(); dance(); return; }
+    if (song.beat >= SONG) {
+      const pct = Math.round(song.power); stopSong(); cam?.reset(900);
+      say(`音樂停了，衝勁集到 ${pct}%。再來一首！手指在輪子外圈<b>穩穩地繞</b>，跟著咚咚的拍子，兩拍一圈。`, 'god');
+    }
+  }
+  function dance() {
+    const first = !spunToday();
+    if (first) { san.spinDay = dayKey(); san.spins++; }
+    san.dances = (san.dances || 0) + 1; save();
     sfx.chime(); sfx.buzz([15, 40, 15, 40, 20]);
     burst('spark', WHEEL[0], WHEEL[1], reduce ? 5 : 24);
-    emit('text', WHEEL[0] - 40, WHEEL[1] - 70, { text: '衝勁 +1', color: '#FFD86B', life: 1.8, vy: -26 });
-    setTimeout(() => {
-      S('sHaloC').setAttribute('opacity', '.7'); setTimeout(() => S('sHaloC').setAttribute('opacity', '.15'), 1600);
-      say(`${DONE[Math.floor(Math.random() * DONE.length)]}（已經集了 ${san.spins} 天衝勁）`, 'god');
-      cam?.reset(600);
-    }, 500);
+    cam?.reset(500);
+    const d = S('sDance'); d.style.display = '';
+    let i = 0; const beats = setInterval(() => { sfx.edm?.(i, true); if (i % 2 === 0) burst('spark', 100 + Math.random() * 160, 260 + Math.random() * 120, reduce ? 2 : 8); if (++i >= 12) { clearInterval(beats); d.style.display = 'none'; } }, BEAT);
+    if (first) wallet.earn(10, '電音三太子', 180, 240);
+    say(`衝勁集滿了！三太子跳起電音舞：「嗨起來！今天做什麼都衝衝衝！」${first ? `福氣 +10，已經集了 ${san.spins} 天衝勁。` : '今天的衝勁已經集過了，再跳一次也很開心。'}`, 'god');
   }
   function loop(t) {
     const dt = lastT ? Math.min(.05, (t - lastT) / 1000) : .016; lastT = t;
     if (!grab) { addTurn(omega * dt); omega *= Math.exp(-dt * 1.6); }
-    if (Math.abs(omega) > 500 && Math.random() < .5) {
+    if (song && t >= song.next) { song.next += BEAT; onBeat(); }
+    if (Math.abs(omega) > 400 && Math.random() < .4) {
       const a = Math.random() * Math.PI * 2; emit('spark', WHEEL[0] + Math.cos(a) * 38, WHEEL[1] + Math.sin(a) * 38);
     }
     paint();
-    if (grab || Math.abs(omega) > 8) anim = requestAnimationFrame(loop);
+    if (grab || song || Math.abs(omega) > 8) anim = requestAnimationFrame(loop);
     else { anim = 0; lastT = 0; omega = 0; paint(); }
   }
   const kick = () => { if (!anim) { lastT = 0; anim = requestAnimationFrame(loop); } };
   wheel.addEventListener('pointerdown', (e) => {
     e.preventDefault(); wheel.setPointerCapture(e.pointerId);
     const p = pt(e); grab = { a: angAt(p), t: performance.now(), moved: 0 };
-    omega = 0; if (!spunToday()) total = Math.min(total, NEED - 1);
-    sfx.pop(); kick();
-    cam?.zoom(WHEEL[0] - 30, WHEEL[1] - 20, 220); // 放大輪子，手指在輪子外圈畫圈就好
+    omega = 0; sfx.pop(); kick();
+    cam?.zoom(WHEEL[0] - 50, WHEEL[1] - 50, 260); // 放大輪子，手指在輪子外圈畫圈就好
   });
   wheel.addEventListener('pointermove', (e) => {
     if (!grab) return;
@@ -150,27 +197,23 @@ export function initSantaizi(api) {
     const dt = Math.max(8, now - grab.t) / 1000;
     omega = omega * .6 + (d / dt) * .4; grab.a = a; grab.t = now; grab.moved += Math.abs(d);
     addTurn(d);
+    if (!song && grab.moved > 90) startSong(); // 一開始轉就放音樂
   });
   const up = () => {
     if (!grab) return;
     const moved = grab.moved; grab = null; kick();
-    if (moved < 20) { cam?.reset(300); hint(); return; }
-    if (!spunToday()) {
-      cam?.reset(1200);
-      say(`還差一點！已經轉了 ${(total / 360).toFixed(1)} 圈，按住輪子<b>繞大圈</b>，轉滿三圈。`, 'god');
-    }
+    if (moved < 20 && !song) { cam?.reset(300); hint(); }
   };
   wheel.addEventListener('pointerup', up);
   wheel.addEventListener('pointercancel', up);
   function hint() {
-    say(spunToday() ? '今天的衝勁已經集滿了，想轉還是可以轉著玩。明天再來，連續集衝勁！'
-      : '按住右下角的<b>風火輪</b>，手指在輪子外面<b>繞圈圈</b>，不用壓在輪子上。轉滿三圈，三太子就把衝勁給你。', 'god');
+    say(spunToday() ? '今天的衝勁已經集滿了，想再聽電音、看三太子跳舞，還是可以再轉！'
+      : '按住右下角的<b>風火輪</b>，手指在輪子外面<b>繞圈圈</b>，音樂就會開始。跟著節拍兩拍轉一圈，衝勁集滿三太子會跳舞。', 'god');
   }
-  function autoSpin() { // 按鈕／鍵盤：輪子自己轉
-    if (spunToday()) { hint(); omega = 900; kick(); return; }
-    cam?.zoom(WHEEL[0] - 30, WHEEL[1] - 20, 220);
-    omega = 1500; kick();
-    const keep = () => { if (!spunToday() && !grab) { omega = Math.max(omega, 1300); requestAnimationFrame(keep); } };
+  function autoSpin() { // 按鈕／鍵盤：輪子自己跟著節拍轉
+    if (song) return;
+    startSong(); omega = 420; kick();
+    const keep = () => { if (song && !grab) { omega = 420; requestAnimationFrame(keep); } };
     requestAnimationFrame(keep);
   }
   wheel.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); autoSpin(); } });
@@ -218,11 +261,12 @@ export function initSantaizi(api) {
 
   return {
     enter() {
-      total = 0; omega = 0; paintSnacks(); paint();
-      say(!san.spins ? '歡迎來到三太子殿！先點燭、上香。然後按住右下角的<b>風火輪</b>畫圈轉三圈，跟三太子借今天的衝勁。'
+      stopSong(); omega = 0; paintSnacks(); paint();
+      say(!san.spins ? '歡迎來到三太子殿！先點燭、上香。然後按住右下角的<b>風火輪</b>畫圈，跟著電音的節拍轉，衝勁集滿三太子會跳舞給你看！'
         : spunToday() ? '又來找三太子玩啦？今天的衝勁已經集好了，要不要獻個零食，或抽支太子籤？'
-        : `歡迎回來！你已經集了 ${san.spins} 天衝勁。今天也來轉一下風火輪吧。`, 'god');
+        : `歡迎回來！你已經集了 ${san.spins} 天衝勁。今天也來跟著電音轉風火輪吧。`, 'god');
     },
+    leave() { stopSong(); },
     setFestive(on) { S('sBg').setAttribute('href', on ? festUrl : bgUrl); },
     god: '三太子', qianName: '太子籤', qianCount: SAN_QIAN.length,
     hasQianToday: () => !!san.qian && san.qian.date === dayKey(),

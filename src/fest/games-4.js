@@ -28,6 +28,8 @@ const turtleSvg = (w, h) => `<ellipse cy="${h * .36}" rx="${w * .46}" ry="${h * 
   <path d="M0 ${-h * .34}v${h * .2}M0 ${h * .14}v${h * .2}M${-w * .28} ${-h * .24}l${w * .08} ${h * .1}M${w * .28} ${-h * .24}l${-w * .08} ${h * .1}M${-w * .28} ${h * .24}l${w * .08} ${-h * .1}M${w * .28} ${h * .24}l${-w * .08} ${-h * .1}" stroke="#B02A22" stroke-width="2"/>
   <ellipse cx="${-w * .14}" cy="${-h * .18}" rx="${w * .08}" ry="${h * .05}" fill="#FFF" opacity=".35"/>`;
 const turtle = (w, h) => art('tg-gui', w, h, turtleSvg);
+// 最大一號（龜王）：有 qg-gui-king.webp 就換成背上有「福」字的龜王
+const turtleOf = (lv, w, h) => (lv >= 3 && hasArt('qg-gui-king') ? art('qg-gui-king', w, h * 1.15, '') : turtle(w, h));
 const tray = `<ellipse cy="10" rx="70" ry="16" fill="#7A2A18"/><ellipse rx="70" ry="16" fill="#C8462E" stroke="#E8B060" stroke-width="3"/><ellipse rx="56" ry="10" fill="#A8382A"/>`;
 const basket = `<path d="M-46 -10 L-38 34 Q0 44 38 34 L46 -10Z" fill="#C89A5A" stroke="#8A6030" stroke-width="2"/>
   ${[-30, -14, 2, 18, 34].map((x) => `<path d="M${x} -8 L${x - 2} 34" stroke="#8A6030" stroke-width="1.4"/>`).join('')}
@@ -56,9 +58,10 @@ const qigui = {
       <g id="qgTray" transform="translate(${ALTAR[0]} ${ALTAR[1] + 24})">${tray}</g>
       <g id="qgGui" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgGuiArt">${turtle(110, 80)}</g></g>
       <g id="qgBasket" transform="translate(${BASKET[0]} ${BASKET[1]})">${art('qg-basket', 110, 100, basket)}</g>
-      <g id="qgBack" style="display:none" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/>${turtle(110, 80)}</g>`);
+      <g id="qgBack" style="display:none" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgBackArt">${turtle(110, 80)}</g></g>`);
     const gui = st.$('#qgGui'), info = st.$('#qgInfo');
-    const showSize = () => { place(gui, ...ALTAR, SIZES[level].s); info.textContent = streak ? `連續 ${streak} 個聖筊：${SIZES[level].name}（${jinTxt(SIZES[level].jin)}）` : ''; };
+    let shownLv = 0;
+    const showSize = () => { if ((level >= 3) !== (shownLv >= 3)) st.$('#qgGuiArt').innerHTML = turtleOf(level, 110, 80); shownLv = level; place(gui, ...ALTAR, SIZES[level].s); info.textContent = streak ? `連續 ${streak} 個聖筊：${SIZES[level].name}（${jinTxt(SIZES[level].jin)}）` : ''; };
     place(gui, ...ALTAR, SIZES[0].s); gui.style.opacity = '.45';
 
     if (loan) giveBack(); else intro();
@@ -67,6 +70,7 @@ const qigui = {
     function giveBack() {
       const twice = loan.jin * 2, el = st.$('#qgBack'), s = clamp(SIZES[loan.lv].s * 1.3, .8, 1.6);
       let pos = [...BASKET], done = false;
+      if (loan.lv >= 3) st.$('#qgBackArt').innerHTML = turtleOf(3, 110, 80);
       gui.style.display = 'none'; el.style.display = '';
       place(el, BASKET[0], BASKET[1] - 20, s);
       st.progress(0, 4);

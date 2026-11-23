@@ -15,6 +15,7 @@ import { wallet, EARN } from './wallet.js';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 文字內容（原創） ---------- */
+const CAI_NO = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 export const CAI_QIAN = [
   { no: 1, level: '上上', title: '聚沙', poem: ['點滴聚沙成寶山', '勤耕不怕歲時寒', '一分心血一分利', '他日回頭笑展顏'], gist: '小錢慢慢存，日積月累就很可觀。現在的每一分努力都算數。', tip: '今天記一筆帳，看看錢都去了哪裡。' },
   { no: 2, level: '上吉', title: '開門', poem: ['晨鐘響過市門開', '笑臉迎人福自來', '誠信二字值千金', '回頭客是聚寶台'], gist: '做生意、做工作，誠信和笑臉就是最好的招牌，老客人會幫你帶新客人。', tip: '主動跟一位老客戶或同事問聲好。' },
@@ -64,8 +65,9 @@ export const CAI_SVG = (bg) => `
   </g>
 
   <!-- 聚寶盆（左前方） -->
-  <ellipse cx="58" cy="594" rx="44" ry="7" fill="url(#cContact)"/>
-  <g id="cBowl" class="cai-bowl" data-cai="bowl"><image href="${bowlUrl}" x="8" y="500" width="100" height="96" filter="url(#cLit)"/></g>
+  <ellipse id="cBowlSh" cx="58" cy="594" rx="44" ry="7" fill="url(#cContact)"/>
+  <g id="cBowl" class="cai-bowl" data-cai="bowl"><image id="cBowlImg" href="${bowlUrl}" x="8" y="500" width="100" height="96" filter="url(#cLit)"/></g>
+  <text id="cCombo" x="58" y="492" text-anchor="middle" font-family="Huninn, sans-serif" font-size="16" font-weight="700" fill="#FFE08A" stroke="#5A1A08" stroke-width="3" paint-order="stroke" opacity="0" pointer-events="none"></text>
 
   <!-- 大金元寶（右前方） -->
   <ellipse cx="304" cy="586" rx="44" ry="7" fill="url(#cContact)"/>
@@ -81,6 +83,12 @@ export const CAI_SVG = (bg) => `
   <g id="cCoin" class="cai-coin" data-cai="coin" role="button" tabindex="0" aria-label="拿金幣丟進聚寶盆">
     <circle cx="0" cy="0" r="24" fill="transparent"/>
     <image href="${coinUrl}" x="-14" y="-15" width="28" height="30"/>
+  </g>
+
+  <!-- 財神爺偶爾丟下來的紅包 -->
+  <g id="cHb" class="cai-hb-drop" data-cai="hb" role="button" tabindex="0" aria-label="接住財神爺丟下來的紅包" style="display:none">
+    <circle cx="0" cy="0" r="30" fill="transparent"/>
+    <image href="${hongbaoUrl}" x="-20" y="-26" width="40" height="52"/>
   </g>
 </svg>`;
 
@@ -135,6 +143,24 @@ export function initCaishen(api) {
   /* ----- 擲金幣進聚寶盆 ----- */
   const coin = S('cCoin'), aim = S('cAim');
   const HOME = [200, 612], MOUTH = { x: 58, y: 530, r: 34 };
+  // 聚寶盆左右慢慢移動（中心 46～94），投中會連擊加倍
+  const BX = 70, BA = reduce ? 0 : 24, BP = 5200;
+  let bowlT0 = performance.now(), bowlRaf = 0, combo = 0;
+  const bowlX = (now = performance.now()) => BX + BA * Math.sin(((now - bowlT0) / BP) * Math.PI * 2);
+  const moveBowl = (now) => {
+    const dx = bowlX(now) - 58; MOUTH.x = 58 + dx;
+    S('cBowlImg').setAttribute('transform', `translate(${dx.toFixed(1)} 0)`);
+    S('cBowlSh').setAttribute('transform', `translate(${dx.toFixed(1)} 0)`);
+    S('cAim').setAttribute('cx', MOUTH.x.toFixed(1)); S('cCombo').setAttribute('x', MOUTH.x.toFixed(1));
+    bowlRaf = requestAnimationFrame(moveBowl);
+  };
+  const startBowl = () => { cancelAnimationFrame(bowlRaf); bowlRaf = requestAnimationFrame(moveBowl); };
+  const stopBowl = () => cancelAnimationFrame(bowlRaf);
+  const showCombo = () => {
+    const c = S('cCombo');
+    c.textContent = combo >= 2 ? `連中 ×${Math.min(combo, 5)}` : '';
+    c.setAttribute('opacity', combo >= 2 ? '1' : '0');
+  };
   let cpos = [...HOME], drag = null, flying = false;
   const placeCoin = (x, y, r = 0, s = 1) => { cpos = [x, y]; coin.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${r.toFixed(0)}) scale(${s})`); };
   placeCoin(...HOME);
@@ -164,7 +190,8 @@ export function initCaishen(api) {
     }
     // 輔助瞄準：手機甩動速度差很多，只看方向。方向大致朝聚寶盆就幫忙修成漂亮拋物線
     const T = Math.min(.9, Math.max(.55, sp / 2600)), g = 1300;
-    const ix = (MOUTH.x - cpos[0]) / T, iy = (MOUTH.y - cpos[1] - .5 * g * T * T) / T;
+    const tx = bowlX(performance.now() + T * 1000); // 瞄準盆子「到時候」的位置
+    const ix = (tx - cpos[0]) / T, iy = (MOUTH.y - cpos[1] - .5 * g * T * T) / T;
     let da = Math.abs(Math.atan2(vy, vx) - Math.atan2(iy, ix)); if (da > Math.PI) da = 2 * Math.PI - da;
     if (da < .5) launch(ix * (0.97 + Math.random() * .06), iy);
     else { const k = Math.min(.55, 800 / sp); launch(vx * k, vy * k); }
@@ -173,7 +200,7 @@ export function initCaishen(api) {
   coin.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!flying) autoToss(); } });
   function autoToss() { // 鍵盤／按鈕：自動丟一個漂亮的拋物線
     placeCoin(...HOME); const T = .7, g = 1300;
-    launch((MOUTH.x - HOME[0]) / T, (MOUTH.y - HOME[1] - .5 * g * T * T) / T);
+    launch((bowlX(performance.now() + T * 1000) - HOME[0]) / T, (MOUTH.y - HOME[1] - .5 * g * T * T) / T);
   }
   function flyHome() {
     const [x0, y0] = cpos, t0 = performance.now();
@@ -203,17 +230,57 @@ export function initCaishen(api) {
     burst('spark', MOUTH.x, MOUTH.y - 6, reduce ? 4 : 22);
     const t = dayKey();
     if (cai.coinDay !== t) { cai.coinDay = t; cai.coins = 0; }
-    cai.coins++;
-    const n = cai.coins <= 8 ? 8 : 1; // 每天前 8 枚各 +8
-    addWealth(n, MOUTH.x + 20, MOUTH.y - 20);
-    say(cai.coins === 1 ? '叮噹！金幣進了聚寶盆，聚寶盆閃了一下金光。再丟一枚試試？' : cai.coins === 8 ? '今天已經丟進 8 枚，八方來財！之後再丟也可以，只是財氣加得比較少。' : `叮噹！今天第 ${cai.coins} 枚進盆。`, 'god');
+    cai.coins++; combo++;
+    const mult = Math.min(combo, 5), n = (cai.coins <= 8 ? 8 : 1) * mult; // 每天前 8 枚各 +8，連中再乘倍數
+    addWealth(n, MOUTH.x + 20, MOUTH.y - 20); showCombo();
+    if (combo >= 2) sfx.buzz([10, 30, 10]);
+    if (combo === 5) wallet.earn(5, '聚寶盆連中五枚', MOUTH.x, MOUTH.y - 60);
+    if (Math.random() < .15) setTimeout(dropHb, 900);
+    say(combo >= 2 ? `連中 ${combo} 枚！財氣 ×${mult}，${combo >= 5 ? '五福臨門，福氣幣 +5！' : '沒丟歪就一直加倍（最多 ×5）。'}` : cai.coins === 1 ? '叮噹！金幣進了聚寶盆，聚寶盆閃了一下金光。再丟一枚試試？' : cai.coins === 8 ? '今天已經丟進 8 枚，八方來財！之後再丟也可以，只是財氣加得比較少。' : `叮噹！今天第 ${cai.coins} 枚進盆。`, 'god');
     setTimeout(() => { placeCoin(...HOME); coin.style.opacity = ''; flying = false; }, 650);
   }
   function miss() {
     sfx.knock();
+    if (combo >= 2) emit('text', MOUTH.x, MOUTH.y - 40, { text: '連擊中斷', color: '#FFD0B0', life: 1.2 });
+    combo = 0; showCombo();
     say(MISS[Math.floor(Math.random() * MISS.length)]);
     setTimeout(() => { placeCoin(...HOME); flying = false; }, 500);
   }
+
+  /* ----- 財神爺丟紅包：從上面飄下來，點一下接住（一天最多 3 個） ----- */
+  const hb = S('cHb');
+  let hbRaf = 0, hbOn = false;
+  function dropHb() {
+    const t = dayKey();
+    if (cai.hbDay !== t) { cai.hbDay = t; cai.hbN = 0; }
+    if (hbOn || cai.hbN >= 3 || host.hidden) return;
+    hbOn = true; hb.style.display = '';
+    const x0 = 90 + Math.random() * 180, t0 = performance.now(), D = reduce ? 4200 : 3400;
+    burst('spark', 180, 290, 10);
+    say('財神爺丟了一個紅包下來！快點一下接住它。', 'god');
+    const step = (now) => {
+      const k = (now - t0) / D;
+      if (k >= 1) { hbOn = false; hb.style.display = 'none'; say('紅包飄走了…下次手腳快一點！'); return; }
+      const x = x0 + 26 * Math.sin(k * Math.PI * 3), y = 230 + k * 400, r = 14 * Math.sin(k * Math.PI * 4);
+      hb.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${r.toFixed(0)})`);
+      hbRaf = requestAnimationFrame(step);
+    };
+    hbRaf = requestAnimationFrame(step);
+  }
+  function catchHb(e) {
+    e?.preventDefault?.(); e?.stopPropagation?.();
+    if (!hbOn) return;
+    cancelAnimationFrame(hbRaf); hbOn = false;
+    const m = /translate\(([\d.-]+) ([\d.-]+)\)/.exec(hb.getAttribute('transform') || '') || [0, 180, 400];
+    hb.style.display = 'none';
+    cai.hbN = (cai.hbN || 0) + 1; save();
+    const x = +m[1], y = +m[2];
+    burst('spark', x, y, 18); sfx.chime(); sfx.buzz([10, 30, 10]);
+    addWealth(16, x, y - 10); wallet.earn(6, '接住財神紅包', x, y - 40);
+    say(`接到財神爺的紅包！財氣 +16、福氣幣 +6。${cai.hbN >= 3 ? '今天的紅包都接完了。' : '財神爺心情好的時候還會再丟喔。'}`, 'god');
+  }
+  hb.addEventListener('pointerdown', catchHb);
+  hb.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') catchHb(e); });
 
   /* ----- 財神爺問安 ----- */
   function greetGod() {
@@ -281,7 +348,7 @@ export function initCaishen(api) {
     const t = dayKey();
     if (!cai.qian || cai.qian.date !== t) { cai.qian = { date: t, no: 1 + Math.floor(Math.random() * CAI_QIAN.length) }; save(); sfx.rattle(1); }
     const f = CAI_QIAN.find((x) => x.no === cai.qian.no);
-    openSheet(`財神籤第${'一二三四五六七八'[f.no - 1]}首・${f.title}`, `
+    openSheet(`財神籤第${CAI_NO[f.no - 1]}首・${f.title}`, `
       <div class="slip">
         <div class="slip-side"><span>財神籤</span><span class="lv">${f.level}</span></div>
         <p class="poem">${f.poem.map((l) => `<span>${l}</span>`).join('')}</p>
@@ -307,7 +374,8 @@ export function initCaishen(api) {
       const el = S('cAvatar'), h = 130 * char.scale, w = 120 * char.scale;
       el.setAttribute('href', char.kneel); el.setAttribute('width', w); el.setAttribute('height', h);
       el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h);
-      paintWealth();
+      paintWealth(); combo = 0; showCombo(); startBowl();
+      if (Math.random() < .35) setTimeout(dropHb, 2600);
       say(cai.rubDay === dayKey() ? '歡迎回到財神聚寶閣。一樣先點燭、上香，再丟金幣進聚寶盆、借發財金或抽財神籤。' : '歡迎來到財神聚寶閣！先點燭、上香向財神爺問好，再摸摸右下角的大金元寶，今日財氣 +88。', 'god');
     },
     setFestive(on) { S('cBg').setAttribute('href', on ? festUrl : bgUrl); },
@@ -315,6 +383,6 @@ export function initCaishen(api) {
     hasQianToday: () => !!cai.qian && cai.qian.date === dayKey(),
     setQian(no) { cai.qian = { date: dayKey(), no }; save(); },
     openQian,
-    leave() { ku.leave(); },
+    leave() { ku.leave(); stopBowl(); cancelAnimationFrame(hbRaf); hbOn = false; hb.style.display = 'none'; },
   };
 }

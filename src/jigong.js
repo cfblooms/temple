@@ -7,7 +7,19 @@ import gourdUrl from './assets/ji/gourd.webp';
 import cupUrl from './assets/ji/cup.webp';
 import { makePourer } from './pour.js';
 
+import { wallet } from './wallet.js';
+
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DRUNK = 5; // 敬滿 5 天，濟公就醉倒講笑話
+const JOKES = [
+  '濟公醉醺醺：「有人問我為什麼鞋子破了不換？我說：換了，腳就不認得路回家啦！」',
+  '濟公打了個酒嗝：「煩惱跟蚊子一樣，你越拍它越來勁。拿扇子搧一搧，它自己就飛走囉。」',
+  '濟公瞇著眼：「我跟扇子說，你破成這樣還能幹嘛？扇子說：至少我還有風度。」',
+  '濟公搖搖晃晃：「人家說酒肉穿腸過，我說煩惱也一樣，過了就好，別留在肚子裡發酵。」',
+  '濟公笑到打滾：「昨天有個人求我讓他瘦，我說簡單，先把我這杯喝掉，你就不會吃宵夜了…因為你睡著了！」',
+  '濟公眼睛半開：「我的帽子為什麼歪的？因為天下事本來就沒那麼正經嘛。」',
+  '濟公呵呵笑：「人家問我修行的祕訣，我說：餓了吃、睏了睡、煩了笑一笑，剩下的交給老天。」',
+];
 
 /* ---------- 文字內容（原創） ---------- */
 export const JI_QIAN = [
@@ -41,7 +53,7 @@ const AFTER = [
   '濟公眨眨眼：「這種小事也值得煩？走走走，吃飯去。」',
   '濟公拍拍你的肩：「事情還是要做，但心不用跟著揪成一團。」',
 ];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 
 /* ---------- 場景 ---------- */
 // 參考點：濟公臉 (180,290)、供桌桌面 y≈378、拜墊中心 (184,525)
@@ -81,6 +93,12 @@ export const JI_SVG = (bg) => `
     <g id="jGourdTilt"><image href="${gourdUrl}" x="-20" y="-24.5" width="40" height="49" filter="url(#jLit)"/></g>
   </g>
 
+  <!-- 醉意：酒葫蘆越敬越滿 -->
+  <g id="jDrunk" pointer-events="none" transform="translate(${GOURD_REST[0] + 28} ${GOURD_REST[1] - 14})">
+    <rect x="-4" y="-4" width="16" height="50" rx="8" fill="#3A1A0E" opacity=".55"/>
+    ${Array.from({ length: DRUNK }, (_, i) => `<circle class="ji-pip" cx="4" cy="${38 - i * 9.5}" r="3.4" fill="#5A3A1A"/>`).join('')}
+  </g>
+
   <!-- 破扇（拜墊右前方，可以拿起來搧） -->
   <ellipse id="jFanShadow" cx="${FAN_REST[0]}" cy="${FAN_REST[1] + 30}" rx="22" ry="4" fill="url(#jContact)"/>
   <g id="jFan" class="ji-prop" data-ji="fan" role="button" tabindex="0" aria-label="破扇" transform="translate(${FAN_REST[0]} ${FAN_REST[1]})">
@@ -107,20 +125,35 @@ export function initJigong(api) {
   /* ----- 敬一杯 ----- */
   const wine = S('jWine');
   const poured = () => ji.wineDay === dayKey();
-  const paintWine = () => wine.setAttribute('opacity', poured() ? '.95' : '0');
+  const paintWine = () => {
+    wine.setAttribute('opacity', poured() ? '.95' : '0');
+    S('jDrunk').querySelectorAll('.ji-pip').forEach((c, i) => c.setAttribute('fill', i < (ji.tipsy || 0) ? '#F2B33A' : '#5A3A1A'));
+  };
   paintWine();
   const gourd = makePourer({
     cam, svg, el: S('jGourd'), tilt: S('jGourdTilt'), shadow: S('jGourdShadow'), sfx, emit,
     rest: GOURD_REST, pourAt: GOURD_POUR, spout: GOURD_SPOUT, angle: GOURD_ANG, drop: { color: '#E8A23A' },
     isDone: poured,
     onDone() {
-      ji.wineDay = dayKey(); save(); paintWine();
+      ji.wineDay = dayKey(); ji.tipsy = (ji.tipsy || 0) + 1; save(); paintWine();
       sfx.chime(); sfx.buzz([15, 40, 15]);
       burst('spark', RIM[0], RIM[1], reduce ? 3 : 10);
-      say('酒倒好了。濟公鼻子先動了一下，眼睛都還沒睜開就笑了：「好酒！這杯我記在你帳上，保佑你今天順順的。」', 'god');
+      if (ji.tipsy >= DRUNK) { drunk(); return; }
+      say(`酒倒好了。濟公鼻子先動了一下，眼睛都還沒睜開就笑了：「好酒！」酒葫蘆旁邊的醉意 ${ji.tipsy}／${DRUNK}，敬滿了濟公會醉倒講笑話。`, 'god');
     },
     onTap: () => (poured() ? say('今天已經敬過一杯了，濟公說再喝就要醉倒在供桌上了。') : say('按住左下角的<b>酒葫蘆</b>，拿到供桌右邊的小酒杯上面，就會自己倒酒。', 'god')),
   });
+
+  function drunk() {
+    ji.tipsy = 0; ji.jokes = (ji.jokes || 0) + 1; save();
+    const j = JOKES[(ji.jokes - 1) % JOKES.length];
+    S('jHaloC').setAttribute('opacity', '.8');
+    let k = 0; const zz = setInterval(() => { emit('text', 200 + k * 8, 270 - k * 10, { text: 'z', color: '#FFE6B0', life: 1.6, vy: -30 }); if (++k > 4) clearInterval(zz); }, 260);
+    sfx.chime(); setTimeout(() => sfx.chime(), 260);
+    wallet.earn(15, '濟公醉倒講笑話', 180, 260);
+    setTimeout(() => { S('jHaloC').setAttribute('opacity', '.15'); paintWine(); }, 2400);
+    say(`濟公喝醉倒在供桌旁邊了！${j}（福氣 +15，醉意重新開始累積）`, 'god');
+  }
 
   /* ----- 搧煩惱 ----- */
   const wordsG = S('jWords');
@@ -136,8 +169,12 @@ export function initJigong(api) {
       const el = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       el.setAttribute('class', 'ji-word'); el.setAttribute('text-anchor', 'middle');
       el.textContent = c; wordsG.appendChild(el);
-      words.push({ el, x, y, vx: 0, vy: 0, r: (Math.random() - .5) * 10, vr: 0, gone: false, a: 1, bob: Math.random() * 6 });
+      words.push({ el, x, y, hx: x, hy: y, vx: 0, vy: 0, r: (Math.random() - .5) * 10, vr: 0, gone: false, a: 1, bob: Math.random() * 6, back: 0, ret: false });
     });
+    // 有些煩惱很黏，搧走了還會飄回來（大約三分之一的字，各回來一次）
+    const idx = words.map((_, i) => i).sort(() => Math.random() - .5);
+    idx.slice(0, Math.max(1, Math.round(words.length / 3))).forEach((i) => { words[i].back = 1; });
+    worryOn = true; nagAt = 0;
     paintWords(0);
   }
   function paintWords(t) {
@@ -147,29 +184,40 @@ export function initJigong(api) {
       w.el.setAttribute('opacity', w.a.toFixed(2));
     }
   }
-  let wordAnim = 0, lastW = 0;
+  let wordAnim = 0, lastW = 0, worryOn = false, nagAt = 0;
   function wordLoop(t) {
     const dt = lastW ? Math.min(.05, (t - lastW) / 1000) : .016; lastW = t;
     for (const w of words) {
+      if (w.ret) { // 飄回來
+        w.x += (w.hx - w.x) * Math.min(1, dt * 2.6); w.y += (w.hy - w.y) * Math.min(1, dt * 2.6); w.a = Math.min(1, w.a + dt * 1.4); w.r *= .96;
+        if (Math.hypot(w.hx - w.x, w.hy - w.y) < 2) w.ret = false;
+        continue;
+      }
       if (!w.gone) continue;
       w.x += w.vx * dt; w.y += w.vy * dt; w.vy -= 30 * dt; w.r += w.vr * dt; w.a = Math.max(0, w.a - dt * .9);
+      if (w.a <= 0 && w.back > 0) { // 黏人的煩惱從旁邊又飄回來
+        w.back--; w.gone = false; w.ret = true; w.a = .1; w.vx = w.vy = w.vr = 0;
+        w.x = w.x < 180 ? -10 : 370; w.y = w.hy - 60 + Math.random() * 40;
+        if (t - nagAt > 2500) { nagAt = t; say(`「${w.el.textContent}」又飄回來了！煩惱很黏，繼續搧。`, 'god'); }
+      }
     }
     paintWords(t);
     words = words.filter((w) => { if (w.gone && w.a <= 0) { w.el.remove(); return false; } return true; });
-    if (words.length) wordAnim = requestAnimationFrame(wordLoop); else { wordAnim = 0; lastW = 0; }
+    if (words.length) wordAnim = requestAnimationFrame(wordLoop);
+    else { wordAnim = 0; lastW = 0; if (worryOn) { worryOn = false; allGone(); } }
   }
   const kickWords = () => { if (!wordAnim) { lastW = 0; wordAnim = requestAnimationFrame(wordLoop); } };
   function blow(fx, fy, vx, vy) {
     const sp = Math.hypot(vx, vy);
     let hit = false;
     for (const w of words) {
-      if (w.gone || Math.hypot(w.x - fx, w.y - fy) > 44) continue;
+      if (w.gone || w.a < .5 || Math.hypot(w.x - fx, w.y - fy) > 44) continue;
       const k = Math.max(1, 420 / Math.max(sp, 1));
       w.gone = true; hit = true;
       w.vx = vx * k * .9 + (Math.random() - .5) * 60; w.vy = vy * k * .9 - 40 - Math.random() * 40; w.vr = (Math.random() - .5) * 720;
       emit('spark', w.x, w.y);
     }
-    if (hit) { sfx.pop(); kickWords(); if (words.every((w) => w.gone)) allGone(); }
+    if (hit) { sfx.pop(); kickWords(); }
   }
   function allGone() {
     ji.fanned++; ji.fanDay = dayKey(); save();
@@ -192,7 +240,7 @@ export function initJigong(api) {
       const t = ta.value.trim().replace(/\s+/g, '');
       if (!t) { ta.focus(); return; }
       closeSheet(); placeWords(t); kickWords(); sfx.knock();
-      say('煩惱飄在供桌前了。按住右下角的<b>破扇</b>，在字上面用力<b>左右搧</b>，把它們搧走！', 'god');
+      say('煩惱飄在供桌前了。按住右下角的<b>破扇</b>，在字上面用力<b>左右搧</b>，把它們搧走！有些煩惱很黏，會飄回來，要一直搧到全部消失。', 'god');
     });
   }
 
@@ -236,11 +284,11 @@ export function initJigong(api) {
     const t0 = performance.now(), ys = [...new Set(words.filter((w) => !w.gone).map((w) => Math.round(w.y)))];
     let px = 60, py = ys[0];
     const step = (t) => {
-      const s = (t - t0) / 1000, i = Math.min(ys.length - 1, Math.floor(s / .7)), k = (s % .7) / .7;
-      const x = 60 + 240 * (i % 2 ? 1 - k : k), y = ys[i] + 10;
+      const s = (t - t0) / 1000, j = Math.floor(s / .7), i = j % ys.length, k = (s % .7) / .7;
+      const x = 60 + 240 * (j % 2 ? 1 - k : k), y = ys[i] + 10;
       fanPos = [x, y]; placeFan((i % 2 ? -1 : 1) * 25);
       blow(x, y - 10, (x - px) * 60, (y - py) * 60 - 1); px = x; py = y;
-      if (s < ys.length * .7 && words.some((w) => !w.gone)) requestAnimationFrame(step); else { fanHome(); cam?.reset(900); }
+      if (s < 9 && words.length) requestAnimationFrame(step); else { fanHome(); cam?.reset(900); }
     };
     requestAnimationFrame(step);
   }
@@ -263,7 +311,11 @@ export function initJigong(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，濟公說：認真過日子，但別太認真看待煩惱。</p>`);
   }
 
-  const ACTS = { worry: () => (words.some((w) => !w.gone) ? autoFan() : openWorry()), wine: () => gourd.auto(), qian: openQian };
+  const openGourd = () => {
+    if (!poured()) { gourd.auto(); return; }
+    say(`今天已經敬過一杯了。醉意 ${ji.tipsy || 0}／${DRUNK}，明天再來敬，滿了濟公會醉倒講笑話。${ji.jokes ? `你已經聽過 ${ji.jokes} 個笑話。` : ''}`);
+  };
+  const ACTS = { worry: () => (words.some((w) => !w.gone) ? autoFan() : openWorry()), wine: openGourd, qian: openQian };
   svg.addEventListener('click', (e) => { if (e.target.closest('[data-ji="deity"]')) greetGod(); });
   svg.querySelector('[data-ji="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
   $('#jiBar').addEventListener('click', (e) => { const b = e.target.closest('button[data-ji]'); if (b) ACTS[b.dataset.ji](); });

@@ -9,6 +9,7 @@ import tree2 from './assets/tudi/tree-2.webp';
 import tree3 from './assets/tudi/tree-3.webp';
 import tree4 from './assets/tudi/tree-4.webp';
 import { makePourer } from './pour.js';
+import { wallet } from './wallet.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const TREES = [tree1, tree2, tree3, tree4];
@@ -16,6 +17,17 @@ const TREES = [tree1, tree2, tree3, tree4];
 const STAGE_AT = [0, 2, 4, 7];
 const STAGE_NAME = ['種子', '小芽', '小樹', '金果樹'];
 const stageOf = (days) => (days >= 7 ? 3 : days >= 4 ? 2 : days >= 2 ? 1 : 0);
+// 長大以後：樹不會再變回種子，每週結一次金果（離上次收成滿 7 天、這週澆過 4 天水）
+const WEEK_WATER = 4, WEEK_DAYS = 7;
+// 跟著季節換樣子
+const SEASONS = [
+  { id: 'spring', name: '春天', note: '枝頭開滿粉紅小花', months: [2, 3, 4] },
+  { id: 'summer', name: '夏天', note: '葉子綠油油，螢火蟲來作伴', months: [5, 6, 7] },
+  { id: 'autumn', name: '秋天', note: '葉子變成金黃色，一片片飄下來', months: [8, 9, 10] },
+  { id: 'winter', name: '冬天', note: '掛上小紅燈籠，等過年', months: [11, 12, 1] },
+];
+const seasonNow = () => { const m = new Date().getMonth() + 1; return SEASONS.find((x) => x.months.includes(m)); };
+const daysBetween = (a, b) => Math.round((new Date(b.replace(/-/g, '/')) - new Date(a.replace(/-/g, '/'))) / 864e5);
 
 /* ---------- 文字內容（原創） ---------- */
 export const TUDI_QIAN = [
@@ -43,7 +55,7 @@ const GREET = [
   '土地公拄著拐杖點點頭：「今天的樹有沒有澆水呀？」',
   '土地公舉起金元寶晃一晃：「財不用多，夠用、心安就好。」',
 ];
-const NAMES = ['一', '二', '三', '四', '五', '六', '七', '八'];
+const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 
 /* ---------- 場景 ---------- */
 // 參考點：土地公臉 (182,280)、供桌桌面 y≈384、拜墊中心 (184,525)、福德樹盆土 (300,578)
@@ -72,6 +84,7 @@ export const TUDI_SVG = (bg) => `
   <ellipse cx="300" cy="609" rx="30" ry="5" fill="url(#tContact)"/>
   <circle id="tTarget" cx="${SOIL[0]}" cy="${SOIL[1] - 6}" r="24" fill="none" stroke="#BFE8FF" stroke-width="2" stroke-dasharray="5 5" opacity="0" pointer-events="none"/>
   <image id="tTree" class="tudi-tree" data-tudi="tree" role="button" tabindex="0" aria-label="福德樹" href="${tree1}" x="${POT.x}" y="${POT.y}" width="${POT.w}" height="${POT.h}" filter="url(#tLit)"/>
+  <g id="tSeason" class="tudi-season" pointer-events="none"></g>
 
   <!-- 澆水壺（拜墊左前方，可以拿起來） -->
   <ellipse id="tCanShadow" cx="${CAN_REST[0]}" cy="${CAN_REST[1] + 25}" rx="26" ry="4.5" fill="url(#tContact)"/>
@@ -87,6 +100,11 @@ export function initTudigong(api) {
   const svg = host.querySelector('svg');
   const S = (id) => svg.querySelector('#' + id);
   const tu = state.tudi || (state.tudi = { days: 0, waterDay: '', mochiDay: '', gold: 0, qian: null });
+  if (tu.mature === undefined) tu.mature = tu.gold > 0; // 以前收成過的，樹已經長大了
+  // 長大後：這週澆了幾天、離上次收成幾天
+  const ripeMature = () => tu.mature && tu.days >= WEEK_WATER && (!tu.pickDay || daysBetween(tu.pickDay, dayKey()) >= WEEK_DAYS);
+  const ripe = () => (tu.mature ? ripeMature() : stageOf(tu.days) === 3);
+  const stageNow = () => (tu.mature ? (ripeMature() ? 3 : 2) : stageOf(tu.days));
   const watered = () => tu.waterDay === dayKey();
 
   /* ----- 土地公問安 ----- */
@@ -99,18 +117,42 @@ export function initTudigong(api) {
   /* ----- 福德樹 ----- */
   const tree = S('tTree');
   const paintTree = () => {
-    const st = stageOf(tu.days);
+    const st = stageNow(), se = seasonNow();
     tree.setAttribute('href', TREES[st]);
-    tree.setAttribute('aria-label', `福德樹：${STAGE_NAME[st]}，已經澆水 ${tu.days} 天`);
+    tree.setAttribute('aria-label', `福德樹：${tu.mature ? `大樹（${se.name}）` : STAGE_NAME[st]}，${tu.mature ? '這週' : '已經'}澆水 ${tu.days} 天`);
     tree.classList.toggle('ripe', st === 3);
+    tree.classList.toggle('mature', !!tu.mature);
+    for (const x of SEASONS) tree.classList.toggle('s-' + x.id, !!tu.mature && x === se);
+    paintSeason(se);
   };
+  // 季節裝飾：只有長大的樹才有
+  function paintSeason(se) {
+    const g = S('tSeason');
+    if (!tu.mature) { g.innerHTML = ''; return; }
+    const r = (a, b) => a + Math.random() * (b - a);
+    const cx = 300, cy = 538;
+    let h = '';
+    if (se.id === 'spring') for (let i = 0; i < 9; i++) { const x = r(cx - 26, cx + 26), y = r(cy - 24, cy + 10); h += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><circle r="3.2" fill="#FFC2D6"/><circle r="1.2" fill="#FFF1A8"/></g>`; }
+    if (se.id === 'summer') for (let i = 0; i < 5; i++) h += `<circle class="tudi-fly" style="animation-delay:${(-i * .7).toFixed(1)}s" cx="${r(cx - 34, cx + 34).toFixed(1)}" cy="${r(cy - 30, cy + 20).toFixed(1)}" r="2" fill="#F6FF9A"/>`;
+    if (se.id === 'autumn') for (let i = 0; i < 4; i++) h += `<path class="tudi-leaf" style="animation-delay:${(-i * 1.1).toFixed(1)}s" transform="translate(${r(cx - 26, cx + 26).toFixed(1)} ${r(cy - 10, cy + 6).toFixed(1)})" d="M0 -4c3 1 4 4 0 8c-4-4-3-7 0-8z" fill="${['#E8A43A', '#D9692A', '#F2C14E'][i % 3]}"/>`;
+    if (se.id === 'winter') for (const [x, y] of [[cx - 20, cy - 4], [cx + 18, cy - 10], [cx + 2, cy + 8]]) h += `<g transform="translate(${x} ${y})"><path d="M0 -9v4" stroke="#7A4A24" stroke-width=".8"/><ellipse cy="0" rx="4" ry="5" fill="#E8402A"/><rect x="-2" y="-5.5" width="4" height="1.4" fill="#F2C14E"/><rect x="-2" y="4.2" width="4" height="1.4" fill="#F2C14E"/></g>`;
+    g.innerHTML = h;
+  }
   paintTree();
-  const left = () => { const st = stageOf(tu.days); return st < 3 ? [STAGE_AT[st + 1] - tu.days, STAGE_NAME[st + 1]] : null; };
+  const left = () => {
+    if (tu.mature) {
+      if (ripeMature()) return null;
+      const w = Math.max(0, WEEK_WATER - tu.days), d = tu.pickDay ? Math.max(0, WEEK_DAYS - daysBetween(tu.pickDay, dayKey())) : 0;
+      return [Math.max(w, 1), '金果樹', w, d];
+    }
+    const st = stageOf(tu.days); return st < 3 ? [STAGE_AT[st + 1] - tu.days, STAGE_NAME[st + 1]] : null;
+  };
+  const matureWait = (nx) => (nx[2] ? `這週再澆 ${nx[2]} 天水` : '') + (nx[2] && nx[3] ? '，而且' : '') + (nx[3] ? `再等 ${nx[3]} 天` : '') + '，大樹就會再結金果';
 
   function grow() {
-    const before = stageOf(tu.days);
+    const before = stageNow();
     tu.days++; tu.waterDay = dayKey(); save();
-    const after = stageOf(tu.days);
+    const after = stageNow();
     paintTree();
     sfx.chime(); sfx.buzz([15, 40, 15]);
     emit('text', SOIL[0] - 20, POT.y - 4, { text: `澆水第 ${tu.days} 天`, color: '#CFF0FF', life: 1.8, vy: -22 });
@@ -119,22 +161,30 @@ export function initTudigong(api) {
       burst('spark', SOIL[0], POT.y + 30, reduce ? 4 : 18);
     }
     const nx = left();
+    if (tu.mature) {
+      say(after === 3 && before !== 3 ? '大樹這週又結出<b>金果</b>了！點一下樹，把金果摘下來。' : nx ? `澆好水了，大樹喝得好開心。${matureWait(nx)}。` : '澆好水了，金果亮晶晶的。點一下樹就能摘。', 'god');
+      return;
+    }
     say(after === 3 && before !== 3 ? '哇！福德樹<b>結出金果</b>了！點一下樹，把金果摘下來。'
       : after !== before ? `福德樹長成<b>${STAGE_NAME[after]}</b>了！${nx ? `再澆 ${nx[0]} 天會變成${nx[1]}。` : ''}`
       : nx ? `澆好水了。再澆 ${nx[0]} 天，福德樹會變成<b>${nx[1]}</b>。明天記得再來喔。` : '澆好水了，金果亮晶晶的。點一下樹就能摘。', 'god');
   }
   function harvest() {
-    tu.gold++; tu.days = 0; save();
+    const first = !tu.mature;
+    tu.gold++; tu.days = 0; tu.mature = true; tu.pickDay = dayKey(); save();
+    wallet.earn(first ? 30 : 20, '福德樹金果', SOIL[0], POT.y - 20);
     sfx.chime(); setTimeout(() => sfx.chime(), 220); sfx.buzz([20, 60, 20, 60, 40]);
     burst('spark', SOIL[0], POT.y + 20, reduce ? 6 : 30);
     emit('text', SOIL[0] - 24, POT.y, { text: '土地公金 +1', color: '#FFE08A', life: 2, vy: -26 });
     setTimeout(() => { paintTree(); tree.classList.remove('pop'); void tree.getBoundingClientRect(); tree.classList.add('pop'); }, 500);
-    say(`摘下金果，換成一份<b>土地公金</b>（你已經有 ${tu.gold} 份）。土地公又幫你種下一顆新的種子，明天開始再澆水吧。`, 'god');
+    say(first ? `摘下金果，換成一份<b>土地公金</b>！福德樹已經長成大樹了，以後不用重種：每週澆 ${WEEK_WATER} 天水，就會再結一次金果。樹也會跟著季節換樣子。`
+      : `摘下金果，換成一份<b>土地公金</b>（你已經有 ${tu.gold} 份）。下週再來收成吧。`, 'god');
   }
   function tapTree() {
-    if (stageOf(tu.days) === 3) { harvest(); return; }
+    if (ripe()) { harvest(); return; }
     const nx = left();
     sfx.knock();
+    if (tu.mature) { say(`這是你的福德大樹（${seasonNow().name}：${seasonNow().note}）。${watered() ? '今天澆過了。' : '今天還沒澆水。'}${matureWait(nx)}。`); return; }
     say(`這是你的福德樹（${STAGE_NAME[stageOf(tu.days)]}），已經澆水 ${tu.days} 天。${watered() ? '今天澆過了，明天再來。' : '今天還沒澆水：拿起左下角的澆水壺，移到樹上面就會澆水。'}${nx ? `再澆 ${nx[0]} 天會變成${nx[1]}。` : ''}`);
   }
 
@@ -153,11 +203,14 @@ export function initTudigong(api) {
 
   /* ----- 福德樹進度 ----- */
   function openTree() {
-    const st = stageOf(tu.days), nx = left();
+    const st = stageNow(), nx = left(), se = seasonNow();
     const body = openSheet('我的福德樹', `
       <div class="tudi-tree-card"><img src="${TREES[st]}" alt="福德樹：${STAGE_NAME[st]}"></div>
-      <p class="tudi-steps">${STAGE_NAME.map((n, i) => `<span class="${i <= st ? 'on' : ''}"><b>${STAGE_AT[i] || 1}</b>${n}</span>`).join('')}</p>
-      <p>已經澆水 <b>${tu.days}</b> 天${nx ? `，再澆 ${nx[0]} 天會變成<b>${nx[1]}</b>` : '，金果已經熟了'}。漏掉一天不會枯，只是長得慢一點。</p>
+      ${tu.mature ? `<p class="tudi-steps">${SEASONS.map((x) => `<span class="${x === se ? 'on' : ''}"><b>${x.name[0]}</b>${x.name}</span>`).join('')}</p>
+      <p>福德樹已經長成大樹了。現在是<b>${se.name}</b>：${se.note}。</p>
+      <p>${nx ? `這週澆了 <b>${tu.days}</b> 天水，${matureWait(nx)}。` : '這週的金果熟了，快摘下來！'}</p>`
+      : `<p class="tudi-steps">${STAGE_NAME.map((n, i) => `<span class="${i <= st ? 'on' : ''}"><b>${STAGE_AT[i] || 1}</b>${n}</span>`).join('')}</p>
+      <p>已經澆水 <b>${tu.days}</b> 天${nx ? `，再澆 ${nx[0]} 天會變成<b>${nx[1]}</b>` : '，金果已經熟了'}。漏掉一天不會枯，只是長得慢一點。長大以後每週都會結金果，還會跟著季節換樣子。</p>`}
       <p class="hint">摘過的土地公金：${tu.gold} 份。${watered() ? '今天已經澆過水了。' : '今天還沒澆水。'}</p>
       <div class="row">${st === 3 ? '<button class="btn gold" id="tPick">摘金果</button>' : watered() ? '<button class="btn ghost" id="tOk">好</button>' : '<button class="btn" id="tWater">去澆水</button>'}</div>`);
     body.querySelector('#tOk')?.addEventListener('click', closeSheet);
@@ -207,9 +260,10 @@ export function initTudigong(api) {
   return {
     enter() {
       paintTree(); paintMochi(); can.place();
-      const st = stageOf(tu.days);
+      const st = stageNow();
       say(!tu.days && !tu.gold ? '歡迎來到福德祠！先點燭、上香向土地公問好。右邊有一盆福德樹的種子，每天用左下角的澆水壺澆一次水，七天就會結出金果。'
         : st === 3 ? '歡迎回來！你的福德樹結金果了，點一下樹就能摘。'
+        : tu.mature && !watered() ? `歡迎回來。福德大樹換上${seasonNow().name}的樣子了，今天也來澆個水吧。`
         : !watered() ? `歡迎回來。福德樹已經澆水 ${tu.days} 天，今天也來澆一下吧：拿起左下角的澆水壺，移到樹上面。`
         : '又見面了。可以獻一盤麻糬花生，或抽一支土地公籤。', 'god');
     },
