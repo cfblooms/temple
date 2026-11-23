@@ -9,6 +9,7 @@ import plaqueUrl from './assets/yue/plaque.webp';
 import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
 import { tossJiao } from './jiaotoss.js';
+import { wallet } from './wallet.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -43,7 +44,17 @@ const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一�
 
 /* ---------- 場景 ---------- */
 // 參考點：月老臉 (180,230)、姻緣簿 (192,262)、供桌桌面 y≈384、拜墊中心 (180,581)
-const SLOTS = [[42, 242], [52, 292], [42, 342], [318, 242], [308, 292], [318, 342]];
+// 木牌牆：左右兩根紅柱各 2 行 × 6 層，最多 24 塊，左右輪流掛，越掛越滿
+const SLOTS = [];
+for (let r = 0; r < 6; r++) for (const [x0, x1] of [[34, 58], [302, 326]]) for (const x of r % 2 ? [x1, x0] : [x0, x1]) SLOTS.push([x + (r % 2 ? 2 : -2), 186 + r * 44 + (x === x1 ? 14 : 0)]);
+const MAX_PLQ = SLOTS.length;
+// 牽線用：香客的興趣
+const LIKES = ['爬山', '煮咖啡', '養貓', '打羽球', '追劇', '拍照', '吃火鍋', '唱 KTV', '露營', '看展覽', '做麵包', '騎單車', '釣魚', '跳舞', '種多肉', '看棒球'];
+function seedRand(str) {
+  let h = 2166136261;
+  for (const c of str) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; };
+}
 export const YUE_SVG = (bg) => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="月老閣" class="yue-svg">
   <defs>
@@ -60,7 +71,7 @@ export const YUE_SVG = (bg) => `
 
   <!-- 愛心木牌（兩根紅柱上） -->
   <g id="yPlaques">${SLOTS.map(([x, y], i) => `
-    <g class="yue-plaque" id="yPlq${i}" data-yue="plaque" data-i="${i}" style="display:none" transform="translate(${x} ${y})">
+    <g class="yue-plaque" id="yPlq${i}" data-yue="plaque" data-i="${i}" style="display:none" transform="translate(${x} ${y}) scale(.74)">
       <image href="${plaqueUrl}" x="-15" y="-18" width="30" height="36" filter="url(#yLit)"/>
       <text x="0" y="5" text-anchor="middle" font-family="Huninn, sans-serif" font-size="6.5" fill="#6A2A14"></text>
       <text x="0" y="12.5" text-anchor="middle" font-family="Huninn, sans-serif" font-size="6.5" fill="#6A2A14"></text>
@@ -84,7 +95,7 @@ export const YUE_SVG = (bg) => `
 </svg>`;
 
 export function initYuelao(api) {
-  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc } = api;
+  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, chars, me } = api;
   const host = $('#yueHost');
   host.innerHTML = YUE_SVG(bgUrl);
   const svg = host.querySelector('svg');
@@ -211,6 +222,7 @@ export function initYuelao(api) {
       const [a, b] = g.querySelectorAll('text'), s = [...p.text];
       a.textContent = s.slice(0, 4).join(''); b.textContent = s.slice(4, 8).join('') + (s.length > 8 ? '…' : '');
       g.setAttribute('aria-label', '愛心木牌：' + p.text);
+      g.querySelector('image').setAttribute('filter', p.pair ? 'url(#yGlow)' : 'url(#yLit)');
     });
   };
   paintPlaques();
@@ -219,25 +231,82 @@ export function initYuelao(api) {
     const body = openSheet('寫愛心木牌', `
       <p>寫一句心願，掛到紅柱上。只存在你自己的手機裡，別人看不到。</p>
       <textarea id="yWish" class="yue-wish" maxlength="24" rows="2" placeholder="例如：遇到一個會一起吃宵夜的人"></textarea>
-      <p class="hint">${full ? '木牌已經掛滿 6 塊了，新的會換掉最舊的那一塊。' : `已經掛了 ${yue.plaques.length} 塊，最多 6 塊。`}</p>
+      <p class="hint">${full ? `兩根紅柱已經掛滿 ${MAX_PLQ} 塊了！新的會換掉最舊的那一塊。` : `紅柱上已經掛了 ${yue.plaques.length} 塊，最多 ${MAX_PLQ} 塊，每天來掛一塊，柱子會越來越滿。`}</p>
       <div class="row"><button class="btn" id="yHang">掛上去</button></div>`);
     const ta = body.querySelector('#yWish'), btn = body.querySelector('#yHang');
     setTimeout(() => ta.focus(), 50);
     btn.addEventListener('click', () => {
       const text = ta.value.trim().replace(/\s+/g, ' ');
       if (!text) { ta.focus(); return; }
-      if (yue.plaques.length >= SLOTS.length) yue.plaques.shift();
-      yue.plaques.push({ text, date: dayKey() }); save(); paintPlaques(); closeSheet();
-      const i = yue.plaques.length - 1, [x, y] = SLOTS[i], g = S('yPlq' + i);
-      g.classList.remove('pop'); void g.getBoundingClientRect(); g.classList.add('pop');
-      sfx.knock(); sfx.chime(); burst('heart', x, y, reduce ? 3 : 10);
-      say(`木牌掛好了：「${esc(text)}」。點一下柱子上的木牌，可以再看一次。`, 'god');
+      closeSheet(); hang({ text, date: dayKey() });
+      const n = yue.plaques.length;
+      say(`木牌掛好了：「${esc(text)}」。紅柱上已經有 ${n} 塊${n >= MAX_PLQ ? '，掛滿了！' : ''}。點一下柱子上的木牌，可以再看一次。`, 'god');
     });
   }
+  function hang(p) {
+    if (yue.plaques.length >= MAX_PLQ) yue.plaques.shift();
+    yue.plaques.push(p); save(); paintPlaques();
+    const i = yue.plaques.length - 1, [x, y] = SLOTS[i], g = S('yPlq' + i);
+    g.classList.remove('pop'); void g.getBoundingClientRect(); g.classList.add('pop');
+    sfx.knock(); sfx.chime(); burst('heart', x, y, reduce ? 3 : 10);
+    if (yue.plaques.length === MAX_PLQ && !yue.wallFull) { yue.wallFull = true; save(); wallet?.earn(30, '月老木牌牆掛滿', 180, 300); setTimeout(() => burst('heart', 180, 300, reduce ? 6 : 30), 400); }
+  }
+
+  /* ----- 每天幫一對香客牽線：找出興趣一樣的兩個人 ----- */
+  function todayPeople() {
+    const rnd = seedRand(`match|${dayKey()}`);
+    const pool = chars.filter((c) => c.id !== me().id && !['kid', 'junior', 'mama'].includes(c.id));
+    const ppl = []; for (let i = 0; i < 4; i++) ppl.push(pool.splice(Math.floor(rnd() * pool.length), 1)[0]);
+    const likes = [...LIKES]; const take = () => likes.splice(Math.floor(rnd() * likes.length), 1)[0];
+    const share = take();
+    const out = ppl.map((c) => ({ c, likes: [] }));
+    const a = Math.floor(rnd() * 4); let b = Math.floor(rnd() * 3); if (b >= a) b++;
+    out[a].likes.push(share); out[b].likes.push(share);
+    for (const o of out) { while (o.likes.length < 2) o.likes.push(take()); if (rnd() < .5) o.likes.reverse(); }
+    return { out, pair: [a, b].sort(), share };
+  }
+  function openMatch() {
+    const t = dayKey(), m = yue.match || (yue.match = { day: '', total: 0, tries: 0 });
+    if (m.day !== t) { m.day = t; m.tries = 0; m.done = false; m.ok = false; save(); }
+    const { out, pair, share } = todayPeople();
+    if (m.done) {
+      openSheet('今天的牽線', `<p>${m.ok ? `今天已經幫 <b>${esc(out[pair[0]].c.name)}</b> 和 <b>${esc(out[pair[1]].c.name)}</b> 牽上紅線，他們都喜歡${esc(share)}。` : `今天沒牽成，答案是都喜歡${esc(share)}的 <b>${esc(out[pair[0]].c.name)}</b> 和 <b>${esc(out[pair[1]].c.name)}</b>。`}</p>
+        <p class="hint">你一共幫香客牽成了 ${m.total} 對。明天會有新的香客來求姻緣。</p>`);
+      return;
+    }
+    const body = openSheet('幫香客牽線', `
+      <p>月老忙不過來，請你幫忙！今天有四位香客來求姻緣，找出<b>興趣一樣</b>的兩個人，點他們把紅線牽起來。</p>
+      <div class="match-grid">${out.map((o, i) => `<button type="button" class="match-card" data-i="${i}"><img src="${o.c.face}" alt=""><b>${esc(o.c.name)}</b><small>喜歡${o.likes.map(esc).join('、')}</small></button>`).join('')}</div>
+      <p class="hint" id="yMatchHint">已經牽成 ${m.total} 對。猜錯也沒關係，今天可以試 3 次。</p>`);
+    let pick = [];
+    const hint = body.querySelector('#yMatchHint');
+    body.querySelector('.match-grid').addEventListener('click', (e) => {
+      const b = e.target.closest('.match-card'); if (!b || m.done || m.tries >= 3) return;
+      const i = +b.dataset.i;
+      if (pick.includes(i)) { pick = pick.filter((x) => x !== i); b.classList.remove('on'); return; }
+      pick.push(i); b.classList.add('on'); sfx.pop();
+      if (pick.length < 2) return;
+      const ok = pick.sort().join() === pair.join();
+      if (ok) {
+        m.done = true; m.ok = true; m.total++; save();
+        body.querySelectorAll('.match-card.on').forEach((x) => x.classList.add('ok'));
+        hint.innerHTML = `<b>紅線牽上了！</b>兩個人都喜歡${esc(share)}，一聊就停不下來。福氣 +10，月老幫他們在紅柱上掛了一塊木牌。`;
+        sfx.chime(); sfx.buzz([15, 50, 15]); wallet?.earn(10, '幫香客牽線');
+        setTimeout(() => { closeSheet(); hang({ text: `${out[pair[0]].c.name}♥${out[pair[1]].c.name}`, date: t, pair: true }); burst('heart', 180, 300, reduce ? 4 : 18); say(`你幫 ${esc(out[pair[0]].c.name)} 和 ${esc(out[pair[1]].c.name)} 牽了紅線！月老：「眼光不錯，以後常來幫忙。」已經牽成 ${m.total} 對。`, 'god'); }, 1600);
+      } else {
+        m.tries++; save(); sfx.knock();
+        body.querySelectorAll('.match-card.on').forEach((x) => { x.classList.add('no'); setTimeout(() => x.classList.remove('on', 'no'), 700); });
+        hint.textContent = m.tries >= 3 ? `今天的三次機會用完了。答案是喜歡${share}的兩位，明天再來幫忙吧。` : `這兩位聊不太來，再看看大家喜歡什麼。還可以試 ${3 - m.tries} 次。`;
+        if (m.tries >= 3) { m.done = true; save(); }
+      }
+      pick = [];
+    });
+  }
+
   svg.addEventListener('click', (e) => {
     const g = e.target.closest('[data-yue="plaque"]'); if (!g) return;
     const p = yue.plaques[+g.dataset.i]; if (!p) return;
-    sfx.knock(); say(`${esc(p.date.replace(/-/g, '/'))} 掛的木牌：「${esc(p.text)}」`);
+    sfx.knock(); say(p.pair ? `${esc(p.date.replace(/-/g, '/'))} 你牽成的一對：${esc(p.text)}` : `${esc(p.date.replace(/-/g, '/'))} 掛的木牌：「${esc(p.text)}」`);
   });
 
   /* ----- 獻喜糖 ----- */
@@ -270,7 +339,7 @@ export function initYuelao(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，感情的事還是要靠兩個人好好溝通。</p>`);
   }
 
-  const ACTS = { thread: () => (!yue.thread || yue.tieDay === dayKey() ? openAsk() : hintTie()), ask: openAsk, tie: hintTie, plaque: openPlaque, candy: offerCandy, qian: openQian };
+  const ACTS = { thread: () => (!yue.thread || yue.tieDay === dayKey() ? openAsk() : hintTie()), ask: openAsk, tie: hintTie, plaque: openPlaque, candy: offerCandy, qian: openQian, match: openMatch };
   svg.addEventListener('click', (e) => { if (e.target.closest('[data-yue="deity"]')) greetGod(); });
   svg.querySelector('[data-yue="deity"]').addEventListener('keydown', (e) => { if (e.key === 'Enter') greetGod(); });
   $('#yueBar').addEventListener('click', (e) => { const b = e.target.closest('button[data-yue]'); if (b) ACTS[b.dataset.yue](); });

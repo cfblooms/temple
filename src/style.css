@@ -256,7 +256,16 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* ---------- 月老閣 ---------- */
 .yue-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
-.bar.yue-bar { grid-template-columns: repeat(7, 1fr); }
+.bar.yue-bar { grid-template-columns: repeat(8, 1fr); }
+.match-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 8px 0; }
+.match-card { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; align-items: center; column-gap: 8px; text-align: left; padding: 8px; border-radius: 14px; border: 2px solid #E8C9A8; background: #FFF8EC; color: #3A1A0E; font: inherit; cursor: pointer; }
+.match-card img { grid-row: span 2; width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #F6E3C7; }
+.match-card b { font-size: 15px; }
+.match-card small { font-size: 12.5px; color: #6A4A2A; }
+.match-card.on { border-color: #E8262E; box-shadow: 0 0 0 3px #FFC2CF; }
+.match-card.ok { background: #FFE6EE; }
+.match-card.no { animation: shakeX .4s; }
+@keyframes shakeX { 25% { translate: -5px 0; } 75% { translate: 5px 0; } }
 .yue-avatar, .yue-spool { cursor: grab; }
 .yue-plaque { cursor: pointer; transform-box: fill-box; transform-origin: 50% 0; animation: plaqueSway 3.2s ease-in-out infinite alternate; }
 .yue-plaque:nth-child(2n) { animation-delay: -1.4s; }
@@ -353,6 +362,13 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .tudi-tree { cursor: pointer; transform-box: fill-box; transform-origin: 50% 100%; }
 .tudi-tree.pop { animation: jelly .6s ease-out; }
 .tudi-tree.ripe { animation: tudiRipe 2.4s ease-in-out infinite; }
+.tudi-tree.mature { scale: 1.16; }
+.tudi-tree.s-autumn { filter: hue-rotate(-28deg) saturate(1.25); }
+.tudi-tree.s-winter { filter: saturate(.75) brightness(1.04); }
+.tudi-fly { animation: tudiFly 2.8s ease-in-out infinite alternate; }
+@keyframes tudiFly { 0% { opacity: .2; translate: 0 0; } 50% { opacity: 1; } 100% { opacity: .3; translate: 6px -8px; } }
+.tudi-leaf { animation: tudiLeaf 4.4s linear infinite; }
+@keyframes tudiLeaf { 0% { translate: 0 0; rotate: 0deg; opacity: 0; } 15% { opacity: 1; } 100% { translate: 10px 52px; rotate: 160deg; opacity: 0; } }
 @keyframes tudiRipe { 0%, 100% { filter: drop-shadow(0 0 0 rgb(255 216 107 / 0)); } 50% { filter: drop-shadow(0 0 6px rgb(255 216 107 / .9)); } }
 .tudi-mochi { transform-box: fill-box; transform-origin: 50% 100%; }
 .tudi-mochi.pop { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
@@ -363,7 +379,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .tudi-steps b { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; border: 2px solid #C8963E; font-size: 12px; }
 .tudi-steps span.on { color: var(--ink); }
 .tudi-steps span.on b { background: #C8963E; color: #fff; }
-@media (prefers-reduced-motion: reduce) { .tudi-tree.pop, .tudi-tree.ripe, .tudi-mochi.pop { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tudi-tree.pop, .tudi-tree.ripe, .tudi-mochi.pop, .tudi-fly, .tudi-leaf { animation: none; } }
 
 /* ---------- 文昌閣 ---------- */
 .wen-svg, .ji-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
@@ -372,6 +388,10 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .wen-offer.pop { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
 .wen-ticket { cursor: pointer; filter: drop-shadow(0 4px 6px rgb(40 15 5 / .35)); }
 .wen-ticket.writing { cursor: crosshair; }
+.wen-grid { cursor: crosshair; filter: drop-shadow(0 6px 10px rgb(40 15 5 / .4)); transform-box: fill-box; transform-origin: 50% 50%; }
+.wen-grid:focus:not(:focus-visible) { outline: none; }
+.wen-grid.pop { animation: offerPop .4s cubic-bezier(.3,1.6,.5,1); }
+.wen-hr { border: 0; border-top: 1px dashed var(--line); margin: 12px 0; }
 .wen-ticket:focus:not(:focus-visible) { outline: none; }
 .wen-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--paper); color: var(--ink); }
 
@@ -387,6 +407,12 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .san-svg, .gy-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 .bar.san-bar, .bar.gy-bar { grid-template-columns: repeat(6, 1fr); }
 .san-wheel { cursor: grab; }
+.san-dancer { transform-box: fill-box; transform-origin: 50% 100%; animation: sanDance .47s ease-in-out infinite alternate; }
+@keyframes sanDance { 0% { rotate: -12deg; translate: -14px 0; scale: 1; } 50% { scale: 1.08 .94; } 100% { rotate: 12deg; translate: 14px -10px; scale: 1; } }
+.san-lights path { transform-box: fill-box; transform-origin: 50% 0; animation: sanLight 1.4s ease-in-out infinite alternate; }
+.san-lights path:nth-child(2) { animation-delay: -.7s; } .san-lights path:nth-child(3) { animation-duration: .9s; }
+@keyframes sanLight { from { rotate: -14deg; } to { rotate: 14deg; } }
+@media (prefers-reduced-motion: reduce) { .san-dancer, .san-lights path { animation: none; } }
 .san-wheel:focus:not(:focus-visible), .gy-willow:focus:not(:focus-visible) { outline: none; }
 .san-offer, .gy-lamp { transform-box: fill-box; transform-origin: 50% 100%; }
 .san-offer.pop, .gy-lamp.pop { animation: offerPop .45s cubic-bezier(.3,1.6,.5,1); }
@@ -404,6 +430,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 /* 關帝殿、註生娘娘殿、太歲殿 */
 .gg-svg, .zs-svg, .ts-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 .bar.gg-bar, .bar.zs-bar, .bar.ts-bar { grid-template-columns: repeat(6, 1fr); }
+.bar.zs-bar { grid-template-columns: repeat(7, 1fr); }
 .gg-blade, .zs-prop, .ts-prop { cursor: grab; }
 .gg-blade.held, .zs-prop.held, .ts-prop.held { cursor: grabbing; filter: drop-shadow(0 6px 4px rgb(40 15 5 / .35)); }
 .gg-blade:focus:not(:focus-visible), .zs-prop:focus:not(:focus-visible), .ts-prop:focus:not(:focus-visible) { outline: none; }
@@ -436,7 +463,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .stall-prop.held, .jg-doll.held { cursor: grabbing; }
 /* 有 transform 屬性的 <g> 不能直接套 CSS 動畫（會蓋掉位置），動畫放在子元素上 */
 .stall-prop.pop > *, .jg-doll.pop > *, .bz-guest.pop > *, #xTiger.pop > * { animation: jelly .45s ease; transform-box: view-box; transform-origin: 0 0; }
-.bar.ts-bar { grid-template-columns: repeat(7, 1fr); }
+.bar.ts-bar { grid-template-columns: repeat(8, 1fr); }
 .bar.bz-bar { grid-template-columns: repeat(6, 1fr); }
 .bar.xr-bar { grid-template-columns: repeat(5, 1fr); }
 .bar.sj-bar { grid-template-columns: repeat(4, 1fr); }
@@ -444,6 +471,10 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .xr-tag, .bz-tag { font: 700 10px var(--font-ui); fill: #FFF4E0; paint-order: stroke; stroke: rgb(40 10 6 / .7); stroke-width: 3px; }
 .xr-name { font: 900 11px var(--font-serif); fill: #C8302A; }
 .xr-chant { font: 900 17px var(--font-serif); fill: #FFF4E0; letter-spacing: .04em; }
+.xr-chant tspan { fill: #CDBBA8; }
+.xr-chant tspan.on { fill: #FFE08A; }
+.xr-chant tspan.now { fill: #FFFFFF; font-size: 21px; }
+.xr-chant tspan.rest { fill: #E8D8C4; font-size: 14px; }
 .sj-banner { font: 900 20px var(--font-serif); fill: #FFE08A; letter-spacing: .12em; }
 .sj-cue { font: 900 16px var(--font-serif); fill: #FFFFFF; paint-order: stroke; stroke: rgb(20 40 70 / .6); stroke-width: 4px; letter-spacing: .1em; }
 .sj-bpm { font: 900 13px var(--font-ui); fill: #FFF4E0; }
@@ -814,3 +845,44 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
 .rj-in { width: 100%; box-sizing: border-box; font-size: 20px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); margin: 6px 0 10px; background: var(--paper); color: var(--ink); }
 .sm-plaque { font: 900 18px var(--font-serif); fill: #F3C64A; letter-spacing: .2em; }
 .sm-door-t { font: 900 14px var(--font-serif); fill: #FFF4E0; paint-order: stroke; stroke: #7A1E1A; stroke-width: 3px; }
+
+/* 關公守諾徽章 */
+.gg-badges { display: flex; justify-content: center; gap: 14px; margin: 8px 0; }
+.gg-badge { display: flex; flex-direction: column; align-items: center; gap: 1px; color: #8A7A6A; font-size: 12px; }
+.gg-badge svg { width: 44px; height: 44px; }
+.gg-badge b { font-size: 13px; }
+.gg-badge.on { color: #7A1E14; }
+.gg-badge:not(.on) svg { opacity: .7; }
+
+/* 瑤池紙鶴 */
+.mu-flock { cursor: pointer; }
+.mu-flock:focus:not(:focus-visible) { outline: none; }
+.mu-bird > g, .mu-bird > image { animation: muBob 3s ease-in-out infinite alternate; animation-delay: inherit; }
+@keyframes muBob { from { translate: 0 -3px; } to { translate: 0 3px; } }
+.mu-bird.pop { animation: offerPop .6s cubic-bezier(.3,1.6,.5,1); transform-box: fill-box; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .mu-bird > g, .mu-bird > image, .mu-bird.pop { animation: none; } }
+.ml-basin { cursor: pointer; }
+.ml-basin:focus:not(:focus-visible) { outline: none; }
+
+/* 媽祖平安符收集 */
+#bar { grid-template-columns: repeat(8, 1fr); }
+.amu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px 6px; margin: 10px 0 6px; }
+.amu { display: flex; flex-direction: column; align-items: center; gap: 3px; color: #6A5A4A; font-size: 11.5px; }
+.amu-bag { position: relative; width: 40px; height: 62px; border-radius: 8px; background: #D8CFC2; border: 2px solid #BFB3A2; display: grid; place-items: center; }
+.amu-bag::before { content: ''; position: absolute; top: -9px; left: 50%; width: 14px; height: 10px; margin-left: -7px; border: 2px solid #BFB3A2; border-bottom: 0; border-radius: 8px 8px 0 0; }
+.amu-bag i { font-style: normal; writing-mode: vertical-rl; font-size: 10px; font-weight: 700; letter-spacing: 0; color: #8A7A6A; background: #F2ECE2; padding: 3px 1px; border-radius: 2px; line-height: 1.1; }
+.amu.on .amu-bag, .amu-new .amu-bag { background: var(--c); border-color: #F2C14E; box-shadow: 0 2px 4px rgb(60 20 10 / .25); }
+.amu.on .amu-bag::before, .amu-new .amu-bag::before { border-color: #F2C14E; }
+.amu.on .amu-bag i, .amu-new .amu-bag i { color: var(--c); background: #FFF4D8; }
+.amu.on { color: #3A1A0E; }
+.amu-bag.big { width: 58px; height: 86px; }
+.amu-bag.big i { font-size: 14px; }
+.amu-new { display: flex; gap: 14px; align-items: center; padding: 12px; margin: 4px 0 8px; border-radius: 14px; background: #FFF4D8; color: #3A1A0E; }
+.amu-new p { margin: 0; }
+.amu-count { text-align: center; margin: 4px 0; }
+.amu-msg { padding: 8px 12px; border-radius: 12px; background: #FFF4D8; color: #3A1A0E; }
+.bz-grab { cursor: pointer; }
+.bz-grab:focus:not(:focus-visible) { outline: none; }
+.bz-grab.pop { animation: bzGrab .5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 50%; }
+@keyframes bzGrab { from { scale: .9; } to { scale: 1.12; } }
+@media (prefers-reduced-motion: reduce) { .bz-grab.pop { animation: none; } }

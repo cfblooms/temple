@@ -34,6 +34,7 @@ import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
 import { initTiangong } from './tiangong.js';
 import { tossJiao } from './jiaotoss.js';
+import { initAmulet } from './amulet.js';
 import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
 import { wallet, EARN } from './wallet.js';
@@ -1010,6 +1011,7 @@ const ACTIONS = {
   draw: () => (hall !== 'main' ? (SUB[hall].hasQianToday() ? SUB[hall].openQian() : openDraw())
     : state.fortune && state.fortune.date === dayKey() ? showFortune() : openDraw()),
   card: openCard, offer: offerGifts, deity: greetDeity, tiger: petTiger, qing: ringQing,
+  amulet: () => amulet.open(),
 };
 // 用鍵盤（沒有拖曳）時，點燭、上香直接完成
 const QUICK = {
@@ -1255,7 +1257,7 @@ const SHOW = { main: showHall, cai: showCai, yue: showYue, tudi: showTudi, wen: 
 $('#btnMap').addEventListener('click', showMap);
 $('#routeBar').addEventListener('click', (e) => { const b = e.target.closest('[data-step]'); if (b) openStep(b.dataset.step); });
 const cai = initCaishen({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, lunar: () => L });
-const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
+const yue = initYuelao({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, chars: CHARS, me: () => charById(state.char) });
 const tudi = initTudigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const wen = initWenchang({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
 const ji = initJigong({ $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam });
@@ -1269,6 +1271,7 @@ const ml = initMile({ $, state, save, say, sfx, burst, emit, openSheet, closeShe
 const addFish = (n) => { state.fish += n; save(); updateFish(); };
 const me = () => charById(state.char);
 const xapi = { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam, addFish, me, chars: CHARS, lunar, halls: HALLS };
+const amulet = initAmulet({ ...xapi, svg });
 const jg = initJigai(xapi);
 // 廟埕攤位：不是神明殿，是一整張自己的場景，蓋在正殿上面（神明列最後面、地圖上都進得去）
 const ICON = {

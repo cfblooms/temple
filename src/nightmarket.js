@@ -94,6 +94,7 @@ const svgOf = () => `
       <text x="0" y="16" text-anchor="middle" font-size="44">${e}</text>
       <text x="0" y="60" text-anchor="middle" class="ys-booth-n">${n}</text>
       <text id="nFree-${k}" x="0" y="78" text-anchor="middle" class="ys-booth-f"></text>
+      <text id="nBest-${k}" x="0" y="-52" text-anchor="middle" font-size="11" font-weight="700" fill="#FFF4E0"></text>
     </g>`).join('')}
     <g class="ys-booth" data-ys="snack" role="button" tabindex="0" aria-label="點心攤換點心" transform="translate(180 540)">
       <rect x="-90" y="-26" width="180" height="52" rx="14" fill="#FFE08A" stroke="#C8302A" stroke-width="3"/>
@@ -178,10 +179,29 @@ export function initNightMarket(api) {
   const ys = state.ys || (state.ys = { day: '', plays: {}, tix: 0, snacks: {}, best: {}, rounds: 0 });
   let game = null, run = 0, busy = false;
 
-  const today = () => { if (ys.day !== dayKey()) { ys.day = dayKey(); ys.plays = {}; save(); } };
+  const today = () => { if (ys.day !== dayKey()) { ys.day = dayKey(); ys.plays = {}; ys.dayBest = {}; save(); } };
+  const dayBest = (g) => { today(); return (ys.dayBest || {})[g] || 0; };
+  // 破紀錄放煙火（畫在夜市的天空）
+  function fireworks(n = 5) {
+    const NS = 'http://www.w3.org/2000/svg', COLORS = ['#FF5A5A', '#FFD24A', '#5AD8FF', '#B07CFF', '#7CFF9A', '#FF8AD8'];
+    for (let i = 0; i < n; i++) setTimeout(() => {
+      const g = document.createElementNS(NS, 'g'), cx = 50 + Math.random() * 260, cy = 70 + Math.random() * 130, c = COLORS[Math.floor(Math.random() * COLORS.length)], R = 34 + Math.random() * 26;
+      g.setAttribute('pointer-events', 'none');
+      g.innerHTML = Array.from({ length: 16 }, (_, k) => { const a = k / 16 * Math.PI * 2; return `<line x1="0" y1="0" x2="${(Math.cos(a) * R).toFixed(1)}" y2="${(Math.sin(a) * R).toFixed(1)}" stroke="${c}" stroke-width="2.4" stroke-linecap="round"/><circle cx="${(Math.cos(a) * R).toFixed(1)}" cy="${(Math.sin(a) * R).toFixed(1)}" r="2.6" fill="#FFF8E0"/>`; }).join('');
+      svg.appendChild(g); sfx.pop();
+      const t0 = performance.now();
+      const step = (t) => {
+        const k = Math.min(1, (t - t0) / 1300), e = 1 - Math.pow(1 - k, 3);
+        g.setAttribute('transform', `translate(${cx.toFixed(1)} ${(cy + k * 18).toFixed(1)}) scale(${(.15 + .85 * e).toFixed(3)})`);
+        g.setAttribute('opacity', (k < .6 ? 1 : 1 - (k - .6) / .4).toFixed(2));
+        if (k < 1) requestAnimationFrame(step); else g.remove();
+      };
+      requestAnimationFrame(step);
+    }, i * (reduce ? 0 : 380));
+  }
   const freeLeft = (g) => { today(); return Math.max(0, FREE - (ys.plays[g] || 0)); };
   function paintHud() {
-    for (const g of Object.keys(GAMES)) { const f = freeLeft(g); S('nFree-' + g).textContent = f ? `今天免費 ${f} 輪` : `一輪 ${COST} 福氣幣`; }
+    for (const g of Object.keys(GAMES)) { const f = freeLeft(g); S('nFree-' + g).textContent = f ? `今天免費 ${f} 輪` : `一輪 ${COST} 福氣幣`; S('nBest-' + g).textContent = dayBest(g) ? `今日最高 ${dayBest(g)} 張` : '今日還沒玩'; }
     S('nTixL').textContent = `彩券 ${ys.tix} 張`;
     S('nTix').textContent = game ? `彩券 ${ys.tix} 張` : '';
   }
@@ -215,14 +235,18 @@ export function initNightMarket(api) {
     busy = false;
     ys.rounds = (ys.rounds || 0) + 1;
     const best = ys.best[g] || 0; if (gain > best) ys.best[g] = gain;
+    const db = dayBest(g), newDay = gain > db && gain > 0;
+    if (newDay) { ys.dayBest = { ...(ys.dayBest || {}), [g]: gain }; }
     save();
     await sleep(500);
     cam?.reset();
     if (gain) { sfx.chime(); burst('spark', 180, 300, reduce ? 4 : 20); }
+    if (newDay && (db || gain > best)) fireworks(gain > best ? 8 : 5);
     addTix(gain);
     const body = openSheet(`${GAMES[g]}・這一輪`, `
       <p>${lines}</p>
-      <p class="ys-big">拿到彩券 <b>${gain}</b> 張${gain > best && best ? '，<b>新紀錄！</b>' : ''}</p>
+      <p class="ys-big">拿到彩券 <b>${gain}</b> 張${gain > best && best ? '，<b>打破歷史紀錄！</b>' : newDay && db ? '，<b>打破今日最高！</b>' : ''}</p>
+      <p class="hint">今日最高 ${Math.max(db, gain)} 張・歷史最高 ${Math.max(best, gain)} 張${newDay && db ? '，放煙火慶祝！' : ''}</p>
       <p class="hint">身上有彩券 ${ys.tix} 張。${pick(BOSS)}</p>
       <div class="row"><button class="btn" id="nAgain">再玩一輪${freeLeft(g) ? `（免費，剩 ${freeLeft(g)}）` : `（${COST} 福氣幣）`}</button><button class="btn ghost" id="nSnack">去換點心</button><button class="btn ghost" id="nBack">逛其他攤</button></div>`);
     body.querySelector('#nAgain').addEventListener('click', () => { closeSheet(); start(g); });
