@@ -26,6 +26,11 @@ function dragger(svg, el, { onDown, onMove, onUp, lift = LIFT }) {
   const up = () => { if (!on) return; on = false; onUp?.(); };
   el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
 }
+// 有 Gemini 圖（src/assets/pl/<key>.webp）就用圖，沒有就用程式畫的
+const ART = import.meta.glob('./assets/pl/*.webp', { eager: true, import: 'default' });
+const A = (k) => ART[`./assets/pl/${k}.webp`];
+const bgOr = (k, code) => (A(`${k}-bg`) ? `<image href="${A(`${k}-bg`)}" width="360" height="645" preserveAspectRatio="xMidYMid slice"/>` : code);
+const pic = (k, x, y, w, h, code) => (A(k) ? `<image href="${A(k)}" x="${x}" y="${y}" width="${w}" height="${h}"/>` : code);
 const BG = (a, b, id) => `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="360" height="645" fill="url(#${id})"/>`;
 const streakOf = (rec, dayKey) => daily(rec, dayKey(), yesterdayKey());
 
@@ -42,15 +47,16 @@ const ZX_CHEER = [
 export function initStudy(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, cam } = api;
   const zx = state.zx || (state.zx = { run: null, day: '', n: 0, mins: 0, last: '', streak: 0, total: 0 });
-  const svg = mount($('#zxHost'), `${BG('#F3DDB8', '#D9B27E', 'zxBg')}
+  const svg = mount($('#zxHost'), `${bgOr('zx', `${BG('#F3DDB8', '#D9B27E', 'zxBg')}
     <rect x="34" y="70" width="130" height="150" rx="8" fill="#BFE0F2" stroke="#8A5A32" stroke-width="8"/><path d="M99 70v150M34 145h130" stroke="#8A5A32" stroke-width="5"/>
     <circle cx="70" cy="108" r="14" fill="#FFF3C0" opacity=".9"/><path d="M40 200q30-30 60-10t60-6v36H40z" fill="#9CCB8A" opacity=".8"/>
-    <g transform="translate(226 74)"><rect width="104" height="66" rx="4" fill="#FFF8EA" stroke="#C8302A" stroke-width="3"/><text x="52" y="28" text-anchor="middle" class="place-sign">文昌帝君</text><text x="52" y="50" text-anchor="middle" class="place-small">伴讀自習室</text></g>
-    <text id="zxTime" x="250" y="200" text-anchor="middle" class="zx-time">25:00</text>
-    <text id="zxSub" x="250" y="226" text-anchor="middle" class="place-small">點蠟燭開始計時</text>
     <rect x="0" y="430" width="360" height="215" fill="#A0703E"/><rect x="0" y="430" width="360" height="14" fill="#C8955A"/>
     <g transform="translate(70 452)"><path d="M0 18 L-50 4 L-50 -40 L0 -26Z" fill="#FFF8EA" stroke="#C9B48A"/><path d="M0 18 L50 4 L50 -40 L0 -26Z" fill="#FFFDF4" stroke="#C9B48A"/><path d="M-42 -22h34M-42 -14h34M-42 -6h30M8 -22h34M8 -14h34M8 -6h26" stroke="#8A7A60" stroke-width="1.4" opacity=".55"/></g>
-    <g transform="translate(300 452)"><rect x="-10" y="-80" width="8" height="80" fill="#3B3B3B"/><path d="M-36 -78 L22 -78 L8 -106 L-22 -106Z" fill="#2E7A5A"/><ellipse cx="-6" cy="0" rx="26" ry="6" fill="#3B3B3B"/><path id="zxLampLight" d="M-30 -78 L-70 0 L58 0 L18 -78Z" fill="#FFF3C0" opacity=".18"/></g>
+    <g transform="translate(300 452)"><rect x="-10" y="-80" width="8" height="80" fill="#3B3B3B"/><path d="M-36 -78 L22 -78 L8 -106 L-22 -106Z" fill="#2E7A5A"/><ellipse cx="-6" cy="0" rx="26" ry="6" fill="#3B3B3B"/><path d="M-30 -78 L-70 0 L58 0 L18 -78Z" fill="#FFF3C0" opacity=".18"/></g>
+    <rect x="226" y="74" width="104" height="66" rx="4" fill="#FFF8EA" stroke="#C8302A" stroke-width="3"/>`)}
+    <g transform="translate(226 74)"><text x="52" y="28" text-anchor="middle" class="place-sign">文昌帝君</text><text x="52" y="50" text-anchor="middle" class="place-small">伴讀自習室</text></g>
+    <text id="zxTime" x="250" y="200" text-anchor="middle" class="zx-time">25:00</text>
+    <text id="zxSub" x="250" y="226" text-anchor="middle" class="place-small">點蠟燭開始計時</text>
     <g id="zxCandle" class="place-hit" tabindex="0" role="button" aria-label="點蠟燭開始番茄鐘">
       <ellipse cx="180" cy="440" rx="44" ry="10" fill="#B8863A"/><path d="M146 440 Q180 456 214 440 L206 426 L154 426Z" fill="#E0B050"/>
       <rect id="zxWax" x="164" y="300" width="32" height="126" rx="6" fill="#D8343A"/><rect id="zxWaxHi" x="168" y="300" width="7" height="126" rx="3" fill="#F2787A" opacity=".7"/>
@@ -143,17 +149,18 @@ export function initSleep(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, dayKey, cam } = api;
   const xd = state.xd || (state.xd = { last: '', streak: 0, total: 0 });
   const MIRROR = [190, 244], BELL = [262, 486], CLOTH_REST = [76, 590];
-  const svg = mount($('#xdHost'), `${BG('#2C2848', '#16132A', 'xdBg')}
+  const svg = mount($('#xdHost'), `${bgOr('xd', `${BG('#2C2848', '#16132A', 'xdBg')}
     ${Array.from({ length: 14 }, (_, i) => `<circle cx="${(i * 67) % 340 + 10}" cy="${(i * 41) % 130 + 20}" r="${i % 3 ? 1.2 : 1.8}" fill="#FFF3C0" opacity=".7"/>`).join('')}
     <rect x="0" y="420" width="360" height="225" fill="#3A2E3A"/><rect x="20" y="430" width="320" height="18" rx="4" fill="#5A4250"/>
-    <g transform="translate(${MIRROR[0]} ${MIRROR[1]})"><circle r="104" fill="#8A6A3A"/><circle r="94" fill="#C8B080"/><circle r="88" fill="#9EB8D0"/><circle id="xdGlow" r="88" fill="#E8F4FF" opacity="0"/><path d="M-50 -50 Q-20 -70 10 -60" stroke="#FFF" stroke-width="6" opacity=".35" fill="none" stroke-linecap="round"/></g>
+    <g transform="translate(${MIRROR[0]} ${MIRROR[1]})"><circle r="104" fill="#8A6A3A"/><circle r="94" fill="#C8B080"/><circle r="88" fill="#9EB8D0"/></g>`)}
+    <g transform="translate(${MIRROR[0]} ${MIRROR[1]})"><circle id="xdGlow" r="88" fill="#E8F4FF" opacity="0"/><path d="M-50 -50 Q-20 -70 10 -60" stroke="#FFF" stroke-width="6" opacity=".35" fill="none" stroke-linecap="round"/></g>
     <text x="${MIRROR[0]}" y="${MIRROR[1] + 128}" text-anchor="middle" class="place-small" fill="#E8E0FF">心鏡</text>
     <g id="xdDust">${DUST.map(([x, y], i) => `<g class="xd-dust" transform="translate(${x} ${y})"><circle r="${16 + (i % 3) * 4}" fill="#6A6070" opacity=".85"/><circle cx="5" cy="-4" r="${7 + (i % 2) * 3}" fill="#7A7080" opacity=".8"/></g>`).join('')}</g>
     <g transform="translate(96 472)"><ellipse cx="0" cy="10" rx="20" ry="5" fill="#2A1A10" opacity=".5"/><path d="M-14 8 Q0 18 14 8 L10 -2 L-10 -2Z" fill="#C8963E"/><g id="xdLamp"><ellipse cx="0" cy="-22" rx="22" ry="26" fill="#FFE29A" opacity=".22"/><path d="M0 -26 C6 -18 6 -10 0 -6 C-6 -10 -6 -18 0 -26Z" fill="#FFB43A"/></g></g>
-    <g id="xdBell" class="place-hit" tabindex="0" role="button" aria-label="敲磬"><ellipse cx="${BELL[0]}" cy="${BELL[1] + 30}" rx="50" ry="12" fill="#8A2A2A"/><path d="M${BELL[0] - 40} ${BELL[1] - 10} Q${BELL[0]} ${BELL[1] + 50} ${BELL[0] + 40} ${BELL[1] - 10}Z" fill="#B8863A"/><ellipse cx="${BELL[0]}" cy="${BELL[1] - 10}" rx="40" ry="9" fill="#6A4A20"/><ellipse cx="${BELL[0]}" cy="${BELL[1] - 11}" rx="34" ry="6" fill="#3A2A12"/><rect x="${BELL[0] - 60}" y="${BELL[1] - 40}" width="120" height="90" fill="#000" opacity="0"/></g>
-    <g id="xdMallet" transform="translate(320 470) rotate(30)"><rect x="-3" y="-44" width="6" height="50" rx="3" fill="#7A4A22"/><rect x="-9" y="-56" width="18" height="16" rx="5" fill="#E0D0B0"/></g>
+    <g id="xdBell" class="place-hit" tabindex="0" role="button" aria-label="敲磬">${pic('xd-bell', BELL[0] - 60, BELL[1] - 40, 120, 90, `<ellipse cx="${BELL[0]}" cy="${BELL[1] + 30}" rx="50" ry="12" fill="#8A2A2A"/><path d="M${BELL[0] - 40} ${BELL[1] - 10} Q${BELL[0]} ${BELL[1] + 50} ${BELL[0] + 40} ${BELL[1] - 10}Z" fill="#B8863A"/><ellipse cx="${BELL[0]}" cy="${BELL[1] - 10}" rx="40" ry="9" fill="#6A4A20"/><ellipse cx="${BELL[0]}" cy="${BELL[1] - 11}" rx="34" ry="6" fill="#3A2A12"/>`)}<rect x="${BELL[0] - 60}" y="${BELL[1] - 40}" width="120" height="90" fill="#000" opacity="0"/></g>
+    <g id="xdMallet" transform="translate(320 470) rotate(30)">${pic('xd-mallet', -12, -60, 24, 68, '<rect x="-3" y="-44" width="6" height="50" rx="3" fill="#7A4A22"/><rect x="-9" y="-56" width="18" height="16" rx="5" fill="#E0D0B0"/>')}</g>
     <g id="xdRings"></g>
-    <g id="xdCloth" class="place-hit" tabindex="0" role="button" aria-label="拿抹布擦心鏡"><rect x="-26" y="-18" width="52" height="36" rx="8" fill="#F4ECDC" stroke="#C9B48A" stroke-width="2"/><path d="M-18 -8h36M-18 2h36M-18 12h26" stroke="#D8C8A8" stroke-width="2"/><rect x="-40" y="-36" width="80" height="72" fill="#000" opacity="0"/></g>
+    <g id="xdCloth" class="place-hit" tabindex="0" role="button" aria-label="拿抹布擦心鏡">${pic('xd-cloth', -30, -24, 60, 48, '<rect x="-26" y="-18" width="52" height="36" rx="8" fill="#F4ECDC" stroke="#C9B48A" stroke-width="2"/><path d="M-18 -8h36M-18 2h36M-18 12h26" stroke="#D8C8A8" stroke-width="2"/>')}<rect x="-40" y="-36" width="80" height="72" fill="#000" opacity="0"/></g>
     <text id="xdStep" x="180" y="404" text-anchor="middle" class="place-sign" fill="#FFE08A"></text>
     <rect id="xdDark" width="360" height="645" fill="#05040C" opacity="0" pointer-events="none"/>
     <text id="xdBreath" x="190" y="256" text-anchor="middle" class="xd-breath" opacity="0"></text>`, 'xd-svg');
@@ -254,13 +261,13 @@ export function initBoard(api) {
   const { $, state, save, say, sfx, burst, openSheet, closeSheet, dayKey, esc } = api;
   const rj = state.rj || (state.rj = { km: 0, laps: 0, log: {}, stop: 0 });
   const stopXY = (i) => (i === RJ_STOPS.length - 1 ? [70, 150] : RJ_PATH[i]);
-  const svg = mount($('#rjHost'), `${BG('#F6E6C8', '#E6C894', 'rjBg')}
-    <rect x="18" y="60" width="324" height="520" rx="14" fill="#8A2A22"/><rect x="30" y="72" width="300" height="496" rx="8" fill="#FFF6E2"/>
+  const svg = mount($('#rjHost'), `${bgOr('rj', `${BG('#F6E6C8', '#E6C894', 'rjBg')}
+    <rect x="18" y="60" width="324" height="520" rx="14" fill="#8A2A22"/><rect x="30" y="72" width="300" height="496" rx="8" fill="#FFF6E2"/>`)}
     <text x="180" y="108" text-anchor="middle" class="place-sign">三月瘋媽祖・隨香看板</text>
     <path d="M${RJ_PATH.map((p) => p.join(' ')).join(' L')} L70 150" fill="none" stroke="#E8C690" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
     <path id="rjDone" fill="none" stroke="#E0443E" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
     ${RJ_STOPS.slice(0, -1).map((s, i) => `<g transform="translate(${RJ_PATH[i][0]} ${RJ_PATH[i][1]})"><circle r="8" fill="#FFF6E2" stroke="#C8302A" stroke-width="3" class="rj-stop" id="rjS${i}"/><text x="${RJ_PATH[i][0] > 200 ? -14 : 14}" y="4" text-anchor="${RJ_PATH[i][0] > 200 ? 'end' : 'start'}" class="place-small">${s.name}</text></g>`).join('')}
-    <g id="rjSedan"><ellipse cx="0" cy="4" rx="16" ry="4" fill="#000" opacity=".2"/><rect x="-11" y="-22" width="22" height="22" rx="3" fill="#E0443E" stroke="#8A2A22" stroke-width="1.6"/><path d="M-15 -22 L0 -32 L15 -22Z" fill="#F3C64A" stroke="#8A2A22" stroke-width="1.4"/><rect x="-6" y="-17" width="12" height="10" fill="#FFE08A"/><path d="M-20 -4h40" stroke="#7A4A22" stroke-width="3" stroke-linecap="round"/></g>
+    <g id="rjSedan">${pic('rj-sedan', -22, -38, 44, 44, '<ellipse cx="0" cy="4" rx="16" ry="4" fill="#000" opacity=".2"/><rect x="-11" y="-22" width="22" height="22" rx="3" fill="#E0443E" stroke="#8A2A22" stroke-width="1.6"/><path d="M-15 -22 L0 -32 L15 -22Z" fill="#F3C64A" stroke="#8A2A22" stroke-width="1.4"/><rect x="-6" y="-17" width="12" height="10" fill="#FFE08A"/><path d="M-20 -4h40" stroke="#7A4A22" stroke-width="3" stroke-linecap="round"/>')}</g>
     <text id="rjKm" x="180" y="610" text-anchor="middle" class="rj-km"></text>
     <text id="rjNext" x="180" y="634" text-anchor="middle" class="place-small"></text>`, 'rj-svg');
   const S = (id) => svg.querySelector('#' + id);
@@ -350,16 +357,17 @@ export function initGate(api) {
   const sm = state.sm || (state.sm = { last: '', streak: 0, total: 0 });
   const SILL = 452; // 門檻的高度
   const DOORS = [{ id: 'tiger', x: 70, name: '虎門' }, { id: 'mid', x: 180, name: '中門' }, { id: 'dragon', x: 290, name: '龍門' }];
-  const svg = mount($('#smHost'), `${BG('#BFE0F2', '#F6E6C8', 'smBg')}
+  const svg = mount($('#smHost'), `${bgOr('sm', `${BG('#BFE0F2', '#F6E6C8', 'smBg')}
     <circle cx="300" cy="80" r="26" fill="#FFF3C0"/>
     <rect x="0" y="470" width="360" height="175" fill="#C8B89A"/><path d="M0 500h360M0 540h360M0 590h360M60 470v175M150 470v175M240 470v175M320 470v175" stroke="#B0A080" stroke-width="2"/>
-    <g id="smArch">
       <path d="M0 132 Q180 92 360 132 L360 156 L0 156Z" fill="#2E6A4A"/><path d="M-6 132 Q180 86 366 132" stroke="#F3C64A" stroke-width="5" fill="none"/>
-      <rect x="10" y="156" width="340" height="40" fill="#C8302A"/><rect x="120" y="160" width="120" height="32" rx="3" fill="#1E3A6A" stroke="#F3C64A" stroke-width="3"/><text x="180" y="184" text-anchor="middle" class="sm-plaque">心靈大廟</text>
+      <rect x="10" y="156" width="340" height="40" fill="#C8302A"/><rect x="120" y="160" width="120" height="32" rx="3" fill="#1E3A6A" stroke="#F3C64A" stroke-width="3"/>
       ${[14, 124, 216, 326].map((x) => `<rect x="${x}" y="196" width="20" height="${SILL - 196 + 12}" fill="#B8302A" stroke="#7A1E1A" stroke-width="2"/>`).join('')}
       <rect x="34" y="196" width="90" height="14" fill="#E0443E"/><rect x="236" y="196" width="90" height="14" fill="#E0443E"/><rect x="144" y="196" width="72" height="14" fill="#E0443E"/>
+      <rect x="10" y="${SILL}" width="340" height="18" rx="3" fill="#7A4A22" stroke="#4A2A12" stroke-width="2"/>`)}
+    <g id="smArch">
+      <text x="180" y="184" text-anchor="middle" class="sm-plaque">心靈大廟</text>
       ${DOORS.map((d) => `<g class="place-hit sm-door" data-door="${d.id}" tabindex="0" role="button" aria-label="走${d.name}"><rect x="${d.id === 'mid' ? 144 : d.x - 36}" y="210" width="${d.id === 'mid' ? 72 : 72}" height="${SILL - 210}" fill="#FFF8EA" opacity=".001"/><text x="${d.x}" y="238" text-anchor="middle" class="sm-door-t">${d.name}</text></g>`).join('')}
-      <rect id="smSill" x="10" y="${SILL}" width="340" height="18" rx="3" fill="#7A4A22" stroke="#4A2A12" stroke-width="2"/>
     </g>
     <g id="smMe" transform="translate(290 560)"><ellipse cx="0" cy="34" rx="30" ry="6" fill="#000" opacity=".18"/><circle r="30" fill="#FFF4E0" stroke="#E0A440" stroke-width="3"/><clipPath id="smMeC"><circle r="27"/></clipPath><image id="smMeImg" x="-27" y="-27" width="54" height="54" clip-path="url(#smMeC)" preserveAspectRatio="xMidYMid slice"/></g>
     <g id="smFoot" class="place-hit" style="display:none" tabindex="0" role="button" aria-label="抬腳跨過門檻"><ellipse cx="0" cy="0" rx="16" ry="24" fill="#3B2A22"/><ellipse cx="0" cy="-8" rx="11" ry="13" fill="#5A4234"/><rect x="-30" y="-36" width="60" height="72" fill="#000" opacity="0"/></g>
@@ -434,15 +442,16 @@ export function initWash(api) {
   const { $, state, save, say, sfx, burst, emit, openSheet, dayKey, cam, me } = api;
   const wa = state.wash || (state.wash = { last: '', streak: 0, total: 0 });
   const TROUGH = [180, 548], REST = [306, 560];
-  const svg = mount($('#waHost'), `${BG('#E2EEDC', '#C8D8B8', 'waBg')}
+  const svg = mount($('#waHost'), `${bgOr('wa', `${BG('#E2EEDC', '#C8D8B8', 'waBg')}
     <path d="M0 140 Q60 90 120 140 T240 140 T360 130 V0 H0Z" fill="#8AB878" opacity=".5"/>
     ${[40, 320].map((x) => `<g transform="translate(${x} 70)"><path d="M0 0 v120" stroke="#6A4A2A" stroke-width="6"/>${[0, 1, 2, 3, 4].map((i) => `<path d="M0 ${i * 8} q${x < 180 ? 20 : -20} 40 ${x < 180 ? 10 : -10} 110" stroke="#7AAA5A" stroke-width="2.4" fill="none" opacity=".8"/>`).join('')}</g>`).join('')}
     <rect x="0" y="470" width="360" height="175" fill="#B8B0A0"/>
+    <g transform="translate(${TROUGH[0]} ${TROUGH[1]})"><rect x="-120" y="-30" width="240" height="62" rx="18" fill="#8A8478" stroke="#5A5448" stroke-width="3"/><rect x="-106" y="-22" width="212" height="26" rx="10" fill="#7AB8C8"/><path d="M-90 -12q20 -6 40 0t40 0t40 0t40 0" stroke="#BFE6F2" stroke-width="2" fill="none"/></g>`)}
     <g id="waMe"><ellipse cx="180" cy="468" rx="80" ry="12" fill="#000" opacity=".15"/><image id="waMeImg" x="70" y="170" width="220" height="300" preserveAspectRatio="xMidYMax meet"/></g>
     <g id="waSpots">${SPOTS.map(([x, y], i) => `<g class="wa-spot" transform="translate(${x} ${y})"><circle r="${12 + (i % 3) * 3}" fill="#5A5048" opacity=".55"/><circle cx="4" cy="-3" r="6" fill="#4A4038" opacity=".5"/></g>`).join('')}</g>
-    <g transform="translate(${TROUGH[0]} ${TROUGH[1]})"><rect x="-120" y="-30" width="240" height="62" rx="18" fill="#8A8478" stroke="#5A5448" stroke-width="3"/><rect x="-106" y="-22" width="212" height="26" rx="10" fill="#7AB8C8"/><path d="M-90 -12q20 -6 40 0t40 0t40 0t40 0" stroke="#BFE6F2" stroke-width="2" fill="none"/><text y="24" text-anchor="middle" class="place-small" fill="#FFF4E0">抹草水</text></g>
+    <g transform="translate(${TROUGH[0]} ${TROUGH[1]})"><text y="24" text-anchor="middle" class="place-small" fill="#FFF4E0">抹草水</text></g>
     <g id="waWet" transform="translate(326 300)"><rect width="16" height="80" rx="8" fill="#FFF" stroke="#5A8A9A" stroke-width="2"/><rect id="waWetF" x="2" y="78" width="12" height="0" rx="6" fill="#7AB8C8"/></g>
-    <g id="waBranch" class="place-hit" tabindex="0" role="button" aria-label="拿楊柳枝"><path d="M0 0 L-4 -70" stroke="#7A5A32" stroke-width="4" stroke-linecap="round"/>${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M-2 ${-30 - i * 7} q${i % 2 ? 14 : -14} 6 ${i % 2 ? 18 : -18} 22" stroke="#6AA84A" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')}<path d="M6 -8 q10 -6 14 -18 M-6 -10 q-10 -4 -14 -16" stroke="#3E8A4A" stroke-width="4" fill="none"/><g id="waDrip" opacity="0">${[0, 1, 2].map((i) => `<circle cx="${-10 + i * 10}" cy="${-14 + i * 5}" r="2.6" fill="#7AB8C8"/>`).join('')}</g><rect x="-34" y="-84" width="68" height="100" fill="#000" opacity="0"/></g>
+    <g id="waBranch" class="place-hit" tabindex="0" role="button" aria-label="拿楊柳枝">${pic('wa-branch', -40, -96, 80, 104, `<path d="M0 0 L-4 -70" stroke="#7A5A32" stroke-width="4" stroke-linecap="round"/>${[0, 1, 2, 3, 4, 5].map((i) => `<path d="M-2 ${-30 - i * 7} q${i % 2 ? 14 : -14} 6 ${i % 2 ? 18 : -18} 22" stroke="#6AA84A" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')}<path d="M6 -8 q10 -6 14 -18 M-6 -10 q-10 -4 -14 -16" stroke="#3E8A4A" stroke-width="4" fill="none"/>`)}<g id="waDrip" opacity="0">${[0, 1, 2].map((i) => `<circle cx="${-10 + i * 10}" cy="${-14 + i * 5}" r="2.6" fill="#7AB8C8"/>`).join('')}</g><rect x="-34" y="-84" width="68" height="100" fill="#000" opacity="0"/></g>
     <text id="waTip" x="180" y="626" text-anchor="middle" class="place-small"></text>`, 'wa-svg');
   const S = (id) => svg.querySelector('#' + id);
   const spots = [...svg.querySelectorAll('.wa-spot')].map((el, i) => ({ el, x: SPOTS[i][0], y: SPOTS[i][1], a: 1 }));
