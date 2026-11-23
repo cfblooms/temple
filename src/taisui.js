@@ -6,6 +6,8 @@ import talUrl from './assets/ts/talisman.webp';
 import offUrl from './assets/ts/lamp-off.webp';
 import onUrl from './assets/ts/lamp-on.webp';
 import cabUrl from './assets/ts/cabinet.webp';
+import { makePourer } from './pour.js';
+import { wallet } from './wallet.js';
 import { makeCarrier } from './carry.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -72,6 +74,8 @@ const NICHE = [CAB[0] + CAB[2] * (MINE[0] + .5), CAB[1] + CAB[3] * (MINE[1] + .5
 const TAL = [28, 54]; // 太歲符寬高（原點在底部中心）
 const T_REST = [58, 610];
 const OTHERS = [1, 0, 1, 0, 0, 1, 1, 0, 1]; // 其他人點的燈（裝飾）
+// 每天添油：油一天少三分之一，三天沒添就只剩一點點微光（不會全熄，太歲星君會幫你顧著）
+const OIL_REST = [122, 612], OIL_SPOUT = [-20, -6], OIL_POUR = [NICHE[0] + 22, NICHE[1] - 38];
 export const TS_SVG = (bg) => `
 <svg viewBox="0 0 360 645" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="太歲殿" class="ts-svg">
   <defs>
@@ -97,6 +101,27 @@ export const TS_SVG = (bg) => `
     }).join('')}
     <circle id="vMineGlow" cx="${NICHE[0]}" cy="${NICHE[1] + 2}" r="22" fill="url(#vGlow)" opacity="0" style="mix-blend-mode:screen"/>
     <rect id="vRing" x="${NICHE[0] - CAB[2] / 2 - 1}" y="${NICHE[1] - CAB[3] / 2 - 1}" width="${CAB[2] + 2}" height="${CAB[3] + 2}" rx="4" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
+  </g>
+
+  <!-- 油量 -->
+  <g id="vOil" pointer-events="none" style="display:none">
+    <rect x="${CAB[0] - 18}" y="${CAB[1]}" width="9" height="${CAB[3] * 3}" rx="4.5" fill="#2A0E0A" opacity=".6"/>
+    <rect id="vOilFill" x="${CAB[0] - 16.5}" y="${CAB[1] + 1.5}" width="6" height="${CAB[3] * 3 - 3}" rx="3" fill="#F2B33A"/>
+  </g>
+  <circle id="vOilTarget" cx="${NICHE[0]}" cy="${NICHE[1]}" r="20" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0" pointer-events="none"/>
+
+  <!-- 添油的小油壺（拜墊左前方） -->
+  <ellipse id="vOilShadow" cx="${OIL_REST[0]}" cy="${OIL_REST[1] + 14}" rx="16" ry="3.5" fill="url(#vContact)"/>
+  <g id="vOilPot" class="ts-prop" data-ts="oil" role="button" tabindex="0" aria-label="油壺，拿去給光明燈添油" style="display:none" transform="translate(${OIL_REST[0]} ${OIL_REST[1]})">
+    <g id="vOilTilt">
+      <rect x="-26" y="-22" width="52" height="40" fill="transparent"/>
+      <path d="M-8 -10 L-22 -8 L-20 -4 L-8 -4z" fill="#C98A2E" stroke="#7A4A14" stroke-width="1"/>
+      <ellipse cx="2" cy="2" rx="13" ry="12" fill="#D9A040" stroke="#7A4A14" stroke-width="1.2"/>
+      <ellipse cx="-2" cy="-2" rx="5" ry="4" fill="#F7D488" opacity=".7"/>
+      <rect x="-4" y="-16" width="12" height="7" rx="2" fill="#C98A2E" stroke="#7A4A14" stroke-width="1"/>
+      <path d="M15 -4c8 0 8 12 0 12" fill="none" stroke="#7A4A14" stroke-width="2.4"/>
+      <rect x="-5" y="8" width="14" height="4" rx="2" fill="#C2372B"/>
+    </g>
   </g>
 
   <!-- 太歲符（寫好才出現在左下角） -->
@@ -127,15 +152,44 @@ export function initTaisui(api) {
 
   /* ----- 你的那盞燈 ----- */
   let flick = 0;
+  const since = (a) => (a ? Math.round((new Date(dayKey().replace(/-/g, '/')) - new Date(a.replace(/-/g, '/'))) / 864e5) : 99);
+  // 油量 0～1：今天添過是滿的，之後一天少三分之一，最少留一點微光
+  const oil = () => (lit() ? Math.max(.12, 1 - since(ts.oilDay || ts.litDay || dayKey()) / 3) : 0);
+  const oiled = () => ts.oilDay === dayKey();
   function paintLamp() {
     S('vMine').setAttribute('href', lit() ? onUrl : offUrl);
     cancelAnimationFrame(flick);
-    const g = S('vMineGlow');
+    const g = S('vMineGlow'), o = oil();
+    S('vOil').style.display = lit() ? '' : 'none';
+    S('vOilPot').style.display = lit() ? '' : 'none';
+    const H = CAB[3] * 3 - 3, fh = H * o;
+    S('vOilFill').setAttribute('y', (CAB[1] + 1.5 + H - fh).toFixed(1)); S('vOilFill').setAttribute('height', fh.toFixed(1));
+    S('vOilFill').setAttribute('fill', o > .5 ? '#F2B33A' : o > .2 ? '#E8862A' : '#B84A2A');
+    S('vMine').style.opacity = String(.45 + .55 * o);
     if (!lit()) { g.setAttribute('opacity', '0'); return; }
-    if (reduce) { g.setAttribute('opacity', '.6'); return; }
-    const f = (t) => { g.setAttribute('opacity', (.55 + Math.sin(t / 200) * .08 + Math.sin(t / 83) * .05).toFixed(2)); flick = requestAnimationFrame(f); };
+    if (reduce) { g.setAttribute('opacity', (.6 * o).toFixed(2)); return; }
+    const f = (t) => { g.setAttribute('opacity', ((.55 + Math.sin(t / 200) * .08 + Math.sin(t / 83) * .05) * (.25 + .75 * o)).toFixed(2)); flick = requestAnimationFrame(f); };
     flick = requestAnimationFrame(f);
   }
+  /* ----- 添油 ----- */
+  function addOil() {
+    const y = since(ts.oilDay);
+    ts.oilStreak = y === 1 ? (ts.oilStreak || 0) + 1 : 1;
+    ts.oilDay = dayKey(); ts.oilDays = (ts.oilDays || 0) + 1; save(); paintLamp();
+    sfx.chime(); sfx.buzz([15, 40, 15]);
+    burst('spark', NICHE[0], NICHE[1], reduce ? 4 : 14);
+    emit('text', NICHE[0] - 30, NICHE[1] - 60, { text: '燈火更亮了', color: '#FFE08A', life: 1.8, vy: -24 });
+    const bonus = ts.oilStreak % 7 === 0;
+    wallet.earn(bonus ? 12 : 3, bonus ? '光明燈連續添油一週' : '光明燈添油', NICHE[0], NICHE[1] - 30);
+    say(`油添好了，「${esc(ts.name)}」的光明燈又亮又穩。${ts.oilStreak > 1 ? `已經連續添油 ${ts.oilStreak} 天。` : ''}${bonus ? '連續一整週，太歲星君特別照看你，福氣 +12！' : '每天來添一點，燈就一直亮。'}`, 'god');
+  }
+  const oilPot = makePourer({
+    cam, svg, el: S('vOilPot'), tilt: S('vOilTilt'), shadow: S('vOilShadow'), target: S('vOilTarget'), sfx, emit,
+    rest: OIL_REST, pourAt: OIL_POUR, spout: OIL_SPOUT, drop: { color: '#F2B33A' },
+    isDone: () => !lit() || oiled(), onDone: addOil,
+    onTap: () => (!lit() ? openAn() : oiled() ? say(`今天已經添過油了，燈亮得很穩。${ts.oilStreak ? `連續 ${ts.oilStreak} 天。` : ''}`) : say('按住左下角的<b>油壺</b>，拿到右邊光明燈櫃中間你的那盞燈上面，就會自己添油。', 'god')),
+  });
+  oilPot.place();
   paintLamp();
 
   /* ----- 安太歲 ----- */
@@ -147,13 +201,13 @@ export function initTaisui(api) {
     onTap: () => say('按住左下角的<b>太歲符</b>拿起來，放進右邊<b>光明燈櫃</b>中間那一格。', 'god'),
     onDrop() {
       tal.style.display = 'none';
-      Object.assign(ts, { year: Y(), z: draft.z, name: draft.name, thanked: false }); save(); paintLamp();
+      Object.assign(ts, { year: Y(), z: draft.z, name: draft.name, thanked: false, oilDay: dayKey(), oilStreak: 1 }); save(); paintLamp(); oilPot.place();
       sfx.chime(); sfx.buzz([15, 40, 15, 40, 20]);
       burst('spark', NICHE[0], NICHE[1], reduce ? 4 : 18);
       emit('text', NICHE[0] - 40, NICHE[1] - 75, { text: '光明燈亮了', color: '#FFE08A', life: 1.8, vy: -24 });
       S('vHaloC').setAttribute('opacity', '.75'); setTimeout(() => S('vHaloC').setAttribute('opacity', '.15'), 1800);
       const c = clash(draft.z, Y());
-      say(`太歲安好了！屬${ZOD[draft.z]}的「${esc(draft.name)}」，光明燈會亮一整個${yearName()}。${c.length ? `今年${c.join('、')}，有太歲星君照看，凡事多想一下就好。` : '今年沒有犯太歲，安個平安更安心。'}`, 'god');
+      say(`太歲安好了！屬${ZOD[draft.z]}的「${esc(draft.name)}」，光明燈會亮一整個${yearName()}。之後每天用左下角的油壺<b>添一次油</b>，燈才會一直又亮又穩。${c.length ? `今年${c.join('、')}，有太歲星君照看，凡事多想一下就好。` : '今年沒有犯太歲，安個平安更安心。'}`, 'god');
       draft = null; cam?.reset(2200);
     },
   });
@@ -165,9 +219,11 @@ export function initTaisui(api) {
     if (lit()) {
       const la = isLaYue() && !ts.thanked;
       const body = openSheet(la ? '謝太歲' : '今年已安太歲', `
-        <p>屬${ZOD[ts.z]}的「<b>${esc(ts.name)}</b>」已經安了${yearName()}的太歲，光明燈亮著。</p>
+        <p>屬${ZOD[ts.z]}的「<b>${esc(ts.name)}</b>」已經安了${yearName()}的太歲，光明燈亮著。${oiled() ? '今天已經添過油了。' : '<b>今天還沒添油</b>，燈有點暗了。'}${ts.oilDays ? `一共添了 ${ts.oilDays} 次油。` : ''}</p>
+        ${oiled() ? '' : '<div class="row"><button class="btn gold" id="vOilGo">去添油</button></div>'}
         ${la ? '<p>年底到了，按習俗要<b>謝太歲</b>，謝謝太歲星君這一年的照顧。</p><div class="row"><button class="btn" id="vThank">謝太歲</button></div>'
           : ts.thanked ? '<p class="hint">今年已經謝過太歲了，明年過年再來安新的。</p>' : '<p class="hint">臘月（農曆十二月）回來謝太歲，一年就圓滿了。</p>'}`);
+      body.querySelector('#vOilGo')?.addEventListener('click', () => { closeSheet(); oilPot.auto(); });
       body.querySelector('#vThank')?.addEventListener('click', () => {
         ts.thanked = true; save(); closeSheet();
         sfx.chime(); burst('spark', 180, 285, reduce ? 4 : 20);
@@ -226,7 +282,7 @@ export function initTaisui(api) {
       <p class="hint">一天抽一支。籤詩是心靈參考，平安是自己一天一天顧出來的。</p>`);
   }
 
-  const ACTS = { an: () => (draft ? carrier.auto() : openAn()), who: openWho, qian: openQian };
+  const ACTS = { an: () => (draft ? carrier.auto() : openAn()), oil: () => (lit() ? oilPot.auto() : openAn()), who: openWho, qian: openQian };
   svg.addEventListener('click', (e) => {
     if (e.target.closest('[data-ts="deity"]')) greetGod();
     else if (e.target.closest('[data-ts="cab"]')) { if (draft) carrier.auto(); else openAn(); }
@@ -236,8 +292,8 @@ export function initTaisui(api) {
 
   return {
     enter() {
-      paintLamp();
-      say(lit() ? `歡迎回來。屬${ZOD[ts.z]}的「${esc(ts.name)}」的光明燈還亮著。${isLaYue() && !ts.thanked ? '年底了，記得按「安太歲」<b>謝太歲</b>。' : '上一炷香跟太歲星君問安吧。'}`
+      paintLamp(); oilPot.place();
+      say(lit() ? `歡迎回來。屬${ZOD[ts.z]}的「${esc(ts.name)}」的光明燈${oiled() ? '亮得很穩' : oil() < .5 ? '<b>快沒油了</b>，按「添油」或拿左下角的油壺幫它添一點' : '還亮著，今天也來添一點油吧'}。${isLaYue() && !ts.thanked ? '年底了，記得按「安太歲」<b>謝太歲</b>。' : ''}`
         : `歡迎來到太歲殿！今年是${yearName()}。按「安太歲」選生肖、寫名字，把太歲符放進光明燈櫃，燈會亮一整年。`, 'god');
     },
     setFestive(on) { S('vBg').setAttribute('href', on ? festUrl : bgUrl); },

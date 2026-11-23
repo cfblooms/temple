@@ -7,6 +7,8 @@ import { makeCarrier } from './carry.js';
 
 const ART = import.meta.glob('./assets/ml/{note,kumquat}.webp', { eager: true, import: 'default' });
 const art = (k) => ART[`./assets/ml/${k}.webp`];
+import { wallet } from './wallet.js';
+
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 文字內容（原創） ---------- */
@@ -48,6 +50,9 @@ const NAMES = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一�
 const FACE = [180, 250], BELLY = [180, 302];
 const NOTE_REST = [296, 612];
 const SACK = [60, 446];
+// 金橘盆（供桌左邊桌面）：每丟一個煩惱換一顆金橘放進盆裡，滿 12 顆就「滿盆好運」
+const BASIN = [112, 386], KQ_FULL = 12;
+const kqSlot = (i) => { const rows = [[5, 0], [4, 1], [3, 2]]; let k = i; for (const [n, r] of rows) { if (k < n) return [BASIN[0] + (k - (n - 1) / 2) * 10.5, BASIN[1] - 14 - r * 8]; k -= n; } return BASIN; };
 
 const noteSvg = () => art('note')
   ? `<image href="${art('note')}" x="-22" y="-40" width="44" height="40"/>`
@@ -78,6 +83,14 @@ export const ML_SVG = () => `
     <text y="-12" text-anchor="middle" font-size="10" fill="#8A4A10" font-weight="700">開心度</text>
   </g>
   <ellipse id="mlRing" cx="${SACK[0]}" cy="${SACK[1]}" rx="30" ry="10" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
+  <!-- 金橘盆 -->
+  <g id="mlBasin" class="ml-basin" data-ml="basin" role="button" tabindex="0" aria-label="金橘盆">
+    <ellipse cx="${BASIN[0]}" cy="${BASIN[1] + 1}" rx="34" ry="5" fill="url(#mlContact)"/>
+    <g id="mlKqPile"></g>
+    <path d="M${BASIN[0] - 32} ${BASIN[1] - 10} h64 l-6 12 q-26 6 -52 0z" fill="#C2372B" stroke="#7A1A10" stroke-width="1.2"/>
+    <path d="M${BASIN[0] - 32} ${BASIN[1] - 10} h64" stroke="#F2C14E" stroke-width="2.4" stroke-linecap="round"/>
+    <text x="${BASIN[0]}" y="${BASIN[1] - 1}" text-anchor="middle" font-size="7" fill="#FFE08A" font-weight="700">大吉</text>
+  </g>
   <g id="mlKqOut" style="display:none" pointer-events="none">${kumquatSvg()}</g>
   <!-- 煩惱紙團（寫好才出現） -->
   <g id="mlNote" class="ml-prop" data-ml="note" role="button" tabindex="0" aria-label="煩惱紙團，拿起來丟進左邊的大布袋" style="display:none" transform="translate(${NOTE_REST[0]} ${NOTE_REST[1]})">
@@ -95,6 +108,12 @@ export function initMile(api) {
   const S = (id) => svg.querySelector('#' + id);
   const pt = (e) => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
   const ml = state.ml || (state.ml = { rubDay: '', streak: 0, tossed: 0, qian: null });
+  ml.kq = ml.kq || 0; ml.pots = ml.pots || 0;
+  function paintPile() {
+    S('mlKqPile').innerHTML = Array.from({ length: Math.min(ml.kq, KQ_FULL) }, (_, i) => { const [x, y] = kqSlot(i); return `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(.36)">${kumquatSvg()}</g>`; }).join('');
+    S('mlBasin').setAttribute('aria-label', `金橘盆：${ml.kq} 顆`);
+  }
+  paintPile();
 
   const glow = (o = .8, ms = 1600) => { S('mlHaloC').setAttribute('opacity', String(o)); setTimeout(() => S('mlHaloC').setAttribute('opacity', '.18'), ms); };
   function greetGod() { glow(.7, 1400); burst('spark', FACE[0], FACE[1], reduce ? 3 : 10); say(GREET[Math.floor(Math.random() * GREET.length)], 'god'); }
@@ -160,21 +179,36 @@ export function initMile(api) {
     ml.tossed = (ml.tossed || 0) + 1; save();
     // 布袋吐出一顆金橘，彈到供桌前
     const kq = S('mlKqOut'); kq.style.display = '';
-    const from = SACK, to = [150, 452], t0 = performance.now(), ms = reduce ? 200 : 900;
+    const slot = Math.min(ml.kq, KQ_FULL - 1), from = SACK, to = kqSlot(slot), t0 = performance.now(), ms = reduce ? 200 : 900;
     const step = (t) => {
       const k = Math.min(1, (t - t0) / ms);
       const x = from[0] + (to[0] - from[0]) * k, y = from[1] + (to[1] - from[1]) * k - Math.sin(k * Math.PI) * 70;
-      kq.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(k * 360).toFixed(0)})`);
+      kq.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(k * 360).toFixed(0)}) scale(${(1 - .64 * k).toFixed(2)})`);
       if (k < 1) requestAnimationFrame(step);
       else {
-        emit('text', to[0], to[1] - 30, { text: '大吉大利', color: '#E8770E', size: 13, life: 1.4 });
-        setTimeout(() => { kq.style.display = 'none'; }, 1400);
-        say(`煩惱「${esc(draft.w)}」被彌勒佛的布袋吃掉了，換回一顆<b>金橘</b>，大吉大利！<br>彌勒佛說：「布袋什麼都裝得下，你就放心吧。」<br><small>已經丟掉 ${ml.tossed} 個煩惱。</small>`, 'god');
+        kq.style.display = 'none';
+        ml.kq++; save(); paintPile();
+        emit('text', to[0], to[1] - 24, { text: '大吉大利', color: '#E8770E', size: 13, life: 1.4 });
+        const full = ml.kq >= KQ_FULL;
+        say(`煩惱「${esc(draft.w)}」被彌勒佛的布袋吃掉了，換回一顆<b>金橘</b>放進供桌上的金橘盆，大吉大利！<br><small>已經丟掉 ${ml.tossed} 個煩惱，盆裡有 ${Math.min(ml.kq, KQ_FULL)}／${KQ_FULL} 顆金橘。</small>`, 'god');
+        if (full) setTimeout(fullPot, 1600);
         draft = null; cam?.reset(1600);
       }
     };
     requestAnimationFrame(step);
   }
+  function fullPot() {
+    ml.pots++; save();
+    sfx.chime(); setTimeout(() => sfx.chime(), 220); sfx.buzz([20, 60, 20, 60, 40]);
+    burst('spark', BASIN[0], BASIN[1] - 20, reduce ? 6 : 30); glow(.9, 2200);
+    wallet.earn(30, '金橘滿盆好運', BASIN[0], BASIN[1] - 50);
+    emit('text', BASIN[0] + 10, BASIN[1] - 50, { text: '滿盆好運', color: '#FFE08A', size: 18, life: 2, vy: -24 });
+    say(`金橘盆滿了！彌勒佛笑得肚子都在抖：「<b>滿盆好運</b>，金橘我替你收好了，好運帶回家！」福氣 +30。<br><small>這是你收成的第 ${ml.pots} 盆。盆子空出來了，可以再慢慢裝。</small>`, 'god');
+    setTimeout(() => { ml.kq = 0; save(); paintPile(); }, 2400);
+  }
+  const tapBasin = () => { sfx.pop(); say(`金橘盆裡有 ${ml.kq}／${KQ_FULL} 顆金橘${ml.pots ? `，已經收成過 ${ml.pots} 盆` : ''}。按「丟煩惱」把煩惱丟進布袋，就會換一顆金橘。`, 'god'); };
+  S('mlBasin').addEventListener('click', tapBasin);
+  S('mlBasin').addEventListener('keydown', (e) => { if (e.key === 'Enter') tapBasin(); });
   function openToss() {
     const body = openSheet('把煩惱丟進布袋', `
       <p>彌勒佛的布袋什麼都裝得下。把煩惱寫下來，揉成紙團，親手丟進布袋裡。</p>

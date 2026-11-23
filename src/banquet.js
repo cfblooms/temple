@@ -3,6 +3,7 @@
 // 隔天回來就多一道「菜尾湯」。每天一桌，十二道菜慢慢收集成菜單。
 // 場景 360 × 645；SVG 裡的 id 都加 bz 前綴。
 import { makeCarrier } from './carry.js';
+import { wallet } from './wallet.js';
 import { reduce, sleep, tween, pick, daily, yesterdayKey, onSwipe } from './stall.js';
 import bgUrl from './assets/bz/bg.webp';
 import tableUrl from './assets/bz/table.webp';
@@ -33,6 +34,11 @@ const CHEER = ['好彩頭！', '讚啦！', '來來來，呷！', '總舖師好�
 // 十個座位圍著圓桌後半圈（你坐正中間），人畫在桌子後面，桌面擋住下半身＝坐著
 const SEATS = Array.from({ length: 10 }, (_, i) => { const a = Math.PI * (.92 + i / 9 * 1.16); return [180 + Math.cos(a) * 150, 404 + Math.sin(a) * 74]; });
 const ME_SEAT = 5;
+// 同桌香客：上菜時會聊天，還會跟你搶第一口
+const CHAT = ['這道我小時候最愛吃！', '阿嬤以前也會煮這個', '總舖師今天手氣很好喔', '先幫我留一塊啦', '吃完這攤再去上香', '這個要配白飯才對味', '我等這道等好久了', '拍照拍照，先不要動！', '今年拜拜大家都平安', '吃飽才有力氣拜拜'];
+const GRAB = ['這道我要先夾！', '第一塊是我的！', '筷子準備好！', '讓我來讓我來～'];
+const LOSE = ['嘿嘿，我先夾到了！', '手快有，手慢無～', '不好意思我先開動囉'];
+const WIN = ['哇你手好快！', '好啦讓你先', '年輕人手腳就是快'];
 const SLOTS = [[180, 420], [124, 408], [236, 408], [148, 444], [212, 444], [180, 392], [100, 434], [260, 434]];
 const TRAY = [306, 610], BAG = [52, 612], CUP = [244, 616];
 
@@ -84,6 +90,12 @@ const svgOf = () => `
   <text x="${TRAY[0]}" y="${TRAY[1] - 154}" text-anchor="middle" class="bz-tag">總舖師出菜</text>
   <circle id="bzSlotRing" cx="180" cy="420" r="26" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 3" opacity="0"/>
   <g id="bzTable"></g>
+  <!-- 搶菜：發光的「夾」按鈕，跟香客比快 -->
+  <g id="bzGrab" class="bz-grab" data-bz="grab" role="button" tabindex="0" aria-label="快夾第一口" style="display:none">
+    <circle r="24" fill="#FFE08A" opacity=".35"/><circle r="17" fill="#C8302A" stroke="#FFE08A" stroke-width="2.5"/>
+    <text y="6" text-anchor="middle" font-size="16" font-weight="700" fill="#FFF4E0">夾！</text>
+  </g>
+  <g id="bzSay" pointer-events="none"></g>
   <!-- 你 -->
   <!-- 打包袋 -->
   <g id="bzBag" transform="translate(${BAG[0]} ${BAG[1]})" style="display:none">
@@ -111,7 +123,35 @@ export function initBanquet(api) {
   const svg = host.querySelector('svg');
   const S = (id) => svg.querySelector('#' + id);
   const bz = state.bz || (state.bz = { last: '', streak: 0, total: 0, seen: [], pack: '', day: null });
-  let phase = 'idle', menu = [], idx = 0, run = 0, guests = [];
+  let phase = 'idle', menu = [], idx = 0, run = 0, guests = [], grabs = 0;
+  // 香客冒一句話（頭上的對話框）
+  function guestSay(i, text, ms = 1800) {
+    const [x, y] = SEATS[i], w = Math.min(160, 16 + text.length * 11), bx = Math.max(4, Math.min(356 - w, x - w / 2)), by = y - 46;
+    const g = S('bzSay');
+    g.innerHTML = `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${w}" height="22" rx="11" fill="#FFF8EC" stroke="#C89A5A"/><path d="M${(x - 5).toFixed(1)} ${by + 21} l5 7 l5 -7z" fill="#FFF8EC"/><text x="${(bx + w / 2).toFixed(1)}" y="${by + 15}" text-anchor="middle" font-size="11" fill="#5A3A1A">${esc(text)}</text>`;
+    clearTimeout(guestSay.t); guestSay.t = setTimeout(() => { g.innerHTML = ''; }, ms);
+  }
+  const otherSeat = () => { let i; do i = Math.floor(Math.random() * SEATS.length); while (i === ME_SEAT); return i; };
+  // 搶菜：香客喊要先夾，你在時間內點「夾！」就搶到第一口
+  function grabRound(next) {
+    const r = run, who = otherSeat(), [x, y] = SLOTS[Math.max(0, Math.min(idx - 1, SLOTS.length - 1))];
+    if (Math.random() < .35) { guestSay(who, pick(CHAT), 1600); setTimeout(() => { if (r === run) next(); }, 1200); return; }
+    guestSay(who, pick(GRAB), 1500);
+    const btn = S('bzGrab'); btn.setAttribute("transform", `translate(${x + 46} ${y - 2})`); btn.style.display = '';
+    btn.classList.remove('pop'); void btn.getBoundingClientRect(); btn.classList.add('pop');
+    sfx.pop();
+    let over = false;
+    const end = (won) => {
+      if (over) return; over = true; btn.style.display = 'none'; btn.onclick = btn.onkeydown = null;
+      if (r !== run) return;
+      if (won) { grabs++; sfx.chime(); burst('spark', x, y - 10, reduce ? 3 : 10); emit('text', x, y - 46, { text: '第一口！', color: '#FFE08A', size: 15, life: 1.4 }); wallet.earn(2, '辦桌搶到第一口', x, y - 60); guestSay(who, pick(WIN), 1400); }
+      else { sfx.knock(); guestSay(who, pick(LOSE), 1400); const g = S('bzG' + who), [gx, gy] = SEATS[who]; if (g) tween(300, (e, raw) => g.setAttribute('transform', `translate(${gx.toFixed(1)} ${(gy - Math.sin(raw * Math.PI) * 8).toFixed(1)})`), (q) => q); }
+      setTimeout(() => { if (r === run) next(); }, 1100);
+    };
+    btn.onclick = (e) => { e.stopPropagation(); end(true); };
+    btn.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); end(true); } };
+    setTimeout(() => end(false), reduce ? 2600 : 1500);
+  }
 
   function todayMenu() {
     const t = dayKey(), rnd = seeded('menu' + t);
@@ -163,7 +203,7 @@ export function initBanquet(api) {
       sfx.knock();
     }
     await sleep(300); if (r !== run) return;
-    phase = 'serve'; nextDish();
+    phase = 'serve'; grabs = 0; nextDish();
   }
 
   /* ----- 上菜 ----- */
@@ -185,6 +225,7 @@ export function initBanquet(api) {
     onTap: () => say('按住這道菜拿起來（菜會浮在手指上面），拖到圓桌中間發光的地方。'),
     onDrop() {
       const d = menu[idx];
+      if (!d || phase !== 'serve') return;
       S('bzDish').style.display = 'none'; S('bzDishName').textContent = '';
       paintTable(menu.slice(0, idx + 1));
       const [x, y] = slot();
@@ -197,7 +238,7 @@ export function initBanquet(api) {
       say(`<b>${d.name}</b>上桌，「${d.luck}」！${pick(CHEER)}${d.note ? `<br>${d.note}` : ''}`);
       idx++;
       cam?.reset(500);
-      setTimeout(() => (idx < menu.length ? nextDish() : toastStep()), 1100);
+      setTimeout(() => grabRound(() => (idx < menu.length ? nextDish() : toastStep())), 700);
     },
   });
 
@@ -251,7 +292,7 @@ export function initBanquet(api) {
     cam?.reset(300);
     sfx.chime();
     const got = bz.seen.length;
-    setTimeout(() => say(`平安宴圓滿！打包的菜尾明天會變成<b>菜尾湯</b>，記得回來喝。<br>菜單收集 ${got}/${DISHES.length}${got >= DISHES.length ? '，十二道全吃過了，你是辦桌老饕！' : '，每天的菜都不太一樣。'}${first ? '<br>虎爺叼來小魚乾 ×1。' : ''}`), 400);
+    setTimeout(() => say(`平安宴圓滿！${grabs ? `你搶到 ${grabs} 道菜的第一口，手腳真快！` : '同桌香客手好快，下次搶第一口！'}打包的菜尾明天會變成<b>菜尾湯</b>，記得回來喝。<br>菜單收集 ${got}/${DISHES.length}${got >= DISHES.length ? '，十二道全吃過了，你是辦桌老饕！' : '，每天的菜都不太一樣。'}${first ? '<br>虎爺叼來小魚乾 ×1。' : ''}`), 400);
   }
 
   function showMenu() {
