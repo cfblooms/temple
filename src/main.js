@@ -1,3 +1,4 @@
+import { TEST, testSaveKey, initTestPanel } from './testmode.js'; // 試玩模式（?test=1），要最先載入：日期平移
 import './style.css';
 import { SCENE_SVG } from './scene.js';
 import { CHARS, DEFAULT_CHAR, charById } from './chars.js';
@@ -36,7 +37,7 @@ import { initTiangong } from './tiangong.js';
 import { tossJiao } from './jiaotoss.js';
 import { initAmulet } from './amulet.js';
 import { initFest } from './fest/index.js';
-import { lunarFix } from './fest/core.js';
+import { lunarFix, lunarOf, FESTIVALS } from './fest/core.js';
 import { wallet, EARN } from './wallet.js';
 import { initShop, pantry, itemById, favOf } from './shop.js';
 import mapUrl from './assets/temple-map.webp';
@@ -94,7 +95,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (a, b) => a + Math.random() * (b - a);
 
 /* ---------- 存檔（只存在這支手機的瀏覽器） ---------- */
-const KEY = 'cyber-temple.v1';
+const REAL_KEY = 'cyber-temple.v1', KEY = testSaveKey(REAL_KEY); // 試玩模式用另一份存檔
 const state = {
   name: '香客', char: DEFAULT_CHAR, muted: false,
   fish: 0, streak: 0, lastCheckin: '', affection: 0,
@@ -1335,6 +1336,7 @@ npc = initNpc({ svg, chars: CHARS, me: () => charById(state.char), halls: HALLS,
   state.npcTalk = (state.npcTalk || 0) + 1; save();
   if (state.npcTalk === 10) daily.qiyu('friend');
 } });
+if (TEST) initTestPanel({ openSheet, closeSheet, festivals: FESTIVALS, lunarOf, lunarText: (d) => lunar(d)?.text, deityFests: FESTS, festMod, saveKey: KEY, realKey: REAL_KEY });
 // 打開就直接進上次拜的那位神明；地圖是「逛逛全廟」
 SHOW[HALLS[state.home] ? state.home : 'main']();
 

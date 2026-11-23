@@ -893,3 +893,12 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
 .bz-grab.pop { animation: bzGrab .5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 50%; }
 @keyframes bzGrab { from { scale: .9; } to { scale: 1.12; } }
 @media (prefers-reduced-motion: reduce) { .bz-grab.pop { animation: none; } }
+
+/* 試玩模式（?test=1）：左下角的小按鈕＋面板 */
+.test-chip { position: fixed; left: 8px; bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); z-index: 19; padding: 4px 10px; border: 2px dashed #FFC94A; border-radius: 999px; background: rgb(40 16 10 / .85); color: #FFE7A8; font: inherit; font-size: 12px; }
+.test-row { flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.test-row input { font: inherit; padding: 4px 6px; border-radius: 8px; border: 1px solid #C9A27A; }
+.test-list { display: grid; gap: 6px; margin: 6px 0 12px; }
+.test-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px; border-radius: 10px; background: rgb(255 246 232 / .7); }
+.test-item small { display: block; color: #8A5A3A; font-size: 11px; }
+.test-acts { display: flex; gap: 4px; flex-shrink: 0; }
