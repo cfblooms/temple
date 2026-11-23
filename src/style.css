@@ -505,7 +505,14 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 /* 收驚阿嬤：站著時輕輕晃，像在唸經 */
 .sj-granny-idle { animation: sjIdle 3.4s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
 @keyframes sjIdle { 0%, 100% { transform: rotate(-1.4deg); } 50% { transform: rotate(1.4deg) translateY(-1.5px); } }
-@media (prefers-reduced-motion: reduce) { .sj-granny-idle { animation: none; } }
+.sj-spot { animation: sjSpot 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes sjSpot { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.18); } }
+.sj-spot-tag { font: 900 11px var(--font-serif); fill: #FFF4E0; paint-order: stroke; stroke: rgb(60 20 10 / .55); stroke-width: 3px; }
+.sj-flame { animation: sjFlame .5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes sjFlame { from { transform: scale(1, 1) rotate(-3deg); } to { transform: scale(.9, 1.12) rotate(3deg); } }
+.sj-mark { animation: sjMark .35s ease-out both; transform-box: fill-box; transform-origin: center; }
+@keyframes sjMark { from { transform: scale(1.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sj-granny-idle, .sj-spot, .sj-flame, .sj-mark { animation: none; } }
 /* 地圖按鈕：做成看得懂的「逛廟」膠囊 */
 .icon-btn.map-btn { width: auto; padding: 0 9px 0 7px; white-space: nowrap; gap: 4px; display: inline-flex; align-items: center; border-radius: 17px; background: var(--red); border-color: var(--red); color: #FFF4E0; font-weight: 700; font-size: 13px; }
 .icon-btn.map-btn svg { width: 16px; height: 16px; }

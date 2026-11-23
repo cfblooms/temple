@@ -50,5 +50,5 @@ export function makeCarrier({ svg, el, rest, target, radius = 40, lift = 56, cam
     setTimeout(() => tween(target(), 650, () => { busy = false; onDrop(); }), 250);
   }
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); auto(); } });
-  return { auto, home() { pos = [...rest()]; place(); } };
+  return { auto, home() { pos = [...rest()]; place(); }, back(ms = 380) { tween(rest(), ms); }, at: () => pos, busy: () => busy || !!drag };
 }
