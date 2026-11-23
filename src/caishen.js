@@ -15,6 +15,7 @@ import { wallet, EARN } from './wallet.js';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- 文字內容（原創） ---------- */
+const CAI_NO = Array.from({ length: 60 }, (_, i) => { const n = i + 1, d = '一二三四五六七八九'; return n < 10 ? d[n - 1] : `${n >= 20 ? d[Math.floor(n / 10) - 1] : ''}十${n % 10 ? d[n % 10 - 1] : ''}`; }); // 第幾首（籤加量後到 24 首）
 export const CAI_QIAN = [
   { no: 1, level: '上上', title: '聚沙', poem: ['點滴聚沙成寶山', '勤耕不怕歲時寒', '一分心血一分利', '他日回頭笑展顏'], gist: '小錢慢慢存，日積月累就很可觀。現在的每一分努力都算數。', tip: '今天記一筆帳，看看錢都去了哪裡。' },
   { no: 2, level: '上吉', title: '開門', poem: ['晨鐘響過市門開', '笑臉迎人福自來', '誠信二字值千金', '回頭客是聚寶台'], gist: '做生意、做工作，誠信和笑臉就是最好的招牌，老客人會幫你帶新客人。', tip: '主動跟一位老客戶或同事問聲好。' },
@@ -281,7 +282,7 @@ export function initCaishen(api) {
     const t = dayKey();
     if (!cai.qian || cai.qian.date !== t) { cai.qian = { date: t, no: 1 + Math.floor(Math.random() * CAI_QIAN.length) }; save(); sfx.rattle(1); }
     const f = CAI_QIAN.find((x) => x.no === cai.qian.no);
-    openSheet(`財神籤第${'一二三四五六七八'[f.no - 1]}首・${f.title}`, `
+    openSheet(`財神籤第${CAI_NO[f.no - 1]}首・${f.title}`, `
       <div class="slip">
         <div class="slip-side"><span>財神籤</span><span class="lv">${f.level}</span></div>
         <p class="poem">${f.poem.map((l) => `<span>${l}</span>`).join('')}</p>
