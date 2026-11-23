@@ -1,0 +1,11 @@
+{
+  "name": "心靈大廟",
+  "short_name": "心靈大廟",
+  "lang": "zh-Hant-TW",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2A1210",
+  "theme_color": "#7A1E1A",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
