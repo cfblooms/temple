@@ -893,3 +893,15 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
 .bz-grab.pop { animation: bzGrab .5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 50%; }
 @keyframes bzGrab { from { scale: .9; } to { scale: 1.12; } }
 @media (prefers-reduced-motion: reduce) { .bz-grab.pop { animation: none; } }
+
+/* 香油錢箱（donate.js）：安靜、不閃，跟其他地點分開 */
+.area.donate { background: #5A2318; color: #FFE29A; border: .3cqw solid #E6B85C; font-size: max(2.5cqw, 10.5px); animation: none; }
+.dn { text-align: center; line-height: 1.65; }
+.dn p { margin: 0 0 8px; }
+.dn-box { display: grid; place-items: center; margin: 2px 0 8px; }
+.dn-box .dn-coin { animation: dn-drop 2.4s ease-in infinite; }
+@keyframes dn-drop { 0%, 30% { transform: translateY(-6px); opacity: 0; } 45% { opacity: 1; } 75% { transform: translateY(16px); opacity: 1; } 85%, 100% { transform: translateY(20px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .dn-box .dn-coin { animation: none; } }
+.dn-links { display: grid; gap: 8px; margin: 12px 0 6px; }
+.dn-links .btn { display: block; text-decoration: none; }
+.dn-small { font-size: 12px; }
