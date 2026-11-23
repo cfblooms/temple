@@ -149,3 +149,24 @@ export function clap(n = 8) {
     src.connect(bp).connect(g).connect(c.destination); src.start(t);
   }
 }
+// 電音三太子：一拍一拍合成（大鼓＋反拍小鈸＋方波旋律），i 是第幾拍
+const EDM_NOTES = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1046, 988, 784, 659, 587];
+export function edm(i, hype = false) {
+  const c = ac(); if (!c) return;
+  const t = c.currentTime;
+  // 大鼓
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(48, t + .12);
+  env(c, g, t, 0.55, 0.002, 0.16); o.connect(g).connect(c.destination); o.start(t); o.stop(t + .2);
+  // 反拍小鈸
+  const th = t + 0.23, src = c.createBufferSource(); src.buffer = noiseBuffer(c, 0.05);
+  const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 6000;
+  const gh = c.createGain(); env(c, gh, th, 0.12, 0.002, 0.04);
+  src.connect(hp).connect(gh).connect(c.destination); src.start(th);
+  // 旋律（每拍兩個音）
+  for (let k = 0; k < 2; k++) {
+    const tn = t + k * 0.23, s = c.createOscillator(), gs = c.createGain();
+    s.type = 'square'; s.frequency.setValueAtTime(EDM_NOTES[(i * 2 + k) % EDM_NOTES.length] * (hype ? 2 : 1) / 2, tn);
+    env(c, gs, tn, hype ? 0.07 : 0.05, 0.004, 0.16); s.connect(gs).connect(c.destination); s.start(tn); s.stop(tn + .2);
+  }
+}
