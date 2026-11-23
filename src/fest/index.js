@@ -87,7 +87,7 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     if (!game) return;
     if (stage) stop(true);
     // 收起殿裡的按鈕列和神明列，小遊戲用自己的
-    hidden = [...document.querySelectorAll('nav.bar:not([hidden]), #godBar, #festBtn')];
+    hidden = [...document.querySelectorAll('nav.bar:not([hidden]), #godBar, #festBtn, #questBtn')];
     hidden.forEach((el) => { el.dataset.festHid = '1'; el.hidden = true; });
     host.hidden = false; wrap.classList.add('festing');
     stage = makeStage(host, { sfx, say, onClose: () => stop() });

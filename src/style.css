@@ -316,7 +316,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* ---------- 切換神明（場景右上） ---------- */
 /* 神明列：整排可以左右滑，邊緣淡出提示後面還有 */
-.gods { position: absolute; top: 6px; left: 0; right: 0; z-index: 3; display: flex; gap: 6px; padding: 0 12px 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 12px; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 28px), transparent); }
+.gods { position: absolute; top: 3px; left: 0; right: 0; z-index: 3; display: flex; gap: 6px; padding: 3px 12px 2px; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scroll-padding-inline: 12px; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 28px), transparent); }
 .gods::-webkit-scrollbar { display: none; }
 .god { flex: 0 0 auto; width: 48px; scroll-snap-align: start; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 0; border: 0; background: none; color: #FFF4E0; font: inherit; font-size: 11px; white-space: nowrap; text-shadow: 0 1px 2px rgb(0 0 0 / .7); }
 .god img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: 50% 12%; background: #FFF4E0; border: 2px solid rgb(255 244 224 / .7); box-shadow: 0 2px 6px rgb(0 0 0 / .35); }
@@ -753,3 +753,44 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .ys-snack small { color: var(--muted); font-size: 11px; min-height: 2.4em; }
 .ys-snack .btn { padding: 4px 14px; font-size: 13px; }
 .ys-snack i { position: absolute; top: 4px; right: 6px; font-style: normal; font-size: 10px; color: var(--muted); }
+
+/* ---------- 神明委託、奇遇、香火、其他香客（daily.js、npc.js） ---------- */
+.quest-chip { position: absolute; top: 92px; right: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px 3px 5px; border: 0; border-radius: 999px; background: rgb(255 246 232 / .92); color: #6A2A1A; font: inherit; font-size: 12px; box-shadow: 0 2px 6px rgb(0 0 0 / .3); }
+.quest-chip svg { width: 20px; height: 20px; }
+.quest-chip.all { background: #F3C64A; color: #5A2A0A; }
+.app:has(#fhHost:not([hidden])) .quest-chip, #sceneWrap.close-up .quest-chip { opacity: 0; pointer-events: none; }
+.quest-toast { position: absolute; left: 50%; top: 122px; z-index: 25; width: min(86%, 330px); transform: translateX(-50%); padding: 9px 14px; border-radius: 14px; background: rgb(58 26 14 / .92); color: #FFF4E0; font-size: 13px; line-height: 1.5; text-align: center; box-shadow: 0 6px 18px rgb(0 0 0 / .35); pointer-events: none; }
+.quest-toast b { color: #FFD66B; }
+.quest-toast.in { animation: questIn .35s ease-out; }
+@keyframes questIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+.quest-list { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 8px; }
+.quest-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #FFF4E2; }
+.quest-list li > span { flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #E0443E; color: #FFF; font-size: 12px; }
+.quest-list li b { flex: 1; font-weight: 500; }
+.quest-list li.done { opacity: .6; }
+.quest-list li.done > span { background: #5E9A4A; }
+.quest-list li.done b { text-decoration: line-through; }
+.quest-h { margin: 14px 0 6px; font-size: 15px; }
+.quest-h small { font-weight: 400; color: #8A6A4A; }
+.qiyu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.qiyu { padding: 7px 8px; border-radius: 10px; background: #EFE6DA; color: #8A7A6A; display: flex; flex-direction: column; gap: 2px; }
+.qiyu b { font-size: 13px; }
+.qiyu small { font-size: 11px; line-height: 1.35; }
+.qiyu.on { background: linear-gradient(135deg, #FFE9A8, #F7C95A); color: #5A2A0A; }
+.xh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+.xh { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 12px; }
+.xh img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: 50% 12%; }
+.xh small { font-size: 10.5px; color: #8A6A4A; }
+/* 神明列：香火外圈（--xh 是升到下一級的進度 0～1）＋等級小數字 */
+.god { position: relative; }
+.god img { position: relative; z-index: 1; }
+.god::before { content: ''; position: absolute; top: -3px; left: 50%; width: 46px; height: 46px; margin-left: -23px; border-radius: 50%; background: conic-gradient(#FFC93A calc(var(--xh, 0) * 1turn), rgb(255 244 224 / .22) 0); }
+.god.soon::before { display: none; }
+.god .xh-lv { position: absolute; top: 28px; right: 0; z-index: 1; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: #E0443E; color: #FFF; font-size: 10px; font-style: normal; line-height: 15px; text-align: center; box-shadow: 0 1px 3px rgb(0 0 0 / .4); }
+/* 奇遇特效 */
+.gold-jiao { filter: sepia(1) saturate(4) hue-rotate(-12deg) brightness(1.15) drop-shadow(0 0 6px #FFD84A); }
+.smoke-ring { fill: none; stroke: #FFFFFF; stroke-width: 3; opacity: 0; filter: blur(1px); animation: smokeRing 4s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes smokeRing { 0% { opacity: 0; transform: translateY(0) scale(.6); } 15% { opacity: .8; } 100% { opacity: 0; transform: translateY(-140px) scale(2.2); } }
+.kitten-run { animation: kittenRun 2.8s linear forwards; }
+@keyframes kittenRun { 0% { transform: translate(390px, 0) scaleX(1); } 25% { transform: translate(280px, -6px); } 50% { transform: translate(180px, 0); } 75% { transform: translate(80px, -6px); } 100% { transform: translate(-40px, 0); } }
+.npc { cursor: pointer; outline: none; }

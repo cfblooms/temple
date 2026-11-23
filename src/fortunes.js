@@ -144,4 +144,5 @@ export const DAILY = [
 ];
 
 const NUM = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'];
-export const cn = (n) => NUM[n] || String(n);
+const D = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+export const cn = (n) => NUM[n] || (n > 0 && n < 100 ? `${n >= 20 ? D[Math.floor(n / 10)] : ''}十${D[n % 10]}` : String(n));
