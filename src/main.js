@@ -39,6 +39,7 @@ import { initFest } from './fest/index.js';
 import { lunarFix } from './fest/core.js';
 import { wallet, EARN } from './wallet.js';
 import { initShop, pantry, itemById, favOf } from './shop.js';
+import { openDonate, donateOn } from './donate.js'; // 香油錢箱（真的錢，自願贊助作者）
 import mapUrl from './assets/temple-map.webp';
 import hallBg from './assets/hall-bg.webp';
 import hallFest from './assets/hall-festival.webp';
@@ -1076,12 +1077,14 @@ const AREAS = [
   { id: 'xitai', name: '酬神戲台', x: 22, y: 68.5, w: 16, main: true, info: '酬神戲台：神明生日那天，廟埕搭台演布袋戲。' },
   { id: 'gate', name: '朱紅牌樓山門', x: 50, y: 89.8, w: 15, main: true, info: '朱紅牌樓山門：跨過門檻，就從日常切換到廟裡的氛圍。' },
   { id: 'wash', name: '淨身石槽', x: 30, y: 98, w: 14, h: 4.4, main: true, info: '淨身石槽：用楊柳枝沾抹草水，擦去一身灰塵濁氣。' },
+  // 香油錢箱：安靜的樣式、不閃爍；沒設收款連結就不出現（見 donate.js）
+  ...(donateOn() ? [{ id: 'donate', name: '香油錢箱', x: 36, y: 43.5, w: 11, cls: 'donate' }] : []),
 ];
 
 function buildMap() {
   const wrap = $('#mapWrap');
   $('#mapImg').src = mapUrl;
-  const html = AREAS.map((a) => `<button type="button" class="area${a.main ? ' main' : ''}${a.title ? ' title' : ''}" data-area="${a.id}"
+  const html = AREAS.map((a) => `<button type="button" class="area${a.main ? ' main' : ''}${a.title ? ' title' : ''}${a.cls ? ` ${a.cls}` : ''}" data-area="${a.id}"
     style="left:${a.x}%;top:${a.y}%;min-width:${a.w}%;${a.h ? `min-height:${a.h * 1.433}cqw;` : ''}">${esc(a.name)}</button>`).join('');
   wrap.insertAdjacentHTML('beforeend', `<button type="button" class="hall-hit" data-area="hall" aria-label="進入正殿參拜"></button><div class="plaque">心靈大廟</div>${html}`);
   wrap.addEventListener('click', (e) => {
@@ -1106,6 +1109,7 @@ function buildMap() {
     if (PLACE[a.id]) { showStall(PLACE[a.id]); return; }
     if (a.id === 'wings') { pickHall(); return; }
     if (a.id === 'shop') { shop.openShop(); return; }
+    if (a.id === 'donate') { openDonate({ openSheet, sfx }); return; }
     sfx.knock();
     say(`${a.info}這一區還在興建中。想拜拜可以點<b>兩廂專科殿堂</b>，十四位神明的殿都開了；廟埕的流水席辦桌、青衣阿嬤收驚、鵝頸橋打小人，還有後院的靜心閣、許願放生池、山門外的廟口夜市也開張了。`);
   });
