@@ -764,23 +764,23 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .quest-toast.in { animation: questIn .35s ease-out; }
 @keyframes questIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .quest-list { list-style: none; margin: 6px 0 12px; padding: 0; display: grid; gap: 8px; }
-.quest-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #FFF4E2; }
+.quest-list li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #FFF4E2; color: #3A1A0E; }
 .quest-list li > span { flex: 0 0 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #E0443E; color: #FFF; font-size: 12px; }
-.quest-list li b { flex: 1; font-weight: 500; }
-.quest-list li.done { opacity: .6; }
+.quest-list li b { flex: 1; font-weight: 600; color: #3A1A0E; }
+.quest-list li.done { opacity: .75; }
 .quest-list li.done > span { background: #5E9A4A; }
 .quest-list li.done b { text-decoration: line-through; }
 .quest-h { margin: 14px 0 6px; font-size: 15px; }
-.quest-h small { font-weight: 400; color: #8A6A4A; }
+.quest-h small { font-weight: 400; color: inherit; opacity: .7; }
 .qiyu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
-.qiyu { padding: 7px 8px; border-radius: 10px; background: #EFE6DA; color: #8A7A6A; display: flex; flex-direction: column; gap: 2px; }
+.qiyu { padding: 7px 8px; border-radius: 10px; background: #EFE6DA; color: #4A3A2A; display: flex; flex-direction: column; gap: 2px; }
 .qiyu b { font-size: 13px; }
 .qiyu small { font-size: 11px; line-height: 1.35; }
 .qiyu.on { background: linear-gradient(135deg, #FFE9A8, #F7C95A); color: #5A2A0A; }
 .xh-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
 .xh { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 12px; }
 .xh img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: 50% 12%; }
-.xh small { font-size: 10.5px; color: #8A6A4A; }
+.xh small { font-size: 10.5px; color: inherit; opacity: .75; }
 /* 神明列：香火外圈（--xh 是升到下一級的進度 0～1）＋等級小數字 */
 .god { position: relative; }
 .god img { position: relative; z-index: 1; }
@@ -794,3 +794,4 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .kitten-run { animation: kittenRun 2.8s linear forwards; }
 @keyframes kittenRun { 0% { transform: translate(390px, 0) scaleX(1); } 25% { transform: translate(280px, -6px); } 50% { transform: translate(180px, 0); } 75% { transform: translate(80px, -6px); } 100% { transform: translate(-40px, 0); } }
 .npc { cursor: pointer; outline: none; }
+.quest-list li .chip { flex: 0 0 auto; background: #C2372B; border-color: #C2372B; color: #FFF4E2; font-weight: 600; }
