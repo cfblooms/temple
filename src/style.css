@@ -454,8 +454,8 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .gg-book { cursor: pointer; }
 
 /* ---------- 廟埕攤位（辦桌、收驚、打小人）與太歲殿祭改 ---------- */
-#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #fhHost, #fhHost svg, #jxHost, #jxHost svg, #jqHost, #jqHost svg, #fsHost, #fsHost svg, #xiHost, #xiHost svg, #ysHost, #ysHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #fhHost[hidden], #jxHost[hidden], #jqHost[hidden], #fsHost[hidden], #xiHost[hidden], #ysHost[hidden] { display: none; }
+#jgHost, #jgHost svg, #bzHost, #bzHost svg, #sjHost, #sjHost svg, #xrHost, #xrHost svg, #fhHost, #fhHost svg, #jxHost, #jxHost svg, #jqHost, #jqHost svg, #fsHost, #fsHost svg, #xiHost, #xiHost svg, #ysHost, #ysHost svg, #zxHost, #zxHost svg, #xdHost, #xdHost svg, #rjHost, #rjHost svg, #smHost, #smHost svg, #waHost, #waHost svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#jgHost[hidden], #bzHost[hidden], #sjHost[hidden], #xrHost[hidden], #fhHost[hidden], #jxHost[hidden], #jqHost[hidden], #fsHost[hidden], #xiHost[hidden], #ysHost[hidden], #zxHost[hidden], #xdHost[hidden], #rjHost[hidden], #smHost[hidden], #waHost[hidden] { display: none; }
 .stall-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
 #jgHost, .jg-svg { pointer-events: none; }
 .jg-svg [data-jg] { pointer-events: auto; }
@@ -826,6 +826,25 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @keyframes kittenRun { 0% { transform: translate(390px, 0) scaleX(1); } 25% { transform: translate(280px, -6px); } 50% { transform: translate(180px, 0); } 75% { transform: translate(80px, -6px); } 100% { transform: translate(-40px, 0); } }
 .npc { cursor: pointer; outline: none; }
 .quest-list li .chip { flex: 0 0 auto; background: #C2372B; border-color: #C2372B; color: #FFF4E2; font-weight: 600; }
+
+/* 地圖上的五個小地方（places.js） */
+.bar.zx-bar, .bar.sm-bar { grid-template-columns: repeat(4, 1fr); }
+.bar.xd-bar, .bar.rj-bar, .bar.wa-bar { grid-template-columns: repeat(3, 1fr); }
+.place-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+.place-hit { cursor: pointer; }
+.place-svg :focus:not(:focus-visible) { outline: none; }
+.place-sign { font: 900 15px var(--font-serif); fill: #8A2A22; letter-spacing: .06em; }
+.place-small { font: 700 11px var(--font-ui); fill: #5A3A28; }
+.zx-time { font: 900 40px var(--font-serif); fill: #6A2A1A; }
+.xd-breath { font: 900 30px var(--font-serif); fill: #FFF; stroke: #2C2848; stroke-width: 4px; paint-order: stroke; letter-spacing: .2em; }
+.xd-svg .place-sign { fill: #FFE08A; }
+.xd-svg .place-small { fill: #E8E0FF; }
+.xd-svg .xd-dust, .xd-svg #xdRings, .wa-svg .wa-spot, .wa-svg #waMe { pointer-events: none; }
+body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000; opacity: .88; z-index: 999; pointer-events: none; transition: opacity 1.2s; }
+.rj-km { font: 900 16px var(--font-serif); fill: #8A2A22; }
+.rj-in { width: 100%; box-sizing: border-box; font-size: 20px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); margin: 6px 0 10px; background: var(--paper); color: var(--ink); }
+.sm-plaque { font: 900 18px var(--font-serif); fill: #F3C64A; letter-spacing: .2em; }
+.sm-door-t { font: 900 14px var(--font-serif); fill: #FFF4E0; paint-order: stroke; stroke: #7A1E1A; stroke-width: 3px; }
 
 /* 關公守諾徽章 */
 .gg-badges { display: flex; justify-content: center; gap: 14px; margin: 8px 0; }
