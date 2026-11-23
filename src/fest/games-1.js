@@ -394,7 +394,7 @@ const songshen = {
         tip = [x, y]; place(brushEl, x, y, 1, -18);
         if (D(tip, JAR_MOUTH) < 22 && honey < 1) { honey = 1; st.$('#brushTip').setAttribute('opacity', '1'); st.sfx.pop(); st.say('沾到了，黏黏的。現在塗在灶君的<b>嘴巴</b>上，來回刷幾下。', 'temple'); }
         if (honey > 0 && D(tip, MOUTH) < 24 && last) {
-          const m = D(tip, last); cov += m; honey -= m / 140;
+          const m = D(tip, last); cov += m; honey -= m / 240;
           paintMouth(clamp(cov / 170, 0, 1));
           if (Math.random() < .2) st.emit('spark', x, y, { color: '#F3B040', speed: 18, life: .5 });
           if (honey <= 0) { honey = 0; st.$('#brushTip').setAttribute('opacity', '0'); if (cov < 170) st.say('糖用完了，再去罐子沾一點。', 'temple'); }
@@ -406,7 +406,7 @@ const songshen = {
     });
     function sweet() {
       phase = 'dust'; st.progress(1, 3);
-      st.$('#zjMouth').setAttribute('d', 'M-9 2 Q0 12 9 2');
+      st.$('#zjMouth')?.setAttribute('d', 'M-9 2 Q0 12 9 2'); // 用 Gemini 灶君圖時沒有這條嘴巴線
       flyTo(st, brushEl, tip, BR_REST, 300); st.reset();
       st.burst('heart', MOUTH[0], MOUTH[1], 8, { color: '#F3B040' }); st.sfx.chime();
       st.floatText('甜甜嘴', MOUTH[0], MOUTH[1] - 60, '#C8382E');

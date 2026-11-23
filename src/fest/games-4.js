@@ -1,5 +1,5 @@
 // 第四批節慶小遊戲：元宵前「乞龜」、七月最後一天「搶孤」
-import { art, hasArt, clamp, rand, place } from './core.js';
+import { art, hasArt, clamp, rand, pick, place } from './core.js';
 import { backdrop } from './games-1.js';
 import { tossJiao } from '../jiaotoss.js';
 
@@ -12,11 +12,12 @@ function flyTo(st, el, from, to, ms, s0 = 1, s1 = 1, done) {
 // 澎湖、台南的元宵習俗：擲到聖筊就能把神桌上的紅龜粿「乞」回家吃平安，隔年元宵前再做一隻加倍的來還願。
 // 這裡做成「再擲一次挑戰大一號」：連續聖筊越多借越大隻；太貪心沒擲到聖筊就退一號。
 const SIZES = [
-  { name: '小紅龜', jin: 1, s: .62 },
-  { name: '中紅龜', jin: 3, s: .86 },
-  { name: '大紅龜', jin: 6, s: 1.12 },
-  { name: '龜王', jin: 12, s: 1.4 },
+  { name: '小紅龜', jin: 1, s: .9 },
+  { name: '中紅龜', jin: 3, s: 1.2 },
+  { name: '大紅龜', jin: 6, s: 1.55 },
+  { name: '龜王', jin: 12, s: 2 },
 ];
+const WISH = ['平安', '健康', '學業', '事業', '姻緣', '財運'];
 const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const jinTxt = (n) => (n <= 10 ? CN[n] : n < 20 ? `十${n > 10 ? CN[n - 10] : ''}` : n < 100 ? `${CN[Math.floor(n / 10)]}十${n % 10 ? CN[n % 10] : ''}` : `${n}`) + '斤';
 // 紅龜粿（手繪替代圖，原點在中心；有 tg-gui.webp 就用那張）
@@ -36,6 +37,11 @@ const basket = `<path d="M-46 -10 L-38 34 Q0 44 38 34 L46 -10Z" fill="#C89A5A" s
   <ellipse cy="-10" rx="46" ry="10" fill="#E8C07A" stroke="#8A6030" stroke-width="2"/><path d="M-40 -12 Q0 -70 40 -12" stroke="#8A6030" stroke-width="5" fill="none"/>
   <rect x="-20" y="8" width="40" height="16" rx="3" fill="#E0443E"/><text y="21" text-anchor="middle" class="fest-small" fill="#FFE29A">平安</text>`;
 
+// 龜山：廟裡兩旁地上一層層疊起來的紅龜粿（裝飾，看起來很多很熱鬧）
+function guiShan() {
+  const pile = (cx, flip) => { let h = ''; [[3, 606], [2, 576], [1, 548]].forEach(([n, y], r) => { for (let i = 0; i < n; i++) { const x = cx + (i - (n - 1) / 2) * 44; h += `<g transform="translate(${x} ${y}) scale(${flip}.42 .42)">${turtle(110, 80)}</g>`; } }); return h; };
+  return `<g pointer-events="none">${pile(58, '')}${pile(302, '-')}</g>`;
+}
 function lunarYearOfToday() { return new Date().getFullYear(); } // 正月十三、十四一定落在國曆 1～3 月
 
 const qigui = {
@@ -46,7 +52,7 @@ const qigui = {
     const loan = state.qigui && state.qigui.y < year && !state.qigui.back ? state.qigui : null;
     const already = real && state.qigui?.y === year; // 今年已經乞過：可以再玩，但不會改掉借據
     const keep = real && !already;
-    let level = 0, streak = 0, busy = false;
+    let level = 0, streak = 0, busy = false, wish = '';
 
     st.set(`${backdrop('qigui', { wall: ['#5A1E18', '#8A3020'], table: 330, tableColor: ['#B8462E', '#7A2A18'], extra: `
       <circle cx="180" cy="120" r="80" fill="#FFE29A" opacity=".18"/>
@@ -54,14 +60,25 @@ const qigui = {
       <text x="180" y="124" text-anchor="middle" class="fest-small" fill="#FFE29A">擲筊乞平安・明年加倍還</text>
       ${[50, 310].map((x) => `<g transform="translate(${x} 70)"><path d="M0-30v14" stroke="#7A3A1A" stroke-width="2"/><ellipse cy="10" rx="22" ry="26" fill="#E0443E"/><ellipse cy="10" rx="30" ry="34" fill="url(#fGlow)" opacity=".5"/><rect x="-9" y="-18" width="18" height="5" fill="#FFC94A"/><rect x="-9" y="34" width="18" height="5" fill="#FFC94A"/></g>`).join('')}
       <rect x="20" y="330" width="320" height="18" fill="#E8B060" opacity=".5"/>
-      <text x="180" y="440" text-anchor="middle" class="fest-tip" id="qgInfo"></text>` })}
-      <g id="qgTray" transform="translate(${ALTAR[0]} ${ALTAR[1] + 24})">${tray}</g>
+` , over: `<text x="180" y="452" text-anchor="middle" class="fest-tip" id="qgInfo"></text>` })}
+      ${guiShan()}
+      <g id="qgTray" transform="translate(${ALTAR[0]} ${ALTAR[1] + 24}) scale(1.3)">${tray}</g>
+      <g id="qgNext" opacity="0" pointer-events="none"><g opacity=".35">${turtle(110, 80)}</g><ellipse rx="52" ry="40" fill="none" stroke="#FFE29A" stroke-width="2.5" stroke-dasharray="6 5"/><text id="qgNextTxt" y="-48" text-anchor="middle" class="fest-small" fill="#FFE29A"></text></g>
       <g id="qgGui" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgGuiArt">${turtle(110, 80)}</g></g>
       <g id="qgBasket" transform="translate(${BASKET[0]} ${BASKET[1]})">${art('qg-basket', 110, 100, basket)}</g>
       <g id="qgBack" style="display:none" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgBackArt">${turtle(110, 80)}</g></g>`);
     const gui = st.$('#qgGui'), info = st.$('#qgInfo');
     let shownLv = 0;
-    const showSize = () => { if ((level >= 3) !== (shownLv >= 3)) st.$('#qgGuiArt').innerHTML = turtleOf(level, 110, 80); shownLv = level; place(gui, ...ALTAR, SIZES[level].s); info.textContent = streak ? `連續 ${streak} 個聖筊：${SIZES[level].name}（${jinTxt(SIZES[level].jin)}）` : ''; };
+    const nextEl = st.$('#qgNext');
+    const showSize = () => {
+      if ((level >= 3) !== (shownLv >= 3)) st.$('#qgGuiArt').innerHTML = turtleOf(level, 110, 80);
+      shownLv = level; place(gui, ...ALTAR, SIZES[level].s);
+      info.textContent = streak ? `連續 ${streak} 個聖筊：${SIZES[level].name}（${jinTxt(SIZES[level].jin)}）` : '';
+      // 下一號的虛線輪廓：看得到再擲一次能換多大隻
+      const nx = streak && level < 3 ? SIZES[level + 1] : null;
+      nextEl.setAttribute('opacity', nx ? '1' : '0');
+      if (nx) { place(nextEl, ALTAR[0], ALTAR[1] - 6, nx.s); st.$('#qgNextTxt').textContent = `${nx.name}・${jinTxt(nx.jin)}`; }
+    };
     place(gui, ...ALTAR, SIZES[0].s); gui.style.opacity = '.45';
 
     if (loan) giveBack(); else intro();
@@ -98,7 +115,17 @@ const qigui = {
       st.progress(again ? 1 : 0, 4);
       if (already && !again) { st.say(`今年你已經乞過一隻<b>${SIZES[state.qigui.lv].name}</b>了，明年記得還 ${jinTxt(state.qigui.jin * 2)}。這次可以再玩玩看（不會改掉借據）。`, 'temple'); st.buttons([{ label: '再玩一次', primary: true, on: toss }]); return; }
       st.say(`${again ? '' : '元宵前，廟裡把一隻隻<b>紅龜粿</b>擺上神桌（龜代表長壽平安）。'}擲筊問神明能不能借一隻回家：<b>聖筊</b>就能借。擲到聖筊後可以<b>再擲一次挑戰大一號</b>，但沒擲到聖筊會退一號。借回家的，<b>明年要加倍還</b>。`, 'temple');
+      if (!wish) { pickWish(); return; }
       st.buttons([{ label: '擲筊乞龜', primary: true, on: toss }]);
+    }
+    // 先跟神明說想求什麼（紅紙條會貼在托盤上）
+    function pickWish() {
+      st.buttons(WISH.map((w) => ({ label: `求${w}`, on: () => {
+        wish = w; st.sfx.pop();
+        st.add(`<g transform="translate(${ALTAR[0]} ${ALTAR[1] + 52})" pointer-events="none"><rect x="-34" y="-12" width="68" height="24" rx="3" fill="#E0443E" stroke="#F3C64A" stroke-width="1.5"/><text y="6" text-anchor="middle" class="fest-small" fill="#FFE29A">求${w}</text></g>`);
+        st.say(`跟神明說：想乞一隻紅龜回家，<b>求${w}</b>。現在擲筊，聖筊就能借。`, 'temple');
+        st.buttons([{ label: '擲筊乞龜', primary: true, on: toss }]);
+      } })));
     }
 
     async function toss() {
@@ -107,7 +134,7 @@ const qigui = {
       const faces = key === 'sheng' ? ['flat', 'round'] : key === 'xiao' ? ['flat', 'flat'] : ['round', 'round'];
       if (Math.random() < .5) faces.reverse();
       const next = streak ? SIZES[Math.min(3, level + 1)] : SIZES[0];
-      const ok = await tossJiao({ tip: streak ? `跟神明說：想換大一號的${next.name}` : '跟神明稟報名字、住哪裡，想乞一隻紅龜回家吃平安', faces, key });
+      const ok = await tossJiao({ tip: streak ? `跟神明說：想換大一號的${next.name}` : `跟神明稟報名字、住哪裡，想乞一隻紅龜回家求${wish || '平安'}`, faces, key });
       busy = false;
       if (!st.alive) return;
       if (!ok) { menu(); return; }
@@ -153,7 +180,54 @@ const qigui = {
         st.sfx.pop(); st.burst('star', BASKET[0], BASKET[1] - 30, 16); st.progress(4, 4);
         if (keep) { state.qigui = { y: year, lv: level, jin: sz.jin }; save(); }
         const twice = jinTxt(sz.jin * 2);
-        st.later(900, () => o.done(`乞到<b>${sz.name}（${jinTxt(sz.jin)}）</b>！帶回家和家人分著吃，吃了平安又長壽。<br>記得<b>明年元宵前</b>回來，做一隻<b>${twice}</b>的紅龜還給神明。`));
+        st.say(`乞到<b>${sz.name}（${jinTxt(sz.jin)}）</b>！帶回家跟家人分著吃。`, 'temple');
+        st.later(1100, () => share(level, () => o.done(`${sz.name}分完了，一家人吃了平安又長壽${wish ? `，也求到${wish}` : ''}。<br>記得<b>明年元宵前</b>回來，做一隻<b>${twice}</b>的紅龜還給神明。`)));
+      }
+    }
+    // 回家分紅龜：在紅龜上劃過去切開，一塊一塊分給家人（大隻切比較多塊）
+    function share(lv, fin) {
+      const CUTS = [1, 2, 3, 4][lv], C = [180, 380], S = 2.2;
+      const fam = ['agong', 'ama', 'dad', 'mom', 'kid', 'senior'].filter((id) => id !== o.me?.id).slice(0, CUTS + 1).map((id) => o.chars?.byId?.(id)).filter(Boolean);
+      const seats = fam.map((_, i) => { const a = Math.PI * (1.15 + i * .7 / Math.max(1, fam.length - 1)); return [180 + Math.cos(a) * 150 + 0, 210 + Math.sin(a) * 40 + (i % 2) * 18]; });
+      st.reset(0); st.buttons([]);
+      st.set(`${backdrop('chunjie-home', { wall: ['#F4E2C4', '#E8C89C'], table: 330 })}
+        <ellipse cx="${C[0]}" cy="${C[1] + 70}" rx="150" ry="34" fill="#000" opacity=".12"/>
+        <g transform="translate(${C[0]} ${C[1] + 40}) scale(1.9)">${tray}</g>
+        <clipPath id="qgCut"><ellipse cx="${C[0]}" cy="${C[1]}" rx="${44 * S}" ry="${27 * S}"/></clipPath>
+        <g id="qgHome" transform="translate(${C[0]} ${C[1]}) scale(${S})">${turtleOf(lv, 110, 80)}</g>
+        <g id="qgLines" clip-path="url(#qgCut)"></g>
+        ${fam.map((c, i) => `<g id="fam${i}" transform="translate(${seats[i][0].toFixed(1)} ${seats[i][1].toFixed(1)})"><circle r="27" fill="#FFF4E0" stroke="#E0443E" stroke-width="2"/><clipPath id="fc${i}"><circle r="25"/></clipPath><image href="${c.face}" x="-25" y="-25" width="50" height="50" clip-path="url(#fc${i})" preserveAspectRatio="xMidYMid slice"/><text y="42" text-anchor="middle" class="fest-small" fill="#7A2A18">${c.name}</text></g>`).join('')}
+        <text x="180" y="560" text-anchor="middle" class="fest-tip" id="cutTip">手指在紅龜上劃過去，切 ${CUTS} 刀</text>`);
+      st.say(`回到家，大家都在等！手指在紅龜上<b>劃過去切開</b>，切 ${CUTS} 刀，分給 ${fam.length} 個家人。`, 'temple');
+      let cuts = 0, a = null, doneCut = false;
+      const lines = st.$('#qgLines');
+      const cut = (p0, p1) => {
+        cuts++; st.sfx.knock?.(); st.sfx.buzz?.(15);
+        lines.insertAdjacentHTML('beforeend', `<path d="M${p0.x.toFixed(1)} ${p0.y.toFixed(1)}L${p1.x.toFixed(1)} ${p1.y.toFixed(1)}" stroke="#7A1E18" stroke-width="3" stroke-linecap="round"/><path d="M${(p0.x + 2).toFixed(1)} ${(p0.y + 2).toFixed(1)}L${(p1.x + 2).toFixed(1)} ${(p1.y + 2).toFixed(1)}" stroke="#FFE0D0" stroke-width="1.5" opacity=".7"/>`);
+        st.burst('spark', (p0.x + p1.x) / 2, (p0.y + p1.y) / 2, 8, { color: '#FFF4D8' });
+        st.$('#cutTip').textContent = cuts < CUTS ? `還要切 ${CUTS - cuts} 刀` : '';
+        if (cuts >= CUTS) serve();
+      };
+      st.touch({
+        down(p) { if (!doneCut) a = p; },
+        up(p) {
+          if (doneCut || !a) return;
+          const len = Math.hypot(p.x - a.x, p.y - a.y), mx = (p.x + a.x) / 2, my = (p.y + a.y) / 2;
+          if (len > 70 && Math.abs(mx - C[0]) < 110 && Math.abs(my - C[1]) < 80) cut(a, p);
+          a = null;
+        },
+      });
+      st.buttons([{ label: '幫我切', on: () => { while (!doneCut) cut({ x: 90 + cuts * 50, y: C[1] - 70 }, { x: 110 + cuts * 50, y: C[1] + 70 }); } }]);
+      function serve() {
+        if (doneCut) return; doneCut = true; st.buttons([]); st.sfx.chime();
+        fam.forEach((c, i) => st.later(350 + i * 380, () => {
+          const pc = st.add(`<g pointer-events="none"><path d="M-14 -8 L14 -10 L12 10 L-12 8Z" fill="#E8483F" stroke="#B02A22" stroke-width="1.5"/><path d="M-10 -2h20" stroke="#B02A22"/></g>`);
+          st.tween(500, (k, e) => place(pc, C[0] + (seats[i][0] - C[0]) * e, C[1] + (seats[i][1] - C[1]) * e - Math.sin(k * Math.PI) * 50, 1 - e * .4), () => {
+            pc.remove(); st.burst('heart', seats[i][0], seats[i][1] - 10, 6); st.sfx.pop();
+            st.floatText(pick(['好Q！', '甜甜的', '吃平安', '長命百歲', '讚啦']), seats[i][0], seats[i][1] - 40, '#C8382E');
+          });
+        }));
+        st.later(500 + fam.length * 380 + 900, fin);
       }
     }
   },

@@ -44,12 +44,12 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 export const FESTIVALS = [
   { id: 'chunjie', name: '春節', game: '初一到初五每天不同', when: isLunar(1, 1, 5), date: '正月初一～初五' },
   { id: 'tiangong', name: '天公生', game: '擺頂桌', when: isLunar(1, 9), date: '正月初九' },
-  { id: 'qigui', name: '乞龜', game: '擲筊乞紅龜・明年加倍還', when: isLunar(1, 13, 14), date: '正月十三～十四（元宵前）' },
+  { id: 'qigui', name: '乞龜', game: '擲筊乞紅龜・回家分紅龜', when: isLunar(1, 13, 14), date: '正月十三～十四（元宵前）' },
   { id: 'yuanxiao', name: '元宵', game: '放天燈・猜燈謎', when: isLunar(1, 15), date: '正月十五' },
   { id: 'fengpao', name: '鹽水蜂炮', game: '穿護具躲蜂炮', when: isLunar(1, 15), date: '正月十五' },
-  { id: 'qingming', name: '清明', game: '捲潤餅', when: (d) => d.getMonth() === 3 && d.getDate() === term(d.getFullYear(), 4.81), date: '國曆 4/4 或 4/5' },
+  { id: 'qingming', name: '清明', game: '幫家人包潤餅', when: (d) => d.getMonth() === 3 && d.getDate() === term(d.getFullYear(), 4.81), date: '國曆 4/4 或 4/5' },
   { id: 'mazu', name: '媽祖生', game: '小遶境・鑽轎腳', when: isLunar(3, 23), date: '三月廿三' },
-  { id: 'duanwu', name: '端午', game: '正午立蛋・掛香包', when: isLunar(5, 5), date: '五月初五' },
+  { id: 'duanwu', name: '端午', game: '包粽子・立蛋・掛香包', when: isLunar(5, 5), date: '五月初五' },
   { id: 'qixi', name: '七夕', game: '搭鵲橋', when: isLunar(7, 7), date: '七月初七' },
   { id: 'zhongyuan', name: '中元普渡', game: '寫牌位・放水燈・普渡・燒法船', when: isLunar(7, 14, 15), date: '七月十四～十五' },
   { id: 'qianggu', name: '搶孤', game: '爬孤棚搶順風旗', when: (d, L) => { if (!L || L.leap || L.mon !== 7) return false; const n = lunarOf(addDays(d, 1)); return !!n && n.day === 1; }, date: '七月最後一天（關鬼門）' },
@@ -178,7 +178,11 @@ export function makeStage(host, { sfx, say, onClose }) {
       const p = pt(e);
       let x = p.x, y = p.y - lift() * liftBy;
       const m = magnet?.();
-      if (m) { const d = Math.hypot(x - m[0], y - m[1]), R = m[2] || 40; if (d < R) { const k = Math.min(1, (1 - d / R) * 1.6); x += (m[0] - x) * k; y += (m[1] - y) * k; } }
+      if (m) {
+        // 道具浮在手指上方，目標在畫面下緣時手指會沒地方放：手指本身靠近目標也算（取道具和手指比較近的那個）
+        const R = m[2] || 40, dI = Math.hypot(x - m[0], y - m[1]), dF = Math.hypot(p.x - m[0], p.y - m[1]) * 1.15, d = Math.min(dI, dF);
+        if (d < R) { const k = Math.min(1, (1 - d / R) * 1.6); x += (m[0] - x) * k; y += (m[1] - y) * k; }
+      }
       return [x, y, p];
     };
     const down = (e) => {

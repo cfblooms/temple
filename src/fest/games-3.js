@@ -31,10 +31,23 @@ const duanwu = {
       <g id="egg"><g transform="translate(0 -34)">${art('dw-egg', 54, 72, egg)}</g></g>
       <g id="meter" transform="translate(180 500)"><rect x="-70" y="-6" width="140" height="12" rx="6" fill="#FFF" opacity=".7"/><rect id="meterFill" x="-70" y="-6" width="0" height="12" rx="6" fill="#3E9E86"/></g>
       <text x="180" y="560" text-anchor="middle" class="fest-tip">手指在這下面左右移，扶住蛋</text>
-      <g id="sachet" class="fest-hit" filter="url(#fToy)" style="display:none">${art('dw-sachet', 60, 90, sachet)}</g>`);
+      <g id="sachet" class="fest-hit" filter="url(#fToy)" style="display:none">${art('dw-sachet', 60, 90, sachet)}</g>
+      <g id="zong"></g>`);
     const eggEl = st.$('#egg');
-    st.progress(0, 2);
-    st.say(`端午節正午立蛋！${noon ? '現在剛好是<b>正午</b>，陽氣最旺，蛋特別好立。' : '（正午 11 點到 1 點玩會比較好立。）'}手指按在<b>蛋的下方</b>，蛋往哪邊倒，手指就往哪邊輕輕移，撐 2.5 秒就成功。`, 'temple');
+    // 先包粽子，包好才立蛋
+    ['#egg', '#meter'].forEach((k) => { st.$(k).style.display = 'none'; });
+    st.$('#egg').previousElementSibling.style.display = 'none';
+    st.$('#meter').nextElementSibling.style.display = 'none';
+    phase = 'zong';
+    zongzi(st, o, () => {
+      ['#egg', '#meter'].forEach((k) => { st.$(k).style.display = ''; });
+      st.$('#egg').previousElementSibling.style.display = '';
+      st.$('#meter').nextElementSibling.style.display = '';
+      phase = 'egg'; startEgg();
+    });
+    function startEgg() {
+    st.progress(3, 5);
+    st.say(`粽子掛好了！接著<b>正午立蛋</b>！${noon ? '現在剛好是<b>正午</b>，陽氣最旺，蛋特別好立。' : '（正午 11 點到 1 點玩會比較好立。）'}手指按在<b>蛋的下方</b>，蛋往哪邊倒，手指就往哪邊輕輕移，撐 2.5 秒就成功。`, 'temple');
     st.touch({
       down(p) { if (phase === 'egg') { fx = p.x; f0 = p.x; } },
       move(p) { if (phase === 'egg') fx = p.x; },
@@ -56,9 +69,11 @@ const duanwu = {
       }
       if (ok >= NEED) { stood(); return false; }
     });
+    st.buttons([{ label: '幫我扶', on: () => { ok = NEED; } }]);
+    }
     function stood() {
       phase = 'sachet'; place(eggEl, BASE[0], BASE[1]); st.sfx.chime(); st.burst('star', BASE[0], BASE[1] - 40, 16);
-      st.progress(1, 2); st.floatText('立起來了！', BASE[0], BASE[1] - 90, '#C8382E');
+      st.progress(4, 5); st.floatText('立起來了！', BASE[0], BASE[1] - 90, '#C8382E');
       st.$('#meter').setAttribute('opacity', '0');
       const sc = st.$('#sachet'); sc.style.display = ''; const rest = [80, 520]; place(sc, ...rest);
       st.say('蛋站好了，今年好運！再把<b>香包</b>掛到門上的釘子，驅蚊保平安。', 'temple');
@@ -76,13 +91,109 @@ const duanwu = {
     }
     let fin = false;
     function hung() {
-      if (fin) return; fin = true; st.buttons([]); st.sfx.pop(); st.progress(2, 2);
+      if (fin) return; fin = true; st.buttons([]); st.sfx.pop(); st.progress(5, 5);
       st.burst('spark', HOOK[0], HOOK[1], 12, { color: '#F3C64A' });
-      st.later(600, () => o.done(`${noon ? '正午' : ''}立蛋成功、香包掛好了。端午記得吃粽子、多喝水，夏天平平安安。`));
+      st.later(600, () => o.done(`親手包的粽子、${noon ? '正午' : ''}立起來的蛋、門上的香包，端午三件事都做到了。記得多喝水，夏天平平安安。`));
     }
-    st.buttons([{ label: '幫我扶', on: () => { ok = NEED; } }]);
   },
 };
+
+/* ---------- 包粽子：竹葉捲成漏斗 → 放料 → 摺起來 → 綁繩子 ---------- */
+const ZFILL = [
+  { id: 'pork', name: '滷肉', c: '#7A3A1E' }, { id: 'mush', name: '香菇', c: '#4A2E1E' }, { id: 'yolk', name: '鹹蛋黃', c: '#F0A020' },
+  { id: 'peanut', name: '花生', c: '#D8A868' }, { id: 'chestnut', name: '栗子', c: '#B8742E' }, { id: 'shrimp', name: '蝦米', c: '#F08A6A' },
+];
+function zongzi(st, o, next) {
+  const C = [180, 440], TRAY = ZFILL.map((_, i) => [52 + i * 51, 590]);
+  const z = st.$('#zong');
+  const riceTex = (y0, h) => Array.from({ length: 16 }, () => `<ellipse cx="${rand(-30, 30).toFixed(1)}" cy="${(y0 + rand(0, h)).toFixed(1)}" rx="3" ry="1.8" fill="#FFFDF4" stroke="#E8E0C8" stroke-width=".5"/>`).join('');
+  z.innerHTML = `
+    <g id="zLeaf" transform="translate(${C[0]} ${C[1]})">
+      <path id="zLeafFlat" d="M-110 30 Q-20 -30 110 -10 Q20 30 -110 30Z" fill="#5E9A4A" stroke="#3E7A2E" stroke-width="2"/>
+      <path id="zLeafFlat2" d="M-110 50 Q-10 0 110 16 Q10 56 -110 50Z" fill="#6BAA55" stroke="#3E7A2E" stroke-width="2"/>
+      <g id="zCone" opacity="0">
+        <path d="M-52 -60 L0 60 L52 -60Z" fill="#5E9A4A" stroke="#3E7A2E" stroke-width="2.5"/>
+        <clipPath id="zClip"><path d="M-48 -58 L0 52 L48 -58Z"/></clipPath>
+        <g clip-path="url(#zClip)"><g id="zIn"></g></g>
+        <path d="M-52 -60 Q0 -48 52 -60" stroke="#8ACB6E" stroke-width="3" fill="none"/>
+        <path d="M-30 -40 L0 40 M24 -50 L4 30" stroke="#3E7A2E" stroke-width="1" opacity=".5"/>
+      </g>
+      <g id="zDone" opacity="0">
+        <path d="M-58 36 L0 -58 L58 36 Q0 50 -58 36Z" fill="#5E9A4A" stroke="#3E7A2E" stroke-width="2.5"/>
+        <path d="M-30 -10 L30 30 M10 -40 L-20 36" stroke="#3E7A2E" stroke-width="1.2" opacity=".5"/>
+        <g id="zStr"></g>
+      </g>
+    </g>
+    <g id="zRice" class="fest-hit" data-nograb transform="translate(300 520)"><ellipse cx="0" cy="8" rx="30" ry="9" fill="#C8A878"/><ellipse rx="30" ry="12" fill="#FFFDF4" stroke="#D8C8A8"/>${riceTex(-8, 14)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">糯米</text></g>
+    ${ZFILL.map((f, i) => `<g id="zf-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)" transform="translate(${TRAY[i][0]} ${TRAY[i][1]})">${art('dw-' + f.id, 40, 34, `<circle r="15" fill="#FFF" stroke="#D8C8B0"/>${f.id === 'yolk' ? '<circle r="9" fill="#F0A020"/>' : f.id === 'pork' ? '<rect x="-10" y="-7" width="20" height="14" rx="4" fill="#7A3A1E"/><rect x="-10" y="-2" width="20" height="3" fill="#F4E0C0"/>' : `${[[-5, -3], [5, -4], [0, 5], [-6, 5], [6, 4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${f.c}"/>`).join('')}`}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}
+    <g id="zPad" opacity="0" pointer-events="none"><circle cx="${C[0]}" cy="${C[1] + 120}" r="48" fill="none" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8"/><text x="${C[0]}" y="${C[1] + 126}" text-anchor="middle" class="fest-tip">在這裡畫圈綁繩</text></g>`;
+  ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = 'none'; });
+  let phase = 'leaf', layers = [], rice = 0, fy0 = null, acc = 0, lastA = null;
+  st.progress(0, 5);
+  st.say('五月初五端午節！先<b>包粽子</b>：手指按住竹葉<b>往上滑</b>，把兩片竹葉捲成漏斗。', 'temple');
+  st.buttons([{ label: '幫我捲', on: () => cone() }]);
+  st.zoom(180, 480, 300);
+  function cone() {
+    if (phase !== 'leaf') return; phase = 'fill';
+    st.sfx.pop(); st.$('#zLeafFlat').style.display = 'none'; st.$('#zLeafFlat2').style.display = 'none';
+    st.tween(300, (k) => st.$('#zCone').setAttribute('opacity', k.toFixed(2)));
+    ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = ''; });
+    st.progress(1, 5);
+    st.say('竹葉捲好了。先放一匙<b>糯米</b>墊底，再放<b>三樣</b>喜歡的料，最後再蓋一層糯米。點一下就會放進去。', 'temple');
+    st.buttons([]);
+  }
+  const levelY = () => 50 - (rice * 16 + layers.length * 13);
+  const addLayer = (c, h, tex) => { const y = levelY() - h; st.$('#zIn').insertAdjacentHTML('beforeend', `<g><rect x="-50" y="${y}" width="100" height="${h + 2}" fill="${c}"/>${tex || Array.from({ length: 6 }, () => `<circle cx="${rand(-26, 26).toFixed(1)}" cy="${(y + rand(2, h)).toFixed(1)}" r="${rand(2.5, 4.5).toFixed(1)}" fill="rgb(0 0 0 / .18)"/>`).join('')}</g>`); st.emit('spark', C[0] + rand(-20, 20), C[1] + y, { color: '#FFFDF4', speed: 30, life: .5 }); st.sfx.pop(); };
+  st.$('#zRice').addEventListener('click', () => {
+    if (phase !== 'fill') return;
+    if (rice === 0) { addLayer('#FFF8E8', 16, riceTex(levelY() - 16, 14)); rice = 1; st.say('糯米墊好了。再放<b>三樣料</b>。', 'temple'); return; }
+    if (layers.length < 3) { st.say(`料還不夠，再放 ${3 - layers.length} 樣（滷肉、香菇、蛋黃……）。`, 'temple'); return; }
+    addLayer('#FFF8E8', 16, riceTex(levelY() - 16, 14)); rice = 2; phase = 'fold'; st.progress(2, 5);
+    ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = 'none'; });
+    st.say('滿滿一包！手指在粽子上<b>往下滑</b>，把竹葉蓋下來摺好。', 'temple');
+    st.buttons([{ label: '幫我摺', on: fold }]);
+  });
+  ZFILL.forEach((f) => st.$('#zf-' + f.id).addEventListener('click', (e) => {
+    if (phase !== 'fill') return;
+    if (!rice) { st.say('先放一匙<b>糯米</b>墊底喔（右邊那碗）。', 'temple'); return; }
+    if (layers.includes(f.id) || layers.length >= 4) return;
+    layers.push(f.id); addLayer(f.c + '', 12); e.currentTarget.setAttribute('opacity', '.35');
+    st.say(layers.length >= 3 ? `放了${layers.map((id) => ZFILL.find((x) => x.id === id).name).join('、')}。最後再<b>蓋一層糯米</b>（點糯米）。` : `${f.name}放好了，再放 ${3 - layers.length} 樣。`, 'temple');
+  }));
+  function fold() {
+    if (phase !== 'fold') return; phase = 'tie';
+    st.sfx.pop();
+    st.tween(320, (k) => { st.$('#zCone').setAttribute('opacity', (1 - k).toFixed(2)); st.$('#zDone').setAttribute('opacity', k.toFixed(2)); });
+    st.progress(2, 5); st.$('#zPad').setAttribute('opacity', '1');
+    st.say('摺好了！最後用棉繩綁緊：手指在粽子<b>下面的圈圈</b>裡<b>畫圈</b>，繞三圈。', 'temple');
+    st.buttons([{ label: '幫我綁', on: () => { acc = 99; tie(); } }]);
+  }
+  function tie() {
+    const turns = Math.min(3, Math.floor(acc / (Math.PI * 2)));
+    st.$('#zStr').innerHTML = Array.from({ length: turns }, (_, i) => `<path d="M-50 ${14 - i * 18} Q0 ${26 - i * 18} 50 ${14 - i * 18}" stroke="#F4ECD8" stroke-width="3.2" fill="none"/>`).join('') + (turns >= 3 ? '<path d="M0 -58 v-60" stroke="#F4ECD8" stroke-width="3"/>' : '');
+    if (turns >= 3 && phase === 'tie') {
+      phase = 'done'; st.$('#zPad').setAttribute('opacity', '0'); st.buttons([]);
+      st.sfx.chime(); st.burst('star', C[0], C[1] - 20, 14); st.floatText('粽子包好了！', C[0], C[1] - 90, '#3E7A2E');
+      st.progress(3, 5);
+      // 粽子提起來，掛到牆上的釘子旁邊，畫面讓給立蛋
+      st.later(900, () => { const zl = st.$('#zLeaf'); st.tween(700, (k, e) => zl.setAttribute('transform', `translate(${C[0] + (226 - C[0]) * e} ${C[1] + (262 - C[1]) * e}) scale(${1 - e * .5})`), () => { st.reset(); next(); }); });
+    }
+  }
+  st.touch({
+    down(p) { fy0 = p; lastA = null; },
+    move(p) {
+      if (phase === 'leaf' && fy0 && fy0.y - p.y > 60) { fy0 = null; cone(); return; }
+      if (phase === 'fold' && fy0 && p.y - fy0.y > 50) { fy0 = null; fold(); return; }
+      if (phase !== 'tie') return;
+      const dx = p.x - C[0], dy = p.y - (C[1] + 120), r = Math.hypot(dx, dy);
+      if (r < 10 || r > 140) { lastA = null; return; }
+      const a = Math.atan2(dy, dx);
+      if (lastA !== null) { let d = a - lastA; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; acc += Math.abs(d); }
+      lastA = a; tie();
+    },
+    up() { fy0 = null; },
+  });
+}
 
 /* ================= 七夕：搭鵲橋 ================= */
 const magpie = `${hit(50, 40)}<ellipse rx="16" ry="10" fill="#2A2A3A"/><ellipse cx="2" cy="3" rx="9" ry="6" fill="#FFF"/><circle cx="14" cy="-6" r="7" fill="#2A2A3A"/><circle cx="16" cy="-7" r="1.6" fill="#FFF"/><path d="M20 -6 l6 1 -6 2z" fill="#F3C64A"/><path d="M-14 -2 l-14 -4 2 8z" fill="#3A4A7A"/><path d="M-4 -6 Q-2 -22 10 -14" fill="#3A4A7A"/>`;

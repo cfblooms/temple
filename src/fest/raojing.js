@@ -111,13 +111,14 @@ const amuletFallback = `<rect x="-18" y="-26" width="36" height="52" rx="5" fill
   <path d="M-4 26 v12 M0 26 v14 M4 26 v12" stroke="#F3C64A" stroke-width="2"/>`;
 const palmSvg = `<circle r="36" fill="#000" opacity="0"/><path d="M-10 30 v-14 q-14 -2 -14 -16 v-14 q0 -6 6 -6 q5 0 5 6 v-14 q0 -6 6 -6 q5 0 5 6 v-4 q0 -6 6 -6 q5 0 5 6 v4 q0 -6 6 -6 q5 0 5 6 v26 q6 -8 12 -6 q5 2 1 10 q-8 14 -18 24 v10z" fill="#FFD9B8" stroke="#C88A60" stroke-width="2"/>`;
 
+// slot 的高度讓供品底部「坐」在香案桌面上（以前底部落在桌裙上，看起來浮在桌子前面）
 const OFFER = [
-  { id: 'burner', name: '香爐', url: burnerUrl, w: 52, h: 38, slot: [TABLE[0] - 2, TABLE[1] - 14] },
-  { id: 'flowers', name: '鮮花', url: flowersUrl, w: 26, h: 48, slot: [TABLE[0] - 52, TABLE[1] - 22] },
-  { id: 'fruit', name: '水果', url: fruitUrl, w: 38, h: 44, slot: [TABLE[0] + 46, TABLE[1] - 18] },
-  { id: 'tea', name: '清茶', url: teaUrl, w: 38, h: 27, slot: [TABLE[0] - 28, TABLE[1] - 10] },
+  { id: 'burner', name: '香爐', url: burnerUrl, w: 52, h: 38, slot: [TABLE[0] - 2, TABLE[1] - 28] },
+  { id: 'flowers', name: '鮮花', url: flowersUrl, w: 26, h: 48, slot: [TABLE[0] - 52, TABLE[1] - 34] },
+  { id: 'fruit', name: '水果', url: fruitUrl, w: 38, h: 44, slot: [TABLE[0] + 46, TABLE[1] - 30] },
+  { id: 'tea', name: '清茶', url: teaUrl, w: 38, h: 27, slot: [TABLE[0] - 28, TABLE[1] - 24] },
 ];
-const TRAY = [[34, 620], [86, 624], [138, 620], [190, 624]];
+const TRAY = [[62, 610], [116, 614], [170, 610], [224, 614]]; // 左下角留空，不要被「試玩」標籤擋住
 
 /* ---------- 合照：把舞台畫成 PNG ---------- */
 async function snapshot(svg) {

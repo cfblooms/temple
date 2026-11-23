@@ -175,62 +175,155 @@ const RUNBING = [
   { id: 'cabbage', name: '高麗菜', c: '#B8DC8A' }, { id: 'sprout', name: '豆芽菜', c: '#F4EFD8' }, { id: 'egg', name: '蛋絲', c: '#F7D64A' },
   { id: 'tofu', name: '豆干絲', c: '#B8885A' }, { id: 'peanut', name: '花生糖粉', c: '#D8A868' }, { id: 'cilantro', name: '香菜', c: '#4E9A3E' },
 ];
+// 清明節一家人圍著桌子包潤餅，每個人愛吃的料都不一樣：照家人點的單包，再兩邊摺起來、往上捲、端給他。
+const ORDERS = [
+  { id: 'agong', want: ['cabbage', 'tofu', 'peanut'], no: 'cilantro', line: '阿公牙齒不好，高麗菜、豆干，花生粉多一點，<b>不要香菜</b>。', ok: '軟軟的，好吃！', bad: '哎唷，阿公說不要香菜啦～' },
+  { id: 'ama', want: ['sprout', 'egg', 'cilantro'], no: 'peanut', line: '阿嬤要豆芽菜、蛋絲、香菜，<b>不要花生粉</b>，太甜。', ok: '跟阿嬤以前包的一樣香。', bad: '阿嬤說太甜了，不過還是吃光光。' },
+  { id: 'kid', want: ['egg', 'peanut'], no: 'cabbage', line: '小朋友只要蛋絲和花生粉，<b>不要青菜</b>！', ok: '耶～甜甜的！', bad: '小朋友把青菜挑出來了……' },
+  { id: 'dad', want: ['cabbage', 'sprout', 'tofu', 'egg'], no: '', line: '爸爸什麼都要，越大捲越好，至少四樣！', ok: '大捲又飽滿，讚！', bad: '爸爸說料太少了，再包一捲。' },
+  { id: 'mom', want: ['sprout', 'cilantro', 'tofu'], no: 'egg', line: '媽媽要豆芽、豆干、香菜，<b>不要蛋</b>。', ok: '清爽好吃，謝謝你。', bad: '媽媽笑著說：我不吃蛋啦。' },
+];
+const rbIcon = (f, s = 1) => `<g transform="scale(${s})">${art('rb-' + f.id, 56, 40, `<ellipse rx="26" ry="14" fill="#FFF" stroke="#D8C8B0"/>${Array.from({ length: 9 }, (_, k) => `<rect x="${-16 + (k % 3) * 11}" y="${-8 + Math.floor(k / 3) * 5}" width="9" height="3.4" rx="1.6" fill="${f.c}" transform="rotate(${(k * 37) % 30 - 15} ${-12 + (k % 3) * 11} ${-6 + Math.floor(k / 3) * 5})"/>`).join('')}`)}</g>`;
 const runbing = {
   play(st, o) {
-    const PLATE = [180, 300], REST = RUNBING.map((_, i) => [70 + (i % 3) * 110, i < 3 ? 470 : 536]); // 托盤：兩排三格
-    let laid = [], phase = 'fill', pos = [0, 0], roll = 0, startY = null;
+    const PLATE = [180, 340], REST = RUNBING.map((_, i) => [62 + (i % 3) * 118, i < 3 ? 488 : 552]); // 托盤：兩排三格
+    const fam = ORDERS.filter((x) => x.id !== o.me?.id).sort(() => Math.random() - .5).slice(0, 3);
+    const SEATS = [[70, 150], [180, 132], [290, 150]];
+    let laid = [], phase = 'fill', pos = [0, 0], roll = 0, startY = null, cur = 0, folded = { L: false, R: false }, score = 0;
+    const face = (id) => o.chars?.byId?.(id)?.face || '';
     st.set(`${backdrop('qingming', { wall: ['#DCEBD0', '#B8D4A8'], table: 230, tableColor: ['#D8B48A', '#B08A60'], extra: `<g opacity=".5">${[50, 120, 250, 320].map((x) => `<path d="M${x} 230 q-4-40 8-70 q-14 30-30 40" stroke="#6BA35A" stroke-width="4" fill="none"/>`).join('')}</g>` })}
-      <ellipse cx="${PLATE[0]}" cy="${PLATE[1] + 4}" rx="130" ry="64" fill="#FFFFFF" stroke="#D8C8B0" stroke-width="2"/>
-      <g id="wrap"><ellipse id="skin" cx="${PLATE[0]}" cy="${PLATE[1]}" rx="104" ry="50" fill="#FBF3E2" stroke="#E8D8B8" stroke-width="2"/><g id="fill"></g></g>
-      <g id="roll" style="display:none"><rect x="-96" y="-16" width="192" height="32" rx="16" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2"/><path d="M-80 0h160" stroke="#E8D8B8" stroke-width="2" stroke-dasharray="8 6"/></g>
-      ${RUNBING.map((f, i) => `<g id="rb-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)">${art('rb-' + f.id, 56, 40, `<ellipse rx="26" ry="14" fill="#FFF" stroke="#D8C8B0"/>${Array.from({ length: 9 }, (_, k) => `<rect x="${-16 + (k % 3) * 11}" y="${-8 + Math.floor(k / 3) * 5}" width="9" height="3.4" rx="1.6" fill="${f.c}" transform="rotate(${(k * 37) % 30 - 15} ${-12 + (k % 3) * 11} ${-6 + Math.floor(k / 3) * 5})"/>`).join('')}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}`);
+      ${fam.map((f, i) => `<g id="seat${i}" transform="translate(${SEATS[i][0]} ${SEATS[i][1]})"><circle r="30" fill="#FFF4E0" stroke="#7BB35A" stroke-width="3"/><clipPath id="rbf${i}"><circle r="28"/></clipPath><image href="${face(f.id)}" x="-28" y="-28" width="56" height="56" clip-path="url(#rbf${i})" preserveAspectRatio="xMidYMid slice"/><text y="46" text-anchor="middle" class="fest-small" fill="#3A5A2A">${o.chars?.byId?.(f.id)?.name || ''}</text><g id="mark${i}"></g></g>`).join('')}
+      <g id="order"></g>
+      <ellipse cx="${PLATE[0]}" cy="${PLATE[1] + 4}" rx="132" ry="66" fill="#FFFFFF" stroke="#D8C8B0" stroke-width="2"/>
+      <g id="wrap"><ellipse id="skin" cx="${PLATE[0]}" cy="${PLATE[1]}" rx="104" ry="50" fill="#FBF3E2" stroke="#E8D8B8" stroke-width="2"/><g id="fill"></g>
+        <path id="flapL" d="M${PLATE[0] - 104} ${PLATE[1]} Q${PLATE[0] - 70} ${PLATE[1] - 46} ${PLATE[0] - 50} ${PLATE[1]} Q${PLATE[0] - 70} ${PLATE[1] + 46} ${PLATE[0] - 104} ${PLATE[1]}Z" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2" opacity="0"/>
+        <path id="flapR" d="M${PLATE[0] + 104} ${PLATE[1]} Q${PLATE[0] + 70} ${PLATE[1] - 46} ${PLATE[0] + 50} ${PLATE[1]} Q${PLATE[0] + 70} ${PLATE[1] + 46} ${PLATE[0] + 104} ${PLATE[1]}Z" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2" opacity="0"/></g>
+      <g id="foldHint" opacity="0" pointer-events="none"><path d="M${PLATE[0] - 120} ${PLATE[1]} h40 l-8 -7 m8 7 l-8 7" stroke="#7A5A2A" stroke-width="3" fill="none"/><path d="M${PLATE[0] + 120} ${PLATE[1]} h-40 l8 -7 m-8 7 l8 7" stroke="#7A5A2A" stroke-width="3" fill="none"/></g>
+      <g id="roll" style="display:none" class="fest-hit"><rect x="-70" y="-16" width="140" height="32" rx="16" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2"/><path d="M-56 0h112" stroke="#E8D8B8" stroke-width="2" stroke-dasharray="8 6"/><g id="rollEnds"></g></g>
+      ${RUNBING.map((f, i) => `<g id="rb-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)">${rbIcon(f)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}`);
     RUNBING.forEach((f, i) => place(st.$('#rb-' + f.id), ...REST[i]));
-    st.progress(0, 2);
-    st.say('清明節吃潤餅。把下面的料一樣一樣<b>拖到餅皮上</b>，至少放四樣，再往上滑把它捲起來。', 'temple');
+    st.progress(0, fam.length);
+    const byId = (id) => RUNBING.find((x) => x.id === id);
+    function showOrder() {
+      const f = fam[cur], [sx, sy] = SEATS[cur];
+      fam.forEach((_, i) => st.$('#seat' + i).setAttribute('opacity', i === cur || i < cur ? '1' : '.55'));
+      // 點單泡泡：要的料（圖）＋不要的（打叉）
+      st.$('#order').innerHTML = `<g transform="translate(180 ${sy + 92})"><rect x="-150" y="-20" width="300" height="44" rx="14" fill="#FFFDF4" stroke="#7BB35A" stroke-width="2"/><path d="M${sx - 180 - 8} -20 l8 -26 l8 26" fill="#FFFDF4" stroke="#7BB35A" stroke-width="2"/>
+        ${f.want.map((id, k) => `<g transform="translate(${-128 + k * 46} 2)">${rbIcon(byId(id), .62)}</g>`).join('')}
+        ${f.no ? `<g transform="translate(120 2)">${rbIcon(byId(f.no), .62)}<path d="M-14 -12 L14 12 M14 -12 L-14 12" stroke="#E0443E" stroke-width="4" stroke-linecap="round"/></g>` : ''}</g>`;
+      st.say(f.line + ' 把料<b>拖到餅皮上</b>（點一下也可以）。', 'temple');
+      st.buttons([{ label: '放好了，摺起來', primary: true, on: toFold }, { label: '重來', on: resetSkin }]);
+    }
+    function resetSkin() {
+      if (phase !== 'fill') return;
+      laid = []; st.$('#fill').innerHTML = '';
+      RUNBING.forEach((f, i) => { const el = st.$('#rb-' + f.id); el.style.display = ''; place(el, ...REST[i]); });
+    }
+    const lay = (f) => {
+      if (phase !== 'fill' || laid.includes(f)) return;
+      laid.push(f); st.$('#rb-' + f.id).style.display = 'none';
+      const n = laid.length, y = PLATE[1] - 24 + (n - 1) * 8;
+      st.$('#fill').insertAdjacentHTML('beforeend', Array.from({ length: 18 }, (_, k) => `<rect x="${PLATE[0] - 72 + k * 8.4 + rand(-3, 3)}" y="${y + rand(-4, 4)}" width="13" height="5" rx="2.5" fill="${f.c}" stroke="rgb(0 0 0 / .12)" stroke-width=".6" transform="rotate(${rand(-25, 25)} ${PLATE[0] - 66 + k * 8.4} ${y})"/>`).join(''));
+      st.sfx.pop(); st.emit('spark', PLATE[0] + rand(-40, 40), y, { color: f.c, speed: 30, life: .5 });
+    };
     RUNBING.forEach((f, i) => {
-      const el = st.$('#rb-' + f.id); let done = false;
+      const el = st.$('#rb-' + f.id); let moved = false;
       st.hold(el, {
-        magnet: () => (done || phase !== 'fill' ? null : [PLATE[0], PLATE[1], 90]),
-        onStart() { if (!done && phase === 'fill') st.zoom(180, 380, 280); },
-        onMove(x, y) { if (done || phase !== 'fill') return; pos = [x, y]; place(el, x, y); },
+        magnet: () => (phase !== 'fill' ? null : [PLATE[0], PLATE[1], 90]),
+        onStart(x, y) { moved = false; pos = [x, y]; if (phase === 'fill') st.zoom(180, 400, 300); },
+        onMove(x, y) { if (phase !== 'fill') return; if (D(pos, [x, y]) > 4) moved = true; pos = [x, y]; place(el, x, y); },
         onUp() {
-          if (done || phase !== 'fill') return; st.reset();
-          if (Math.abs(pos[0] - PLATE[0]) < 100 && Math.abs(pos[1] - PLATE[1]) < 50) {
-            done = true; el.style.display = 'none'; laid.push(f);
-            const n = laid.length, y = PLATE[1] - 22 + (n - 1) * 8;
-            st.$('#fill').insertAdjacentHTML('beforeend', Array.from({ length: 12 }, (_, k) => `<rect x="${PLATE[0] - 66 + k * 11 + rand(-3, 3)}" y="${y + rand(-3, 3)}" width="10" height="4" rx="2" fill="${f.c}" transform="rotate(${rand(-20, 20)} ${PLATE[0] - 60 + k * 11} ${y})"/>`).join(''));
-            st.sfx.pop();
-            if (n >= 4 && n === 4) { st.progress(1, 2); st.say(`放了${laid.map((x) => x.name).join('、')}。還可以再加，或直接<b>從餅皮下方往上滑</b>捲起來。`, 'temple'); st.buttons([{ label: '捲起來', primary: true, on: autoRoll }]); }
-            else if (n < 4) st.say(`${f.name}放好了，再放 ${4 - n} 樣。`, 'temple');
-          } else flyTo(st, el, pos, REST[i], 300);
+          if (phase !== 'fill') return; st.reset();
+          if (!moved || (Math.abs(pos[0] - PLATE[0]) < 110 && Math.abs(pos[1] - PLATE[1]) < 60)) lay(f);
+          else flyTo(st, el, pos, REST[i], 300);
         },
       });
     });
-    // 往上滑捲起來：手指在餅皮下面，捲的那一條跟著往上跑
+    // 兩邊往內摺：手指從餅皮左邊往右滑、右邊往左滑
+    function toFold() {
+      if (phase !== 'fill') return;
+      if (!laid.length) { st.say('餅皮上還沒有料喔。', 'temple'); return; }
+      phase = 'fold'; st.buttons([{ label: '幫我摺', on: () => { fold('L'); fold('R'); } }]);
+      st.$('#foldHint').setAttribute('opacity', '1'); st.zoom(180, 360, 300);
+      st.say('先把餅皮<b>左右兩邊往中間摺</b>（料才不會掉出來）：手指從左邊往右滑，再從右邊往左滑。', 'temple');
+    }
+    function fold(side) {
+      if (phase !== 'fold' || folded[side]) return;
+      folded[side] = true; st.sfx.pop();
+      const fl = st.$('#flap' + side); st.tween(260, (k) => fl.setAttribute('opacity', k.toFixed(2)));
+      if (folded.L && folded.R) {
+        phase = 'roll0'; st.$('#foldHint').setAttribute('opacity', '0'); st.buttons([{ label: '幫我捲', primary: true, on: autoRoll }]);
+        st.say('摺好了！現在<b>從餅皮下面往上滑</b>，把它捲起來。', 'temple');
+      }
+    }
+    let fx0 = null;
     st.touch({
-      down(p) { if (laid.length >= 4 && phase === 'fill' && p.y > PLATE[1] && p.y < PLATE[1] + 130) { phase = 'roll'; startY = p.y; st.zoom(180, 330, 300); } else if (phase === 'roll') startY = p.y + roll * 140; },
-      move(p) { if (phase !== 'roll' || startY === null) return; roll = clamp((startY - p.y) / 140, roll, 1); drawRoll(); if (roll >= 1) rolled(); },
-      up() { startY = null; },
+      down(p) {
+        if (phase === 'fold') fx0 = p;
+        else if (phase === 'roll0' && p.y > PLATE[1] - 20 && p.y < PLATE[1] + 150) { phase = 'roll'; startY = p.y; }
+        else if (phase === 'roll') startY = p.y + roll * 140;
+      },
+      move(p) {
+        if (phase === 'fold' && fx0) { const dx = p.x - fx0.x; if (fx0.x < PLATE[0] && dx > 50) { fold('L'); fx0 = null; } else if (fx0.x > PLATE[0] && dx < -50) { fold('R'); fx0 = null; } return; }
+        if (phase !== 'roll' || startY === null) return; roll = clamp((startY - p.y) / 140, roll, 1); drawRoll(); if (roll >= 1) rolled();
+      },
+      up() { startY = null; fx0 = null; },
     });
     const wrap = st.$('#wrap'), rl = st.$('#roll');
     function drawRoll() {
       const bottom = PLATE[1] + 50 - roll * 100;
-      wrap.setAttribute('clip-path', '');
       st.$('#skin').setAttribute('ry', (50 * (1 - roll * .7)).toFixed(1));
       st.$('#skin').setAttribute('cy', (PLATE[1] - roll * 15).toFixed(1));
-      st.$('#fill').setAttribute('transform', `translate(0 ${(-roll * 15).toFixed(1)}) scale(1 ${(1 - roll * .7).toFixed(3)})`);
-      st.$('#fill').setAttribute('transform-origin', `${PLATE[0]} ${PLATE[1]}`);
+      for (const k of ['#fill', '#flapL', '#flapR']) { st.$(k).setAttribute('transform', `translate(0 ${(-roll * 15).toFixed(1)}) scale(1 ${(1 - roll * .7).toFixed(3)})`); st.$(k).setAttribute('transform-origin', `${PLATE[0]} ${PLATE[1]}`); }
       rl.style.display = ''; place(rl, PLATE[0], bottom, 1);
       rl.setAttribute('opacity', Math.min(1, roll * 3).toFixed(2));
     }
-    function autoRoll() { if (phase === 'end') return; phase = 'roll'; const run = () => { if (phase !== 'roll') return; roll = Math.min(1, roll + .05); drawRoll(); if (roll >= 1) rolled(); else st.later(30, run); }; run(); }
+    function autoRoll() { if (phase !== 'roll0' && phase !== 'roll') return; phase = 'roll'; const run = () => { if (phase !== 'roll') return; roll = Math.min(1, roll + .05); drawRoll(); if (roll >= 1) rolled(); else st.later(30, run); }; run(); }
+    // 捲好了：端給家人（按住捲好的潤餅拖到他的頭像，或按按鈕）
     function rolled() {
-      if (phase === 'end') return; phase = 'end'; st.buttons([]); st.reset();
+      if (phase !== 'roll') return; phase = 'serve'; st.buttons([]); st.reset();
       wrap.style.display = 'none'; place(rl, PLATE[0], PLATE[1], 1.15);
-      st.progress(2, 2); st.sfx.chime(); st.burst('star', PLATE[0], PLATE[1], 14);
-      st.floatText('潤餅捲好了', PLATE[0], PLATE[1] - 50, '#5A3A20');
-      st.later(900, () => o.done(`包了${laid.length}樣料的潤餅，香香的。清明慎終追遠，吃潤餅的時候，可以跟家人聊聊阿公阿嬤以前的故事。`));
+      st.$('#rollEnds').innerHTML = laid.slice(0, 4).map((f, k) => `<circle cx="${-70 + (k % 2) * 3}" cy="${-6 + k * 4}" r="3" fill="${f.c}"/><circle cx="${70 - (k % 2) * 3}" cy="${-6 + k * 4}" r="3" fill="${f.c}"/>`).join('');
+      st.sfx.chime(); st.burst('star', PLATE[0], PLATE[1], 10);
+      const target = SEATS[cur]; let p = [...PLATE], gone = false;
+      st.say(`捲好了！<b>按住潤餅</b>，端給${o.chars?.byId?.(fam[cur].id)?.name || '家人'}。`, 'temple');
+      const give = () => { if (gone) return; gone = true; st.tween(380, (k, e) => place(rl, p[0] + (target[0] - p[0]) * e, p[1] + (target[1] - p[1]) * e, 1.15 - e * .6), judge); };
+      st.buttons([{ label: '端過去', primary: true, on: give }]);
+      st.hold(rl, {
+        magnet: () => (gone || phase !== 'serve' ? null : [...target, 60]),
+        onMove(x, y) { if (gone || phase !== 'serve') return; p = [x, y]; place(rl, x, y, 1); },
+        onUp() { if (gone || phase !== 'serve') return; if (D(p, target) < 60) give(); else { place(rl, PLATE[0], PLATE[1], 1.15); p = [...PLATE]; } },
+      });
     }
+    function judge() {
+      const f = fam[cur], ids = laid.map((x) => x.id);
+      const miss = f.want.filter((id) => !ids.includes(id)), bad = f.no && ids.includes(f.no);
+      const good = !miss.length && !bad, [sx, sy] = SEATS[cur];
+      rl.style.display = 'none';
+      if (good) { score++; st.burst('heart', sx, sy, 12); st.sfx.chime(); st.$('#mark' + cur).innerHTML = '<circle cx="22" cy="-22" r="11" fill="#7BB35A"/><path d="M16 -22l4 4 8-8" stroke="#FFF" stroke-width="3" fill="none"/>'; }
+      else { st.sfx.knock(); st.$('#mark' + cur).innerHTML = '<circle cx="22" cy="-22" r="11" fill="#F3C64A"/><text x="22" y="-17" text-anchor="middle" font-size="14" font-weight="900" fill="#7A3A1A">~</text>'; }
+      st.floatText(good ? f.ok.slice(0, 10) : '嗯……', sx, sy - 44, good ? '#3A7A2A' : '#9A5A2A');
+      st.say(good ? `${o.chars?.byId?.(f.id)?.name || ''}：「${f.ok}」` : (bad ? f.bad : `少放了${miss.map((id) => byId(id).name).join('、')}。${f.bad}`), 'temple');
+      cur++; st.progress(cur, fam.length);
+      st.later(1400, () => {
+        if (cur >= fam.length) { phase = 'end'; finish(); return; }
+        // 下一捲：新的餅皮
+        laid = []; roll = 0; folded = { L: false, R: false }; phase = 'fill';
+        wrap.style.display = ''; rl.style.display = 'none'; st.$('#fill').innerHTML = '';
+        ['#skin', '#fill', '#flapL', '#flapR'].forEach((k) => st.$(k).removeAttribute('transform'));
+        st.$('#skin').setAttribute('ry', '50'); st.$('#skin').setAttribute('cy', PLATE[1]);
+        ['#flapL', '#flapR'].forEach((k) => st.$(k).setAttribute('opacity', '0'));
+        RUNBING.forEach((x, i) => { const el = st.$('#rb-' + x.id); el.style.display = ''; place(el, ...REST[i]); });
+        showOrder();
+      });
+    }
+    function finish() {
+      st.buttons([]); st.$('#order').innerHTML = '';
+      const all = score === fam.length;
+      st.burst('star', 180, 200, 24);
+      st.later(600, () => o.done(`${all ? '三捲都包得剛剛好，全家吃得好開心！' : `包了 ${fam.length} 捲，${score} 捲剛好合家人的口味。`}清明慎終追遠，吃潤餅的時候，可以跟家人聊聊阿公阿嬤以前的故事。`));
+    }
+    showOrder();
   },
 };
 

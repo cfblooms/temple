@@ -230,8 +230,9 @@ function puduDay(st, o) {
 
 function puduTable(st, o, next) {
   const BASE = [['fruit', fruitUrl, 64, 74], ['cakes', cakesUrl, 70, 62], ['tea', teaUrl, 66, 47], ['basin', null, 70, 40]];
-  const SPOTS = [[80, 352], [150, 346], [220, 346], [290, 356]], REST = [[60, 520], [140, 530], [220, 530], [300, 520]];
-  const XSPOTS = [[70, 420], [140, 426], [220, 426], [290, 420]]; // 前排：供品店買的
+  // 背景圖的普渡長桌桌面大約在 y 370～580：供品要「坐」在桌面上（以前擺在桌子後緣，看起來浮在半空）
+  const SPOTS = [[82, 408], [150, 402], [216, 402], [286, 410]], REST = [[60, 560], [140, 570], [220, 570], [300, 560]];
+  const XSPOTS = [[76, 478], [144, 484], [216, 484], [284, 478]]; // 前排：供品店買的
   const shopItems = () => (SHOP?.ITEMS || []).filter((it) => (it.tags || []).includes('pudu') && SHOP.pantry?.count(it.id) > 0);
   let placed = 0, extra = 0, pos = [0, 0], tabled = false;
   st.set(`${backdrop('zhongyuan', { wall: ['#D8D4CC', '#B8B0A4'], table: 380, tableColor: ['#B8A07A', '#8A7650'], extra: `<rect x="40" y="120" width="70" height="150" fill="#F4EEE2" stroke="#C8BEB0"/><rect x="250" y="120" width="70" height="150" fill="#F4EEE2" stroke="#C8BEB0"/><text x="180" y="110" text-anchor="middle" class="fest-sign" style="fill:#6A5A4A;font-size:26px">慶讚中元</text>` })}
@@ -266,8 +267,8 @@ function puduTable(st, o, next) {
     }
     st.say(`你在供品店買的普渡供品也可以擺上來：按住拿到<b>前排</b>的空位。`, 'temple');
     st.$('#zxSpots').innerHTML = XSPOTS.slice(0, list.length).map(([x, y], i) => `<ellipse id="zx${i}" cx="${x}" cy="${y + 18}" rx="26" ry="6" fill="none" stroke="#FFF" stroke-width="2" stroke-dasharray="5 5"/>`).join('');
-    const XR = list.map((_, i) => [60 + i * (240 / Math.max(1, list.length - 1 || 1)), 560]);
-    if (list.length === 1) XR[0] = [180, 560];
+    const XR = list.map((_, i) => [60 + i * (240 / Math.max(1, list.length - 1 || 1)), 584]);
+    if (list.length === 1) XR[0] = [180, 584];
     st.$('#zxItems').innerHTML = list.map((it, i) => `<g id="zxi${i}" class="fest-hit" filter="url(#fToy)">${hit(64, 64)}${it.img ? img(it.img, 60, 60) : `<circle r="24" fill="#F3C64A"/>`}<text y="44" text-anchor="middle" class="fest-tip" style="font-size:12px">${escX(it.name)}</text></g>`).join('');
     list.forEach((it, i) => {
       const el = st.$('#zxi' + i); let done = false;
@@ -305,7 +306,7 @@ function burnBoat(st, o) {
   const fh = [...Object.values(F.reg || {}), ...(F.done || [])].flatMap((r) => (r?.names || []).filter((n) => n.kind === 'cj').map((n) => n.name)).filter(Boolean);
   const all = [...new Set([...tabs.map((t) => t.name), ...fh])];
   const names = all.length ? all : ['歷代祖先'];
-  const FW = 210, FH = 268, FC = [180, 330], MOUTH = [180, FC[1] + 88], REST = [180, 560];
+  const FW = 210, FH = 268, FC = [180, 330], MOUTH = [180, FC[1] + 88], REST = [180, 528]; // 法船放高一點，不要被下面的按鈕蓋住
   st.set(`${backdrop('zhongyuan-boat', { wall: ['#1E2236', '#3A3A50'], table: 470, tableColor: ['#5A5050', '#3A3434'], extra: `
     ${Array.from({ length: 18 }, () => `<circle cx="${rand(10, 350)}" cy="${rand(10, 200)}" r="${rand(.8, 1.8).toFixed(1)}" fill="#FFF4D8" opacity="${rand(.3, .8).toFixed(2)}"/>`).join('')}` })}
     <g id="zGlow" opacity=".35" pointer-events="none"><ellipse cx="${MOUTH[0]}" cy="${MOUTH[1]}" rx="80" ry="60" fill="url(#fGlow)"/></g>
@@ -348,7 +349,7 @@ function burnBoat(st, o) {
     onMove(x, y) { if (done) return; pos = [x, y]; place(el, x, y); },
     onUp() {
       if (done) return;
-      if (D(pos, MOUTH) < 40) go();
+      if (D(pos, MOUTH) < 54) go();
       else { st.reset(); flyTo(st, el, pos, REST, 300); pos = [...REST]; }
     },
   });
