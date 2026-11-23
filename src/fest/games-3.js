@@ -69,7 +69,7 @@ const duanwu = {
       }
       if (ok >= NEED) { stood(); return false; }
     });
-    st.buttons([{ label: '幫我扶', on: () => { ok = NEED; } }]);
+    st.buttons([{ label: '幫我扶', on: () => { if (phase === 'egg') { a = 0; w = 0; stood(); } } }]); // 以前只設 ok = NEED，下一格就被扣掉，按了沒反應
     }
     function stood() {
       phase = 'sachet'; place(eggEl, BASE[0], BASE[1]); st.sfx.chime(); st.burst('star', BASE[0], BASE[1] - 40, 16);
@@ -140,7 +140,12 @@ function zongzi(st, o, next) {
     ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = ''; });
     st.progress(1, 5);
     st.say('竹葉捲好了。先放一匙<b>糯米</b>墊底，再放<b>三樣</b>喜歡的料，最後再蓋一層糯米。點一下就會放進去。', 'temple');
-    st.buttons([]);
+    st.buttons([{ label: '幫我放料', on: () => {
+      const tap = (k) => st.$(k).dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      if (!rice) tap('#zRice');
+      ZFILL.filter((f) => !layers.includes(f.id)).slice(0, Math.max(0, 3 - layers.length)).forEach((f) => tap('#zf-' + f.id));
+      tap('#zRice');
+    } }]);
   }
   const levelY = () => 50 - (rice * 16 + layers.length * 13);
   const addLayer = (c, h, tex) => { const y = levelY() - h; st.$('#zIn').insertAdjacentHTML('beforeend', `<g><rect x="-50" y="${y}" width="100" height="${h + 2}" fill="${c}"/>${tex || Array.from({ length: 6 }, () => `<circle cx="${rand(-26, 26).toFixed(1)}" cy="${(y + rand(2, h)).toFixed(1)}" r="${rand(2.5, 4.5).toFixed(1)}" fill="rgb(0 0 0 / .18)"/>`).join('')}</g>`); st.emit('spark', C[0] + rand(-20, 20), C[1] + y, { color: '#FFFDF4', speed: 30, life: .5 }); st.sfx.pop(); };

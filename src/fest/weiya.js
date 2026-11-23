@@ -35,7 +35,7 @@ const WY = [
 
 const weiya = {
   play(st, o) {
-    const BUN = [180, 384], ALTAR = [180, 238], REST = [[52, 548], [136, 556], [224, 556], [308, 548]];
+    const BUN = [180, 384], ALTAR = [180, 248], REST = [[52, 548], [136, 556], [224, 556], [308, 548]];
     let phase = 'fill', pos = [0, 0], fold = 0, startY = null, sprinkle = 0, bites = 0;
     const laid = new Set();
     st.set(`${backdrop('weiya', { wall: ['#F6D9B0', '#E8B888'], table: 470, tableColor: ['#B97A48', '#8A5430'], extra: `
@@ -45,7 +45,7 @@ const weiya = {
       <path d="M78 286v40M282 286v40" stroke="#6A2418" stroke-width="10"/>
       <rect x="40" y="306" width="280" height="150" rx="18" fill="#D8B07A" opacity=".55"/>` })}
       <g id="halo" opacity="0"><circle cx="180" cy="118" r="80" fill="url(#fGlow)"/></g>
-      <image href="${godTudi}" x="122" y="40" width="116" height="184" preserveAspectRatio="xMidYMax meet"/>
+      <image href="${godTudi}" x="122" y="64" width="116" height="184" preserveAspectRatio="xMidYMax meet"/>
       <ellipse cx="${ALTAR[0]}" cy="${ALTAR[1] + 12}" rx="58" ry="12" fill="#FFF6E2" stroke="#E0C49A" stroke-width="2"/>
       <g id="open" transform="translate(${BUN[0]} ${BUN[1]})"><g id="openArt">${art('wy-bun-open', 210, 140, bunOpen)}</g><g id="fill"></g><g id="dust"></g></g>
       <defs><mask id="wyBite" maskUnits="userSpaceOnUse" x="-200" y="-200" width="400" height="400"><rect x="-200" y="-200" width="400" height="400" fill="#fff"/><g id="bites"></g></mask></defs>

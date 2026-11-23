@@ -212,7 +212,7 @@ const runbing = {
         ${f.want.map((id, k) => `<g transform="translate(${-128 + k * 46} 2)">${rbIcon(byId(id), .62)}</g>`).join('')}
         ${f.no ? `<g transform="translate(120 2)">${rbIcon(byId(f.no), .62)}<path d="M-14 -12 L14 12 M14 -12 L-14 12" stroke="#E0443E" stroke-width="4" stroke-linecap="round"/></g>` : ''}</g>`;
       st.say(f.line + ' 把料<b>拖到餅皮上</b>（點一下也可以）。', 'temple');
-      st.buttons([{ label: '放好了，摺起來', primary: true, on: toFold }, { label: '重來', on: resetSkin }]);
+      st.buttons([{ label: '放好了，摺起來', primary: true, on: toFold }, { label: '照單放料', on: () => { resetSkin(); fam[cur].want.forEach((id) => lay(byId(id))); } }, { label: '重來', on: resetSkin }]);
     }
     function resetSkin() {
       if (phase !== 'fill') return;

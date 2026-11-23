@@ -255,7 +255,7 @@ const dongzhi = {
       st.$('#kitchen').style.display = 'none';
       const pot = st.$('#cook > g'); pot.style.display = 'none';
       st.add(`<g id="altar">
-        ${hasArt('bg-dongzhi-altar') ? `<g transform="translate(180 322.5)">${art('bg-dongzhi-altar', 360, 645, '')}</g>` : `
+        ${hasArt('bg-dongzhi-altar') ? `<g transform="translate(180 322.5)">${art('bg-dongzhi-altar', 360, 645, '')}</g><text x="180" y="62" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text>` : `
         <rect width="360" height="645" fill="#8E3324"/>
         <rect width="360" height="300" fill="#B5432E"/><path d="M0 300h360" stroke="#E2B04A" stroke-width="4"/>
         <g transform="translate(180 54)"><rect x="-70" y="-24" width="140" height="44" rx="6" fill="#E0443E" stroke="#E2B04A" stroke-width="2"/><text y="8" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text></g>
@@ -387,6 +387,7 @@ const songshen = {
     st.progress(0, 3);
     st.say('臘月廿四送灶神回天庭報告。先拿<b>刷子</b>沾左邊罐子裡的麥芽糖，塗在灶君嘴上，讓祂上天只說好話。', 'temple');
     const paintMouth = (k) => { st.$('#zjSweet').setAttribute('opacity', (k * .9).toFixed(2)); };
+    st.buttons([{ label: '幫我塗', on: () => { if (phase === 'paint') { cov = 170; paintMouth(1); sweet(); } } }]);
     st.hold(brushEl, {
       magnet: () => (phase === 'paint' && honey <= 0 ? [...JAR_MOUTH, 40] : null),
       onStart() { if (phase === 'paint') st.zoom(170, 300, 270); last = null; },
