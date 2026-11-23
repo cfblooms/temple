@@ -702,7 +702,7 @@ function hongbao(st, o) {
 
 // 初三：赤狗日，不出門、早早睡（幫虎爺蓋被子、關燈）
 function sleepIn(st, o) {
-  const TIGER = [180, 380];
+  const TIGER = [180, 412]; // 臥在背景圖的圓地毯上
   let top = 590, phase = 'cover', cord = 0, pulling = false, noise = 0, wakes = 0, lastP = null, waking = false;
   st.set(`${backdrop('chunjie-night', { wall: ['#3A3456', '#262040'], table: 470, tableColor: ['#6A4A6A', '#4A3450'], extra: `<circle cx="80" cy="110" r="28" fill="#FFF3C0"/><circle cx="92" cy="102" r="28" fill="#3A3456"/>` })}
     <ellipse cx="${TIGER[0]}" cy="${TIGER[1] + 58}" rx="130" ry="30" fill="#E0544A"/>
@@ -747,7 +747,7 @@ function sleepIn(st, o) {
       if (phase === 'cover') {
         const want = clamp(p.y - st.lift() * .4, 400, 600);
         if (want < top) { top = want; drawBlanket(); }
-        if (top <= 410) { phase = 'lamp'; st.progress(1, 2); st.sfx.pop(); st.burst('heart', TIGER[0], TIGER[1] - 40, 6); st.say('蓋好了，虎爺打呼嚕。最後把右上角燈的<b>拉繩</b>輕輕往下拉，關燈睡覺。', 'cat'); }
+        if (top <= 442) { phase = 'lamp'; st.progress(1, 2); st.sfx.pop(); st.burst('heart', TIGER[0], TIGER[1] - 40, 6); st.say('蓋好了，虎爺打呼嚕。最後把右上角燈的<b>拉繩</b>輕輕往下拉，關燈睡覺。', 'cat'); }
       } else if (phase === 'lamp' && pulling) {
         const dy = clamp(p.y - st.lift() * .4 - 244, 0, 50);
         cord = dy; st.$('#cordK').setAttribute('cy', 74 + dy); st.$('#cordL').setAttribute('y2', 70 + dy);
@@ -764,7 +764,7 @@ function sleepIn(st, o) {
     ['Z', 'z', 'Z'].forEach((z, i) => st.later(400 + i * 500, () => st.floatText(z, TIGER[0] + 60 + i * 14, TIGER[1] - 60 - i * 16, '#FFF3C0')));
     st.later(1600, () => o.done(`${wakes ? `中間吵醒虎爺 ${wakes} 次，最後還是哄睡了。` : '一次都沒吵醒虎爺，好溫柔！'}晚安。初三在家好好休息，把過年的元氣補回來。`));
   }
-  st.buttons([{ label: '幫我蓋好、關燈', on: () => { top = 405; drawBlanket(); phase = 'lamp'; lightsOff(); } }]);
+  st.buttons([{ label: '幫我蓋好、關燈', on: () => { top = 437; drawBlanket(); phase = 'lamp'; lightsOff(); } }]);
 }
 
 // 初四：接神，擺四果
