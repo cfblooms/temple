@@ -37,7 +37,10 @@ const candle = (x, id, url) => `
   </g>`;
 
 // 供品（獻供之後才出現）
-const offer = (id, url, x, y, w, h) => `<image id="${id}" class="offer" href="${url}" x="${x}" y="${y}" width="${w}" height="${h}" filter="url(#lit)" style="display:none"/>`;
+// 供品：底部 (y + h) 要落在供桌桌面上（場景座標 377～388），下面墊一圈接觸陰影才像真的放在桌上
+const offer = (id, url, x, y, w, h) => `<g id="${id}" class="offer" style="display:none">
+    <ellipse cx="${x + w / 2}" cy="${y + h - 1.5}" rx="${w * .46}" ry="2.6" fill="url(#contact)"/>
+    <image href="${url}" x="${x}" y="${y}" width="${w}" height="${h}" filter="url(#lit)"/></g>`;
 
 const lantern = (x, cls) => `
   <g class="lantern ${cls}" filter="url(#toy)">
@@ -112,8 +115,8 @@ export const SCENE_SVG = (bg) => `
   <!-- 供品：後排鮮花，前排水果、糕餅、清茶 -->
   <g id="offerings" class="hit" data-hit="offer" role="button" tabindex="0" aria-label="獻供">
     <rect x="120" y="355" width="125" height="40" fill="transparent"/>
-    ${offer('offFlowerL', flowersUrl, 121, 343, 21, 39)}${offer('offFlowerR', flowersRUrl, 223, 343, 21, 39)}
-    ${offer('offFruit', fruitUrl, 124, 366, 28, 32)}${offer('offTea', teaUrl, 164, 379, 32, 23)}${offer('offCakes', cakesUrl, 205, 369, 34, 30)}
+    ${offer('offFlowerL', flowersUrl, 120, 345, 22, 40)}${offer('offFlowerR', flowersRUrl, 222, 345, 22, 40)}
+    ${offer('offFruit', fruitUrl, 123, 354, 31, 35)}${offer('offTea', teaUrl, 164, 364, 32, 23)}${offer('offCakes', cakesUrl, 205, 357, 34, 31)}
   </g>
 
   </g>

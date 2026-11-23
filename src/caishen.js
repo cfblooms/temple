@@ -52,8 +52,8 @@ export const CAI_SVG = (bg) => `
     <radialGradient id="cHalo"><stop offset="0" stop-color="#FFF4C8" stop-opacity=".95"/><stop offset=".6" stop-color="#FFD36A" stop-opacity=".35"/><stop offset="1" stop-color="#FFD36A" stop-opacity="0"/></radialGradient>
   </defs>
   <image id="cBg" href="${bg}" x="0" y="0" width="360" height="645" preserveAspectRatio="xMidYMid slice" style="display:none"/>
-  <circle id="cHaloC" cx="180" cy="300" r="58" fill="url(#cHalo)" opacity=".3" style="mix-blend-mode:screen"/>
-  <rect class="hit" data-cai="deity" role="button" tabindex="0" aria-label="向財神爺問安" x="148" y="255" width="66" height="95" rx="20" fill="transparent"/>
+  <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="cHaloC" cx="180" cy="300" r="58" fill="url(#cHalo)" opacity=".3" style="mix-blend-mode:screen"/>
+  <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-cai="deity" role="button" tabindex="0" aria-label="向財神爺問安" x="148" y="255" width="66" height="95" rx="20" fill="transparent"/>
 
   <!-- 財氣 -->
   <g pointer-events="none">
@@ -83,7 +83,7 @@ export const CAI_SVG = (bg) => `
 </svg>`;
 
 export function initCaishen(api) {
-  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc } = api;
+  const { $, state, save, say, sfx, burst, emit, openSheet, closeSheet, dayKey, esc, cam } = api;
   const host = $('#caiHost');
   host.innerHTML = CAI_SVG(bgUrl);
   const svg = host.querySelector('svg');
@@ -110,23 +110,23 @@ export function initCaishen(api) {
     addWealth(88 + bonus, 304, 520);
     say(`摸到金元寶了！今日財氣 +88${bonus ? `，連續 ${cai.streak} 天再加 ${bonus}` : ''}。${cai.streak >= 7 ? '連續一整週，財神爺都記住你了。' : '明天再來，連續天數越多，財氣越高。'}`, 'god');
   }
-  ingot.addEventListener('pointerdown', (e) => { e.preventDefault(); ingot.setPointerCapture(e.pointerId); const p = pt(e); rub = { x: p.x, y: p.y, d: 0, last: 0 }; });
+  ingot.addEventListener('pointerdown', (e) => { e.preventDefault(); ingot.setPointerCapture(e.pointerId); const p = pt(e); rub = { x: p.x, y: p.y, d: 0, last: 0 }; cam?.zoom(304, 520, 200); });
   ingot.addEventListener('pointermove', (e) => {
     if (!rub) return;
     const p = pt(e); rub.d += Math.hypot(p.x - rub.x, p.y - rub.y); rub.x = p.x; rub.y = p.y;
-    if (rub.d - rub.last > 30) { rub.last = rub.d; emit('spark', p.x, p.y); ingot.classList.toggle('rub'); }
-    if (rub.d > 420) { rub = null; ingot.classList.remove('rub'); rubDone(); }
+    if (rub.d - rub.last > 30) { rub.last = rub.d; emit('spark', 284 + Math.random() * 40, 525 + Math.random() * 25); ingot.classList.toggle('rub'); } // 火花冒在元寶上，不是手指下
+    if (rub.d > 420) { rub = null; ingot.classList.remove('rub'); rubDone(); cam?.reset(1400); }
   });
   const rubEnd = () => {
     if (!rub) return;
-    const short = rub.d < 12; rub = null; ingot.classList.remove('rub');
+    const short = rub.d < 12; rub = null; ingot.classList.remove('rub'); cam?.reset(300);
     if (short) hintRub();
   };
   ingot.addEventListener('pointerup', rubEnd); ingot.addEventListener('pointercancel', rubEnd);
   ingot.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); rubDone(); } });
   function hintRub() {
     ingot.classList.remove('wiggle'); void ingot.getBoundingClientRect(); ingot.classList.add('wiggle');
-    say('用手指按住右下角的大金元寶，來回摸一摸，把財氣摸到身上。');
+    say('按住右下角的大金元寶，手指可以滑到旁邊<b>來回摸</b>，不用一直壓在元寶上，把財氣摸到身上。');
   }
 
   /* ----- 擲金幣進聚寶盆 ----- */
@@ -146,7 +146,7 @@ export function initCaishen(api) {
     const p = pt(e), now = performance.now();
     drag.samples.push([p.x, p.y, now]); while (drag.samples.length > 2 && now - drag.samples[0][2] > 90) drag.samples.shift();
     drag.moved += 1;
-    placeCoin(p.x - drag.ox, p.y - drag.oy);
+    placeCoin(p.x, p.y - 40); // 金幣在手指上方
   });
   const coinUp = () => {
     if (!drag) return;
