@@ -1,5 +1,5 @@
 // 第二批節慶小遊戲：天公生、元宵、清明
-import { art, clamp, rand, pick, place } from './core.js';
+import { art, hasArt, clamp, rand, pick, place } from './core.js';
 import { backdrop } from './games-1.js';
 
 const D = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -31,7 +31,7 @@ const tiangong = {
       <rect x="66" y="300" width="228" height="16" fill="#C8462E"/><rect x="74" y="316" width="10" height="70" fill="#8A3020"/><rect x="276" y="316" width="10" height="70" fill="#8A3020"/>
       <rect x="66" y="300" width="228" height="10" fill="#E8B060" opacity=".6"/>
       <rect x="90" y="388" width="180" height="10" fill="#E0443E"/><rect x="40" y="430" width="280" height="16" fill="#A8402A"/>
-      <text x="300" y="296" class="fest-small" fill="#FFE29A">頂桌</text><text x="276" y="426" class="fest-small" fill="#FFE29A">下桌</text>` })}
+      <text x="300" y="296" class="fest-small" fill="#FFE29A">頂桌</text><text x="276" y="426" class="fest-small" fill="#FFE29A">下桌</text>`, over: `<text x="180" y="96" text-anchor="middle" class="fest-sign">天公</text><text x="300" y="282" class="fest-small" fill="#FFE29A">頂桌</text><text x="300" y="386" class="fest-small" fill="#FFE29A">下桌</text>` })}
       ${TOP.map(([x, y], i) => `<ellipse id="ts${i}" cx="${x}" cy="${y + 12}" rx="22" ry="6" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 4"/>`).join('')}
       ${LOW.map(([x, y], i) => `<ellipse id="ls${i}" cx="${x}" cy="${y + 14}" rx="26" ry="6" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 4"/>`).join('')}
       ${CANE.map(([x, y], i) => `<rect id="cs${i}" x="${x - 9}" y="${y - 112}" width="18" height="224" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="6 5" opacity="0"/>`).join('')}
@@ -107,10 +107,12 @@ const RIDDLES = [
   { q: '一個老公公，天天起得早，白天出去晚上回，從來不說話。（猜一樣東西）', a: '太陽', opts: ['太陽', '月亮', '公雞'] },
 ];
 const WISHES = ['平安順利', '身體健康', '考試順利', '財源廣進', '好姻緣', '家庭和樂'];
-const lantern = (lit) => `<line x1="0" y1="-60" x2="0" y2="-34" stroke="#7A3A1A" stroke-width="2"/><rect x="-12" y="-38" width="24" height="7" rx="2" fill="#E0A440"/>
+const lantern = (lit) => hasArt('yx-lantern') ? `<line x1="0" y1="-60" x2="0" y2="-42" stroke="#7A3A1A" stroke-width="2"/>${lit ? '<ellipse rx="46" ry="48" fill="url(#fGlow)" opacity=".8"/>' : ''}
+  <g style="filter:${lit ? 'brightness(1.12) saturate(1.1)' : 'brightness(.72) saturate(.8)'}" transform="translate(0 4)">${art('yx-lantern', 70, 93, '')}</g>` : `<line x1="0" y1="-60" x2="0" y2="-34" stroke="#7A3A1A" stroke-width="2"/><rect x="-12" y="-38" width="24" height="7" rx="2" fill="#E0A440"/>
   <ellipse rx="30" ry="32" fill="${lit ? '#FF5A3A' : '#B8483A'}"/>${lit ? '<ellipse rx="40" ry="42" fill="url(#fGlow)" opacity=".7"/>' : ''}<path d="M0-32c-14 6-14 58 0 64M0-32c14 6 14 58 0 64" stroke="#FFC94A" stroke-width="1.6" fill="none"/>
   <rect x="-12" y="30" width="24" height="7" rx="2" fill="#E0A440"/><path d="M-6 37v14M0 37v18M6 37v14" stroke="#E0A440" stroke-width="2"/>`;
-const skyLantern = (wish) => `<path d="M-46 60 L-56 -60 Q0 -86 56 -60 L46 60Z" fill="#FFF0C8" stroke="#E0A440" stroke-width="2"/><ellipse cy="60" rx="46" ry="8" fill="#E0A440"/><ellipse cy="52" rx="16" ry="10" fill="url(#fGlow)"/>
+const skyLantern = (wish) => hasArt('yx-skylantern') ? `<ellipse cy="40" rx="60" ry="70" fill="url(#fGlow)" opacity=".6"/>${art('yx-skylantern', 116, 160, '')}
+  ${[...wish].map((c, i, a) => `<text y="${-40 + i * (90 / Math.max(4, a.length))}" text-anchor="middle" class="fest-cp" fill="#FFF6DA" style="fill:#FFF6DA;font-size:${a.length > 4 ? 18 : 22}px;paint-order:stroke;stroke:#A8281E;stroke-width:3px">${c}</text>`).join('')}` : `<path d="M-46 60 L-56 -60 Q0 -86 56 -60 L46 60Z" fill="#FFF0C8" stroke="#E0A440" stroke-width="2"/><ellipse cy="60" rx="46" ry="8" fill="#E0A440"/><ellipse cy="52" rx="16" ry="10" fill="url(#fGlow)"/>
   ${[...wish].map((c, i, a) => `<text y="${-30 + i * (90 / Math.max(4, a.length))}" text-anchor="middle" class="fest-cp" fill="#C8382E" style="font-size:${a.length > 4 ? 18 : 22}px">${c}</text>`).join('')}`;
 
 const yuanxiao = {

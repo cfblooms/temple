@@ -1,5 +1,5 @@
 // 第三批節慶小遊戲：端午、七夕、中元、中秋、重陽
-import { art, clamp, rand, pick, place } from './core.js';
+import { art, hasArt, clamp, rand, pick, place } from './core.js';
 import { backdrop } from './games-1.js';
 import tigerAwakeUrl from '../assets/tiger-awake.webp';
 import tigerHappyUrl from '../assets/tiger-happy.webp';
@@ -26,7 +26,7 @@ const duanwu = {
       <circle cx="70" cy="90" r="34" fill="#FFE07A"/><circle cx="70" cy="90" r="50" fill="#FFE07A" opacity=".25"/>
       <rect x="230" y="70" width="110" height="240" fill="#8A5A3A"/><rect x="242" y="82" width="86" height="216" fill="#C8302A"/>
       <path d="M244 90 l18 -40 M250 92 l26 -48 M256 92 l8 -52" stroke="#5E9A4A" stroke-width="5" stroke-linecap="round"/><path d="M318 92 l-14 -46 M312 92 l-24 -40" stroke="#7BB35A" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="${HOOK[0]}" cy="${HOOK[1] - 46}" r="5" fill="#F3C64A"/>` })}
+      <circle cx="${HOOK[0]}" cy="${HOOK[1] - 46}" r="5" fill="#F3C64A"/>`, over: `<circle cx="${HOOK[0]}" cy="${HOOK[1] - 46}" r="5" fill="#F3C64A"/>` })}
       <ellipse cx="${BASE[0]}" cy="${BASE[1] + 2}" rx="40" ry="6" fill="#000" opacity=".12"/>
       <g id="egg"><g transform="translate(0 -34)">${art('dw-egg', 54, 72, egg)}</g></g>
       <g id="meter" transform="translate(180 500)"><rect x="-70" y="-6" width="140" height="12" rx="6" fill="#FFF" opacity=".7"/><rect id="meterFill" x="-70" y="-6" width="0" height="12" rx="6" fill="#3E9E86"/></g>
@@ -147,14 +147,14 @@ const qixi = {
 
 /* ================= 中秋：剝柚子、柚子帽給虎爺 ================= */
 const pomelo = (p) => `<circle r="56" fill="#F7EBD0"/>${Array.from({ length: 10 }, (_, i) => `<path d="M0 0 L${(Math.cos(i / 10 * 6.283) * 50).toFixed(1)} ${(Math.sin(i / 10 * 6.283) * 50).toFixed(1)}" stroke="#F0D8A8" stroke-width="2"/>`).join('')}
-  <circle id="peel" r="60" fill="#B8D86A" stroke="#8AAE4A" stroke-width="3"/><path id="peelHi" d="M-30 -30 q10 -14 26 -16" stroke="#E0F0A8" stroke-width="6" fill="none" stroke-linecap="round"/>`;
+  ${hasArt('zq-pomelo') ? `<g id="peel" transform="translate(4 -2)">${art('zq-pomelo', 124, 127, '')}</g><path id="peelHi" opacity="0"` : `<circle id="peel" r="60" fill="#B8D86A" stroke="#8AAE4A" stroke-width="3"/><path id="peelHi"`} d="M-30 -30 q10 -14 26 -16" stroke="#E0F0A8" stroke-width="6" fill="none" stroke-linecap="round"/>`;
 const hat = `${hit(110, 70)}<path d="M-52 18 Q-56 -40 0 -44 Q56 -40 52 18 Q0 30 -52 18Z" fill="#B8D86A" stroke="#8AAE4A" stroke-width="3"/><path d="M-50 16 Q0 26 50 16" stroke="#F7EBD0" stroke-width="6" fill="none"/><path d="M0 -44 q-4 -14 6 -22" stroke="#6A8A3A" stroke-width="4" fill="none" stroke-linecap="round"/><ellipse cx="12" cy="-62" rx="10" ry="5" fill="#7BB35A" transform="rotate(-20 12 -62)"/>`;
 
 const zhongqiu = {
   play(st, o) {
     const POM = [180, 320], TIGER = [282, 548], HEAD = [276, 484];
     let acc = 0, lastA = null, phase = 'peel';
-    st.set(`${backdrop('zhongqiu', { wall: ['#1E2440', '#3A3050'], table: 430, tableColor: ['#8A6A4A', '#5A4430'], extra: `<circle id="moon" cx="280" cy="100" r="46" fill="#FFF0B8" opacity=".75"/><circle cx="280" cy="100" r="70" fill="#FFF0B8" opacity=".12"/>` })}
+    st.set(`${backdrop('zhongqiu', { wall: ['#1E2440', '#3A3050'], table: 430, tableColor: ['#8A6A4A', '#5A4430'], extra: `<circle id="moon" cx="280" cy="100" r="46" fill="#FFF0B8" opacity=".75"/><circle cx="280" cy="100" r="70" fill="#FFF0B8" opacity=".12"/>`, over: `<circle id="moon" cx="280" cy="100" r="46" fill="url(#fGlow)" opacity="0"/>` })}
       <circle id="ring" cx="${POM[0]}" cy="${POM[1]}" r="96" fill="none" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8" opacity=".6"/>
       <g id="pom" transform="translate(${POM[0]} ${POM[1]})">${pomelo()}</g>
       <g id="tiger" transform="translate(${TIGER[0]} ${TIGER[1]})">${img(tigerAwakeUrl, 140, 168)}</g>
