@@ -28,6 +28,7 @@ function seedRand(str) {
   return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; };
 }
 
+import { qiyuBoost } from './testmode.js';
 export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName, openSheet, dayKey, esc, burst, lunar }) {
   const wrap = $('#sceneWrap');
   // 右上角（供品籃下面）的委託小晶片
@@ -113,7 +114,7 @@ export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName
     showToast(`<b>✦ 奇遇・${e.name}</b><br>${e.text}${first ? `<br>第一次遇到，收進奇遇圖鑑，福氣 +${QIYU_FU}` : ''}`);
     return true;
   }
-  const chance = (p) => Math.random() < p;
+  const chance = (p) => Math.random() < (qiyuBoost ? Math.max(p, .5) : p); // 試玩模式可以調成很容易遇到
 
   /* ---------- 香火 ---------- */
   function xh(h) {
