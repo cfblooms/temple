@@ -321,7 +321,7 @@ function equip(kind, then) {
   zoomIn();
   if (kind === 'lighter') { S('wickRings').style.display = ''; paintWickRings(); tapBtn(true); }
 }
-const LIGHTER_REST = [282, 424], HAND = [182, 488];
+const LIGHTER_REST = [272, 428], HAND = [182, 488];
 function pullOut(x, y) {
   const t0 = performance.now(), D = REDUCED_MOTION ? 1 : 320;
   onTick(() => {
