@@ -383,6 +383,7 @@ const jar = (w, h) => `<ellipse cy="${h * .38}" rx="${w * .42}" ry="${h * .08}" 
   <rect x="${-w * .18}" y="${-h * .02}" width="${w * .36}" height="${h * .22}" fill="#E0443E"/><text y="${h * .16}" text-anchor="middle" class="fest-small" fill="#FFE29A">糖</text>`;
 const brush = () => `<rect x="-20" y="-10" width="40" height="80" fill="#000" opacity="0"/><path d="M0 0 L-5 -2 L-4 10 L4 10 L5 -2Z" fill="#F3E2C0" stroke="#8A6234" stroke-width="1"/><circle id="brushTip" cy="-1" r="4.4" fill="#E8A030" opacity="0"/><rect x="-3" y="10" width="6" height="58" rx="3" fill="#B0703E"/>`;
 const duster = () => {
+  if (hasArt('ss-duster')) return `<rect x="-26" y="-60" width="52" height="144" fill="#000" opacity="0"/><g transform="translate(0 -5)">${art('ss-duster', 57, 130, '')}</g>`;
   // 雞毛撢子：木柄＋一束放射狀的雞毛（橘、褐、米白），底部紅線綁紮，柄尾有紅穗
   const cols = ['#8A4A22', '#B8662E', '#D9893C', '#E8B46A', '#F3D9A8', '#C9772F'];
   const feather = (a, len, c, w) => `<g transform="rotate(${a} 0 8)"><path d="M0 8 C${-w} ${8 - len * .3} ${-w * 1.1} ${8 - len * .75} 0 ${8 - len} C${w * 1.1} ${8 - len * .75} ${w} ${8 - len * .3} 0 8Z" fill="${c}" stroke="#6A3A18" stroke-width=".9"/><path d="M0 8 L0 ${8 - len + 4}" stroke="#5A2E12" stroke-width="1.1" opacity=".7"/><path d="M0 ${8 - len * .3} L${-w * .8} ${8 - len * .45} M0 ${8 - len * .5} L${w * .85} ${8 - len * .64} M0 ${8 - len * .68} L${-w * .6} ${8 - len * .8}" stroke="#FFF2D0" stroke-width=".9" opacity=".55" fill="none"/></g>`;

@@ -129,26 +129,26 @@ function zongzi(st, o, next) {
       <linearGradient id="zFaceR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4A8A34"/><stop offset="1" stop-color="#2A5E1E"/></linearGradient>
     </defs>
     <g id="zLeaf" transform="translate(${C[0]} ${C[1]})">
-      ${leaf('zLeafFlat', 'M-118 26 C-60 -20 40 -26 118 -12 C50 14 -40 34 -118 26Z', 'M-112 24 C-40 4 40 -6 112 -12', 'url(#zLeafG)')}
-      ${leaf('zLeafFlat2', 'M-118 50 C-50 10 40 6 118 18 C40 46 -40 58 -118 50Z', 'M-112 48 C-40 32 40 24 112 18', 'url(#zLeafG)')}
+      ${hasArt('dw-leaf') ? `<g id="zLeafFlat">${art('dw-leaf', 250, 172, '')}</g><g id="zLeafFlat2"></g>` : `${leaf('zLeafFlat', 'M-118 26 C-60 -20 40 -26 118 -12 C50 14 -40 34 -118 26Z', 'M-112 24 C-40 4 40 -6 112 -12', 'url(#zLeafG)')}
+      ${leaf('zLeafFlat2', 'M-118 50 C-50 10 40 6 118 18 C40 46 -40 58 -118 50Z', 'M-112 48 C-40 32 40 24 112 18', 'url(#zLeafG)')}`}
       <g id="zCone" opacity="0">
-        <path d="M-54 -62 Q0 -50 54 -62 L4 62 Q0 66 -4 62Z" fill="url(#zLeafG)" stroke="#2E6A22" stroke-width="2"/>
+        ${hasArt('dw-cone') ? `<g transform="translate(0 -4)">${art('dw-cone', 128, 208, '')}</g><g id="zIn" transform="translate(0 -6)"></g>` : `<path d="M-54 -62 Q0 -50 54 -62 L4 62 Q0 66 -4 62Z" fill="url(#zLeafG)" stroke="#2E6A22" stroke-width="2"/>
         <clipPath id="zClip"><path d="M-48 -58 Q0 -48 48 -58 L0 54Z"/></clipPath>
         <g clip-path="url(#zClip)"><g id="zIn"></g></g>
         <path d="M-54 -62 Q-30 0 -4 62" stroke="#2E6A22" stroke-width="1.4" fill="none" opacity=".6"/>
         <path d="M54 -62 Q10 -40 -10 -52 L4 62" fill="#5FA846" opacity=".55"/>
-        <path d="M-54 -62 Q0 -50 54 -62" stroke="#B8E09A" stroke-width="3" fill="none"/>
+        <path d="M-54 -62 Q0 -50 54 -62" stroke="#B8E09A" stroke-width="3" fill="none"/>`}
       </g>
       <g id="zDone" opacity="0">
-        <ellipse cy="40" rx="58" ry="8" fill="#000" opacity=".18"/>
+        ${hasArt('dw-zongzi-bare') ? `<ellipse cy="48" rx="62" ry="8" fill="#000" opacity=".18"/><g transform="translate(0 -14)">${art('dw-zongzi-bare', 150, 132, '')}</g><g id="zStr"></g><g id="zFin" opacity="0" transform="translate(0 -22)">${art('dw-zongzi', 150, 140, '')}</g>` : `<ellipse cy="40" rx="58" ry="8" fill="#000" opacity=".18"/>
         <path d="M-60 34 Q-34 -14 -2 -60 Q4 -64 8 -58 L22 38 Q-20 46 -60 34Z" fill="url(#zFaceL)" stroke="#2E6A22" stroke-width="2" stroke-linejoin="round"/>
         <path d="M8 -58 Q34 -12 58 26 Q40 38 22 38Z" fill="url(#zFaceR)" stroke="#2E6A22" stroke-width="2" stroke-linejoin="round"/>
         ${veins(6, -50, 14, 34, -40)}
         <path d="M-46 30 Q-22 -6 2 -52" stroke="#A8D88A" stroke-width="1.6" fill="none" opacity=".6"/>
-        <g id="zStr"></g>
+        <g id="zStr"></g>`}
       </g>
     </g>
-    <g id="zRice" class="fest-hit" data-nograb transform="translate(300 520)"><ellipse cx="0" cy="8" rx="30" ry="9" fill="#C8A878"/><ellipse rx="30" ry="12" fill="#FFFDF4" stroke="#D8C8A8"/>${riceTex(-8, 14)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">糯米</text></g>
+    <g id="zRice" class="fest-hit" data-nograb transform="translate(300 520)">${hasArt('dw-rice') ? art('dw-rice', 72, 64, '') : `<ellipse cx="0" cy="8" rx="30" ry="9" fill="#C8A878"/><ellipse rx="30" ry="12" fill="#FFFDF4" stroke="#D8C8A8"/> ${riceTex(-8, 14)}`}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">糯米</text></g>
     ${ZFILL.map((f, i) => `<g id="zf-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)" transform="translate(${TRAY[i][0]} ${TRAY[i][1]})">${art('dw-' + f.id, 52, 40, `<circle r="15" fill="#FFF" stroke="#D8C8B0"/>${f.id === 'yolk' ? '<circle r="9" fill="#F0A020"/>' : f.id === 'pork' ? '<rect x="-10" y="-7" width="20" height="14" rx="4" fill="#7A3A1E"/><rect x="-10" y="-2" width="20" height="3" fill="#F4E0C0"/>' : `${[[-5, -3], [5, -4], [0, 5], [-6, 5], [6, 4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${f.c}"/>`).join('')}`}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}
     <g id="zPad" opacity="0" pointer-events="none"><circle cx="${C[0]}" cy="${C[1] + 120}" r="48" fill="none" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8"/><text x="${C[0]}" y="${C[1] + 126}" text-anchor="middle" class="fest-tip">在這裡畫圈綁繩</text></g>`;
   ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = 'none'; });
@@ -172,7 +172,7 @@ function zongzi(st, o, next) {
     } }]);
   }
   const levelY = () => 50 - (rice * 16 + layers.length * 13);
-  const addLayer = (c, h, tex) => { const y = levelY() - h; st.$('#zIn').insertAdjacentHTML('beforeend', `<g><rect x="-50" y="${y}" width="100" height="${h + 2}" fill="${c}"/>${tex || Array.from({ length: 6 }, () => `<circle cx="${rand(-26, 26).toFixed(1)}" cy="${(y + rand(2, h)).toFixed(1)}" r="${rand(2.5, 4.5).toFixed(1)}" fill="rgb(0 0 0 / .18)"/>`).join('')}</g>`); st.emit('spark', C[0] + rand(-20, 20), C[1] + y, { color: '#FFFDF4', speed: 30, life: .5 }); st.sfx.pop(); };
+  const addLayer = (c, h, tex) => { if (hasArt('dw-cone')) { const n = st.$('#zIn').children.length; st.$('#zIn').insertAdjacentHTML('beforeend', `<ellipse cx="${rand(-3, 3).toFixed(1)}" cy="${(0 - n * 5).toFixed(1)}" rx="${(38 - n * 3).toFixed(1)}" ry="${(11 - n * .6).toFixed(1)}" fill="${c}" stroke="rgb(0 0 0 / .22)" stroke-width="1"/>${tex ? '' : Array.from({ length: 4 }, () => `<circle cx="${rand(-24, 24).toFixed(1)}" cy="${(0 - n * 5 + rand(-4, 4)).toFixed(1)}" r="2.5" fill="rgb(0 0 0 / .16)"/>`).join('')}`); st.emit('spark', C[0] + rand(-20, 20), C[1] - 30, { color: '#FFFDF4', speed: 30, life: .5 }); st.sfx.pop(); return; } const y = levelY() - h; st.$('#zIn').insertAdjacentHTML('beforeend', `<g><rect x="-50" y="${y}" width="100" height="${h + 2}" fill="${c}"/>${tex || Array.from({ length: 6 }, () => `<circle cx="${rand(-26, 26).toFixed(1)}" cy="${(y + rand(2, h)).toFixed(1)}" r="${rand(2.5, 4.5).toFixed(1)}" fill="rgb(0 0 0 / .18)"/>`).join('')}</g>`); st.emit('spark', C[0] + rand(-20, 20), C[1] + y, { color: '#FFFDF4', speed: 30, life: .5 }); st.sfx.pop(); };
   st.$('#zRice').addEventListener('click', () => {
     if (phase !== 'fill') return;
     if (rice === 0) { addLayer('#FFF8E8', 16, riceTex(levelY() - 16, 14)); rice = 1; st.say('糯米墊好了。再放<b>三樣料</b>。', 'temple'); return; }
@@ -201,7 +201,11 @@ function zongzi(st, o, next) {
     const turns = Math.min(3, Math.floor(acc / (Math.PI * 2)));
     // 棉繩：每一圈都照著錐面的寬度繞（越上面越窄），先畫陰影再畫亮面，最後在頂上打結留一條掛繩
     const band = (y) => { const k = (38 - y) / 96, hl = -60 + 58 * k, hr = 58 - 50 * k, mid = 22 - 14 * k; return `M${hl.toFixed(1)} ${(y - 2).toFixed(1)} Q${((hl + mid) / 2).toFixed(1)} ${(y + 6).toFixed(1)} ${mid.toFixed(1)} ${(y + 4).toFixed(1)} L${hr.toFixed(1)} ${(y - 6).toFixed(1)}`; };
-    st.$('#zStr').innerHTML = Array.from({ length: turns }, (_, i) => { const d = band(20 - i * 24); return `<path d="${d}" stroke="#9A7A40" stroke-width="5" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#F2E2B4" stroke-width="2.6" fill="none" stroke-linecap="round"/>`; }).join('')
+    if (hasArt('dw-zongzi-bare')) {
+      const bw = (y) => 20 + (y + 70) * .4;
+      st.$('#zStr').innerHTML = Array.from({ length: Math.min(turns, 2) }, (_, i) => { const y = 22 - i * 26, h = bw(y), d = `M${-h} ${y - 4} Q0 ${y + 12} ${h} ${y - 4}`; return `<path d="${d}" stroke="#8A6A30" stroke-width="5" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#F2E2B4" stroke-width="2.6" fill="none" stroke-linecap="round"/>`; }).join('');
+      if (turns >= 3) { st.$('#zStr').innerHTML = ''; st.$('#zFin').setAttribute('opacity', '1'); }
+    } else st.$('#zStr').innerHTML = Array.from({ length: turns }, (_, i) => { const d = band(20 - i * 24); return `<path d="${d}" stroke="#9A7A40" stroke-width="5" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#F2E2B4" stroke-width="2.6" fill="none" stroke-linecap="round"/>`; }).join('')
       + (turns >= 3 ? '<path d="M6 -58 Q-6 -84 6 -112" stroke="#9A7A40" stroke-width="4" fill="none"/><path d="M6 -58 Q-6 -84 6 -112" stroke="#F2E2B4" stroke-width="2" fill="none"/><circle cx="6" cy="-58" r="4" fill="#E2CC94" stroke="#9A7A40"/>' : '');
     if (turns >= 3 && phase === 'tie') {
       phase = 'done'; st.$('#zPad').setAttribute('opacity', '0'); st.buttons([]);
