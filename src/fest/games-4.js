@@ -66,7 +66,9 @@ const qigui = {
       <g id="qgNext" opacity="0" pointer-events="none"><g opacity=".35">${turtle(110, 80)}</g><ellipse rx="52" ry="40" fill="none" stroke="#FFE29A" stroke-width="2.5" stroke-dasharray="6 5"/><text id="qgNextTxt" y="-48" text-anchor="middle" class="fest-small" fill="#FFE29A"></text></g>
       <g id="qgGui" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgGuiArt">${turtle(110, 80)}</g></g>
       <g id="qgBasket" transform="translate(${BASKET[0]} ${BASKET[1]})">${art('qg-basket', 110, 100, basket)}</g>
-      <g id="qgBack" style="display:none" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgBackArt">${turtle(110, 80)}</g></g>`);
+      <g id="qgBack" style="display:none" class="fest-hit" filter="url(#fToy)"><circle r="60" fill="#000" opacity="0"/><g id="qgBackArt">${turtle(110, 80)}</g></g>
+      <clipPath id="qgBF"><path d="M-60 -9 Q0 19 60 -9 L60 70 L-60 70Z"/></clipPath>
+      <g id="qgBasketFront" pointer-events="none" style="display:none" transform="translate(${BASKET[0]} ${BASKET[1]})"><g clip-path="url(#qgBF)">${art('qg-basket', 110, 100, basket)}</g></g>`);
     const gui = st.$('#qgGui'), info = st.$('#qgInfo');
     let shownLv = 0;
     const nextEl = st.$('#qgNext');
@@ -166,17 +168,22 @@ const qigui = {
     function take() {
       const sz = SIZES[level]; let pos = [...ALTAR], done = false;
       gui.style.opacity = '1'; showSize();
+      const bs = clamp(sz.s * 1.3, 1, 2.2), BIN = [BASKET[0], BASKET[1] - 15 * bs]; // 籃子跟著紅龜的大小換大一點的
+      st.tween(300, (k, e) => place(st.$('#qgBasket'), ...BASKET, 1 + (bs - 1) * e));
       st.buttons([{ label: '幫我放進籃子', on: () => put() }]);
       st.say(`按住<b>${sz.name}</b>，把它端到下面的竹籃裡帶回家。`, 'temple');
       st.zoom(180, 430, 300);
       st.hold(gui, {
-        magnet: () => (done ? null : [BASKET[0], BASKET[1] - 24, 50]),
+        magnet: () => (done ? null : [...BIN, 50 + 10 * bs]),
         onMove(x, y) { if (done) return; pos = [x, y]; place(gui, x, y, sz.s * 1.05); },
-        onUp() { if (done) return; if (D(pos, [BASKET[0], BASKET[1] - 24]) < 44) put(); else flyTo(st, gui, pos, ALTAR, 300, sz.s, sz.s); },
+        onUp() { if (done) return; if (D(pos, BIN) < 44 + 10 * bs) put(); else flyTo(st, gui, pos, ALTAR, 300, sz.s, sz.s); },
       });
       function put() {
         if (done) return; done = true; st.buttons([]);
-        place(gui, BASKET[0], BASKET[1] - 24, sz.s * .8); st.reset();
+        // 紅龜「放進」籃子：籃子跟著紅龜變大，籃子前緣（qgBasketFront）蓋在紅龜前面，看起來是裝在裡面
+        const bf = st.$('#qgBasketFront');
+        place(st.$('#qgBasket'), ...BASKET, bs); place(bf, ...BASKET, bs); bf.style.display = '';
+        flyTo(st, gui, pos, BIN, 220, sz.s, sz.s * .82); st.reset();
         st.sfx.pop(); st.burst('star', BASKET[0], BASKET[1] - 30, 16); st.progress(4, 4);
         if (keep) { state.qigui = { y: year, lv: level, jin: sz.jin }; save(); }
         const twice = jinTxt(sz.jin * 2);

@@ -1,6 +1,6 @@
 // 第一批節慶小遊戲：冬至（搓湯圓、下鍋、拜神明祖先）、送神、除夕、春節（初一～初五）
 // 座標 360 × 645。道具有 Gemini 圖（src/assets/fest/<key>.webp）就用圖，沒有先用 SVG 手繪。
-import { art, hasArt, artUrl, clamp, rand, pick, place } from './core.js';
+import { art, hasArt, artUrl, sitImg, sitArt, clamp, rand, pick, place } from './core.js';
 import burnerUrl from '../assets/burner.webp';
 import lighterUrl from '../assets/lighter.webp';
 import tigerSleepUrl from '../assets/tiger-sleep.webp';
@@ -10,6 +10,12 @@ import flowersUrl from '../assets/offer/flowers.webp';
 import cakesUrl from '../assets/offer/cakes.webp';
 import teaUrl from '../assets/offer/tea.webp';
 import mazuUrl from '../assets/gods/mazu.webp';
+import caishenUrl from '../assets/gods/caishen.webp';
+import bzFishUrl from '../assets/bz/fish.webp';
+import bzChickenUrl from '../assets/bz/chicken.webp';
+import bzFotiaoUrl from '../assets/bz/fotiao.webp';
+import bzKongUrl from '../assets/bz/kong.webp';
+import tudiUrl from '../assets/gods/tudigong.webp';
 
 const D = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 // 背景：有 bg-<id> 圖就用，沒有就畫一面暖色牆＋木桌
@@ -56,6 +62,10 @@ const sieve = (w, h) => `<ellipse cy="${h * .12}" rx="${w * .5}" ry="${h * .36}"
   <ellipse rx="${w * .42}" ry="${h * .28}" fill="none" stroke="#C99A55" stroke-width="1.5" stroke-dasharray="3 3"/>
   <path d="M${-w * .4} 0h${w * .8}M0 ${-h * .27}v${h * .54}" stroke="#C99A55" stroke-width="1" opacity=".6"/>`;
 // 湯鍋＋瓦斯爐
+// 揉湯圓的圓木板（斜看是橢圓）：邊框厚度、木紋、撒一點麵粉
+const board = `<ellipse cy="9" rx="96" ry="31" fill="#8A5A2E"/><ellipse rx="96" ry="31" fill="#D9A866"/><ellipse rx="88" ry="27" fill="#E6BC7E"/>
+  ${[18, 34, 52, 70].map((r) => `<ellipse rx="${r}" ry="${(r * .3).toFixed(1)}" fill="none" stroke="#C99A5C" stroke-width="1.2" opacity=".6"/>`).join('')}
+  ${[[-46, -6, 16], [32, 8, 12], [-10, 12, 9], [54, -10, 8], [-62, 10, 7]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${(r * .35).toFixed(1)}" fill="#FFFDF6" opacity=".55"/>`).join('')}`;
 const pot = (w, h) => `<rect x="${-w * .42}" y="${h * .28}" width="${w * .84}" height="${h * .2}" rx="8" fill="#3E3A38"/>
   <g class="dz-flame">${[-.22, 0, .22].map((k) => `<path d="M${w * k - 7} ${h * .3}Q${w * k} ${h * .12} ${w * k + 7} ${h * .3}Z" fill="#5AA8FF" opacity=".9"/>`).join('')}</g>
   <path d="M${-w * .46} ${-h * .12}L${-w * .4} ${h * .3}Q0 ${h * .4} ${w * .4} ${h * .3}L${w * .46} ${-h * .12}Z" fill="#8C8F96" stroke="#5E6168" stroke-width="2"/>
@@ -72,13 +82,14 @@ const censer = (lit) => `<g><path d="M-14 0h28l-4 14h-20z" fill="#B8892E" stroke
 
 const dongzhi = {
   play(st, o) {
-    const N = 6, BOARD = [180, 318], PAD = [180, 452], SIEVE = [272, 566], POT = [180, 420];
+    const N = 6, BOARD = [180, 318], PAD = [180, 452], SIEVE = [272, 566], POT = [180, 440];
+    const WY = hasArt('dz-pot') ? -54 : -20; // 鍋裡水面的高度（對齊 dz-pot 圖裡的水）
     const DOUGH = { white: [64, 560], red: [146, 578] };
     let phase = 'pick', made = 0, color = 'white', acc = 0, need = 0, lastA = null, jit = [], ballPos = [...BOARD], balls = [];
     const sign = `<g transform="translate(180 120)"><rect x="-58" y="-34" width="116" height="68" rx="6" fill="#E0443E"/><text y="12" text-anchor="middle" class="fest-sign">冬至</text></g>`;
     st.set(`${backdrop('dongzhi', { table: 250, extra: sign, over: `<text x="180" y="132" text-anchor="middle" class="fest-sign">冬至</text>` })}
       <g id="kitchen">
-        <g transform="translate(${BOARD[0]} ${BOARD[1] + 16})"><rect x="-88" y="-30" width="176" height="60" rx="12" fill="#E9C79A" stroke="#B98A57" stroke-width="2"/><ellipse cx="-40" cy="-8" rx="22" ry="6" fill="#FFF" opacity=".25"/></g>
+        <g transform="translate(${BOARD[0]} ${BOARD[1] + 14})">${hasArt('dz-board') ? art('dz-board', 200, 90, '') : board}</g>
         <circle id="pad" cx="${PAD[0]}" cy="${PAD[1]}" r="54" fill="rgb(255 244 216 / .12)" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8" opacity="0"/>
         <path id="padArrow" d="M${PAD[0] + 54} ${PAD[1] - 6}l-7 10h14z" fill="#FFF4D8" opacity="0"/>
         <text id="padTxt" x="${PAD[0]}" y="${PAD[1] + 6}" text-anchor="middle" class="fest-tip" opacity="0">手指在這裡畫圈</text>
@@ -87,10 +98,12 @@ const dongzhi = {
         <g class="fest-hit" data-c="red" transform="translate(${DOUGH.red[0]} ${DOUGH.red[1]})">${art('dz-dough-red', 92, 66, dough(TY.red))}</g>
       </g>
       <g id="cook" style="display:none">
-        <g transform="translate(${POT[0]} ${POT[1]})">${art('dz-pot', 220, 160, pot)}
-          <clipPath id="dzWater"><ellipse cy="-20" rx="92" ry="20"/></clipPath>
-          <ellipse cy="-20" rx="92" ry="20" fill="#F4EFE6"/>
-          <g clip-path="url(#dzWater)"><g id="inPot"></g></g>
+        <g transform="translate(${POT[0]} ${POT[1]})">${art('dz-pot', 300, 300, pot)}
+          <clipPath id="dzWater"><ellipse cy="${WY}" rx="86" ry="27"/></clipPath>
+          ${hasArt('dz-pot') ? '' : `<ellipse cy="${WY}" rx="86" ry="27" fill="#DCEAF0"/>`}
+          <g clip-path="url(#dzWater)"><g id="inPot"></g>
+            <ellipse cy="${WY + 4}" rx="86" ry="27" fill="#BFD8E2" opacity=".28"/>
+            <g id="ripples" fill="none" stroke="#FFFFFF" stroke-width="1.4" opacity=".7"></g></g>
         </g>
         <g id="bowls"></g>
       </g>
@@ -186,9 +199,9 @@ const dongzhi = {
       st.buttons([{ label: '倒進鍋裡', on: () => pour(true) }]);
       let pos = [...SIEVE];
       st.hold(sv, {
-        magnet: () => (phase === 'pour' ? [POT[0], POT[1] - 40, 80] : null),
+        magnet: () => (phase === 'pour' ? [POT[0], POT[1] + WY - 10, 80] : null),
         onMove(x, y) { if (phase !== 'pour') return; pos = [x, y]; place(sv, x, y, .9, clamp((SIEVE[1] - y) / 6, 0, 30)); },
-        onUp() { if (phase !== 'pour') return; if (D(pos, [POT[0], POT[1] - 40]) < 60) pour(true); else flyTo(st, sv, pos, SIEVE, 300, .9, 1); },
+        onUp() { if (phase !== 'pour') return; if (D(pos, [POT[0], POT[1] + WY - 10]) < 60) pour(true); else flyTo(st, sv, pos, SIEVE, 300, .9, 1); },
       });
     }
     function pour() {
@@ -200,8 +213,10 @@ const dongzhi = {
         st.tween(300, (k) => sv.setAttribute('opacity', .8 * (1 - k)), () => { sv.style.display = 'none'; });
       });
       const inPot = st.$('#inPot');
-      inPot.innerHTML = balls.map((c, i) => `<g data-k="${i}" opacity=".45">${ty(c, 11)}</g>`).join('');
-      const kids = [...inPot.children], X = balls.map((_, i) => -60 + i * 24 + rand(-5, 5)), up = balls.map(() => false);
+      inPot.innerHTML = balls.map((c, i) => `<g data-k="${i}" opacity=".45">${ty(c, 12)}</g>`).join('');
+      const kids = [...inPot.children], X = balls.map((_, i) => -55 + i * 22 + rand(-4, 4)), up = balls.map(() => false);
+      // 水面的小漣漪：湯圓浮上來的地方一圈一圈散開
+      const rip = st.$('#ripples'), ring = (x) => { rip.insertAdjacentHTML('beforeend', `<ellipse cx="${x}" cy="${WY}" rx="4" ry="1.5"/>`); const e = rip.lastElementChild; st.tween(900, (k) => { e.setAttribute('rx', (4 + k * 22).toFixed(1)); e.setAttribute('ry', (1.5 + k * 7).toFixed(1)); e.setAttribute('opacity', (1 - k).toFixed(2)); }, () => e.remove()); };
       st.sfx.bowl?.(); st.burst('spark', POT[0], POT[1] - 30, 14, { color: '#FFFFFF' });
       st.zoom(180, 420, 250);
       st.say('湯圓沉到鍋底了。等它們一顆一顆<b>浮起來</b>，就是煮熟了。', 'temple');
@@ -213,11 +228,11 @@ const dongzhi = {
         const s = (t - t0) / 1000;
         kids.forEach((k, i) => {
           const rise = clamp((s - .8 - i * .45) / .6, 0, 1);
-          if (rise >= 1 && !up[i]) { up[i] = true; st.sfx.pop(); st.emit('spark', POT[0] + X[i], POT[1] - 22, { color: '#FFFFFF', speed: 18, life: .5 }); }
+          if (rise >= 1 && !up[i]) { up[i] = true; st.sfx.pop(); ring(X[i]); }
           k.setAttribute('opacity', (.45 + .55 * rise).toFixed(2));
-          place(k, X[i] + Math.sin(s * 2 + i) * 3, -6 - 14 * rise + Math.sin(s * 3 + i * 1.7) * 1.5 * rise, .85 + .15 * rise);
+          place(k, X[i] + Math.sin(s * 2 + i) * 3, WY + 14 - 14 * rise + Math.sin(s * 3 + i * 1.7) * 1.5 * rise, .85 + .15 * rise);
         });
-        if (Math.random() < .25) st.emit('spark', POT[0] + rand(-80, 80), POT[1] - 22, { color: '#FFFFFF', vx: 0, vy: -12, life: .4, s0: .7, s1: .2 });
+        if (Math.random() < .06) ring(rand(-70, 70));
         if (up.every(Boolean) && phase === 'boil') ready();
         requestAnimationFrame(loop);
       };
@@ -294,7 +309,7 @@ const dongzhi = {
       });
       const setDown = (i, k) => {
         placed[k] = i;
-        const b = st.$(`[data-b="${i}"]`), to = k === 'G' ? GOD : ANC;
+        const b = st.$(`[data-b="${i}"]`), to0 = k === 'G' ? GOD : ANC, to = [to0[0], to0[1] - 26]; // 碗底對齊桌面（碗圖是置中的，往上提半個碗高）
         place(b, ...to, .8); b.classList.remove('fest-hit');
         st.$(k === 'G' ? '#spotG' : '#spotA').style.display = 'none';
         st.burst('star', to[0], to[1] - 20, 10, { color: '#FFE29A' }); st.sfx.chime();
@@ -542,21 +557,37 @@ const chuxi = {
     function dinner() {
       if (phase === 'veg' || phase === 'end') return;
       phase = 'veg'; st.buttons([]); st.reset(0);
-      const BOWL = [180, 548];
-      let top = 500, tx = 180, lastY = null;
-      st.set(`${backdrop('chuxi-dinner', { wall: ['#5A2A20', '#3A1A14'], table: 330, tableColor: ['#B8302A', '#8A2420'] })}
-        <ellipse cx="180" cy="470" rx="200" ry="120" fill="#C8463A"/>
-        ${[[60, 400, '#F3C64A'], [300, 400, '#E8A06A'], [70, 560, '#9AC46A'], [300, 560, '#F2E2C0']].map(([x, y, c]) => `<g transform="translate(${x} ${y})"><ellipse rx="42" ry="16" fill="#FFF"/><ellipse rx="32" ry="10" fill="${c}"/></g>`).join('')}
-        <path id="veg" fill="none" stroke="#4E9A3E" stroke-width="7" stroke-linecap="round"/>
+      // 背景圖的圓桌：桌面橢圓中心 (178, 418)，後緣 y≈385、前緣 y≈450。年菜擺在桌上，長年菜在正前方
+      const hasBg = hasArt('bg-chuxi-dinner');
+      const BOWL = hasBg ? [180, 452] : [180, 548];
+      let top = BOWL[1] - 40, tx = 180, lastY = null;
+      const DISHES = hasBg ? [[bzFishUrl, 100, 404, 96, 48, '年年有餘'], [bzChickenUrl, 262, 404, 90, 53, '全雞'], [bzFotiaoUrl, 56, 446, 78, 58, '佛跳牆'], [bzKongUrl, 304, 446, 84, 46, '控肉']] : [];
+      st.set(`${backdrop('chuxi-dinner', { wall: ['#5A2A20', '#3A1A14'], table: 330, tableColor: ['#B8302A', '#8A2420'], extra: `<ellipse cx="180" cy="470" rx="200" ry="120" fill="#C8463A"/>${[[60, 400, '#F3C64A'], [300, 400, '#E8A06A'], [70, 560, '#9AC46A'], [300, 560, '#F2E2C0']].map(([x, y, c]) => `<g transform="translate(${x} ${y})"><ellipse rx="42" ry="16" fill="#FFF"/><ellipse rx="32" ry="10" fill="${c}"/></g>`).join('')}` })}
+        <defs><linearGradient id="vegStem" x1="0" x2="1"><stop offset="0" stop-color="#9ACB6A"/><stop offset=".5" stop-color="#D8EFA8"/><stop offset="1" stop-color="#7AB04E"/></linearGradient>
+          <linearGradient id="chopG" x1="0" x2="1"><stop offset="0" stop-color="#8A1A14"/><stop offset=".5" stop-color="#D8443A"/><stop offset="1" stop-color="#7A1410"/></linearGradient></defs>
+        ${DISHES.map(([url, x, y, w, h]) => `<g transform="translate(${x} ${y})">${sitImg(url, w, h, .4)}</g>`).join('')}
+        <g transform="translate(${BOWL[0]} ${BOWL[1]})">${sitArt('dz-bowl', 104, 76, bowl, .42)}</g>
+        <ellipse cx="${BOWL[0]}" cy="${BOWL[1] - 60}" rx="36" ry="8" fill="#5E9A3A"/>
+        ${[-22, -8, 8, 22].map((dx, i) => `<ellipse cx="${BOWL[0] + dx}" cy="${BOWL[1] - 63 + (i % 2) * 3}" rx="13" ry="5" fill="${i % 2 ? '#7EBE52' : '#5A9A38'}" transform="rotate(${dx} ${BOWL[0] + dx} ${BOWL[1] - 63})"/>`).join('')}
+        <path id="vegS" fill="none" stroke="#4E8A30" stroke-width="10" stroke-linecap="round"/>
+        <path id="veg" fill="none" stroke="url(#vegStem)" stroke-width="7" stroke-linecap="round"/>
         <g id="leaves"></g>
-        <g transform="translate(${BOWL[0]} ${BOWL[1]})">${art('dz-bowl', 120, 88, bowl)}</g>
-        <g id="chop" filter="url(#fToy)"><path d="M-4 0 L-10 90 M4 0 L10 90" stroke="#5A3018" stroke-width="5" stroke-linecap="round"/></g>
-        <text x="180" y="80" text-anchor="middle" class="fest-sign">長年菜</text>`);
-      const veg = st.$('#veg'), leaves = st.$('#leaves'), chop = st.$('#chop');
+        <g id="chop" filter="url(#fToy)"><path d="M-5 0 L-11 -96 M5 0 L11 -96" stroke="url(#chopG)" stroke-width="5.5" stroke-linecap="round"/><path d="M-10.3 -84 L-11 -96 M10.3 -84 L11 -96" stroke="#F3C64A" stroke-width="6" stroke-linecap="round"/></g>
+        <g transform="translate(180 74)"><rect x="-62" y="-24" width="124" height="42" rx="8" fill="#B8302A" stroke="#F3C64A" stroke-width="2"/><text y="8" text-anchor="middle" class="fest-sign" style="font-size:24px">長年菜</text></g>`);
+      const veg = st.$('#veg'), vegS = st.$('#vegS'), leaves = st.$('#leaves'), chop = st.$('#chop');
+      const B0 = [BOWL[0], BOWL[1] - 60];
+      // 一整根芥菜：莖從碗裡被筷子拉上來，兩邊交錯長出皺皺的葉子
+      const leaf = (x, y, side, sz) => `<path d="M${x} ${y} q${side * sz * .5} ${-sz * .55} ${side * sz * 1.25} ${-sz * .2} q${-side * sz * .1} ${sz * .5} ${-side * sz * .55} ${sz * .62} q${-side * sz * .35} ${sz * .05} ${-side * sz * .7} ${-sz * .42}z" fill="${side > 0 ? '#5FA83E' : '#4E9632'}" stroke="#3A7A26" stroke-width="1"/><path d="M${x} ${y} q${side * sz * .5} ${-sz * .25} ${side * sz * 1.05} ${-sz * .18}" stroke="#CFE9A0" stroke-width="1.2" fill="none"/>`;
       const draw = () => {
-        veg.setAttribute('d', `M${BOWL[0]} ${BOWL[1] - 20} Q${(BOWL[0] + tx) / 2 + Math.sin(top / 40) * 12} ${(BOWL[1] + top) / 2} ${tx} ${top}`);
-        const n = Math.floor((BOWL[1] - top) / 34);
-        leaves.innerHTML = Array.from({ length: n }, (_, i) => { const k = (i + .5) / Math.max(1, n), y = BOWL[1] - 20 + (top - BOWL[1] + 20) * k, x = BOWL[0] + (tx - BOWL[0]) * k; return `<ellipse cx="${x + (i % 2 ? 10 : -10)}" cy="${y}" rx="11" ry="5" fill="#6BB34E" transform="rotate(${i % 2 ? 30 : -30} ${x + (i % 2 ? 10 : -10)} ${y})"/>`; }).join('');
+        const mx = (B0[0] + tx) / 2 + Math.sin(top / 40) * 12, my = (B0[1] + top) / 2;
+        const d = `M${B0[0]} ${B0[1]} Q${mx.toFixed(1)} ${my.toFixed(1)} ${tx.toFixed(1)} ${top.toFixed(1)}`;
+        veg.setAttribute('d', d); vegS.setAttribute('d', d);
+        const n = Math.floor((B0[1] - top) / 26);
+        leaves.innerHTML = Array.from({ length: n }, (_, i) => {
+          const k = (i + .6) / Math.max(1, n + .4), u = 1 - k;
+          const x = u * u * B0[0] + 2 * u * k * mx + k * k * tx, y = u * u * B0[1] + 2 * u * k * my + k * k * top;
+          return leaf(x, y, i % 2 ? 1 : -1, 32 - k * 9);
+        }).join('');
         place(chop, tx, top);
       };
       draw();
@@ -705,12 +736,38 @@ function hongbao(st, o) {
 // 初三：赤狗日，不出門、早早睡（幫虎爺蓋被子、關燈）
 function sleepIn(st, o) {
   const TIGER = [180, 412]; // 臥在背景圖的圓地毯上
-  let top = 590, phase = 'cover', cord = 0, pulling = false, noise = 0, wakes = 0, lastP = null, waking = false;
-  st.set(`${backdrop('chunjie-night', { wall: ['#3A3456', '#262040'], table: 470, tableColor: ['#6A4A6A', '#4A3450'], extra: `<circle cx="80" cy="110" r="28" fill="#FFF3C0"/><circle cx="92" cy="102" r="28" fill="#3A3456"/>` })}
-    <ellipse cx="${TIGER[0]}" cy="${TIGER[1] + 58}" rx="130" ry="30" fill="#E0544A"/>
+  // 被子：從虎爺腳邊（摺成一長條）往上拉到肩膀。BOT＝被子下緣（墊子前緣），FULL＝蓋好的高度
+  const BOT = 500, START = 474, FULL = 432;
+  let top = START, phase = 'cover', cord = 0, pulling = false, noise = 0, wakes = 0, lastP = null, waking = false;
+  // 台灣紅底牡丹花布（有 Gemini 花布圖 cj-quilt 就用圖當花紋）
+  const quiltPat = hasArt('cj-quilt')
+    ? `<pattern id="quiltPat" patternUnits="userSpaceOnUse" width="90" height="90"><image href="${artUrl('cj-quilt')}" width="90" height="90" preserveAspectRatio="xMidYMid slice"/></pattern>`
+    : `<pattern id="quiltPat" patternUnits="userSpaceOnUse" width="64" height="56">
+        <rect width="64" height="56" fill="#C8242A"/>
+        ${[[16, 14], [48, 42]].map(([x, y]) => `<g transform="translate(${x} ${y})"><path d="M-12 4 Q-16 -6 -6 -6 M12 4 Q16 -6 6 -6" stroke="#2E7A3A" stroke-width="3" fill="none"/><ellipse cx="-10" cy="5" rx="6" ry="3" fill="#3E8E46" transform="rotate(-30 -10 5)"/><ellipse cx="10" cy="5" rx="6" ry="3" fill="#3E8E46" transform="rotate(30 10 5)"/>${[0, 72, 144, 216, 288].map((a) => `<ellipse cy="-5" rx="4.6" ry="6.4" fill="#F27AA0" transform="rotate(${a})"/>`).join('')}<circle r="3.4" fill="#FFE07A"/></g>`).join('')}
+        ${[[48, 12], [16, 42]].map(([x, y]) => `<g transform="translate(${x} ${y})">${[0, 90, 180, 270].map((a) => `<circle cx="0" cy="-3" r="2.4" fill="#FFF4E8" transform="rotate(${a})"/>`).join('')}<circle r="1.6" fill="#F3C64A"/></g>`).join('')}
+      </pattern>`;
+  st.set(`${backdrop('chunjie-night', { wall: ['#3A3456', '#262040'], table: 470, tableColor: ['#6A4A6A', '#4A3450'], extra: `<circle cx="80" cy="110" r="28" fill="#FFF3C0"/><circle cx="92" cy="102" r="28" fill="#3A3456"/><ellipse cx="${TIGER[0]}" cy="${TIGER[1] + 58}" rx="130" ry="30" fill="#E0544A"/>` })}
+    <defs>${quiltPat}
+      <linearGradient id="quiltShade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF" stop-opacity=".18"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#2A0006" stop-opacity=".35"/></linearGradient>
+      <radialGradient id="lampGlow"><stop offset="0" stop-color="#FFE9A8" stop-opacity=".55"/><stop offset="1" stop-color="#FFE9A8" stop-opacity="0"/></radialGradient>
+      <linearGradient id="lampShade" x1="0" x2="1"><stop offset="0" stop-color="#F2D08A"/><stop offset=".5" stop-color="#FFF2C8"/><stop offset="1" stop-color="#E0B868"/></linearGradient>
+    </defs>
+    <ellipse cx="${TIGER[0]}" cy="${BOT + 6}" rx="128" ry="12" fill="#000" opacity=".22"/>
     <g transform="translate(${TIGER[0]} ${TIGER[1]})">${img(tigerSleepUrl, 220, 160)}</g>
-    <g id="blanket"><path id="blkP" fill="#F3C64A" stroke="#C8963E" stroke-width="3"/><g id="blkDots"></g></g>
-    <g id="lamp" transform="translate(300 170)"><path d="M-30 0 L30 0 L18 -44 L-18 -44Z" fill="#FFE29A"/><line x1="18" y1="0" x2="18" y2="70" id="cordL" stroke="#C8963E" stroke-width="2"/><circle id="cordK" cx="18" cy="74" r="7" fill="#E0443E" class="fest-hit"/></g>
+    <g id="blanket">
+      <path id="blkP" fill="url(#quiltPat)"/><path id="blkS" fill="url(#quiltShade)"/>
+      <path id="blkFold" fill="#FFF6EA" stroke="#E8D6C0" stroke-width="1.5"/>
+      <path id="blkStitch" fill="none" stroke="#FFF6EA" stroke-width="1.4" stroke-dasharray="4 4" opacity=".7"/>
+    </g>
+    <g id="lamp" transform="translate(302 236)">
+      <ellipse id="lampG" cy="-10" rx="90" ry="80" fill="url(#lampGlow)"/>
+      <rect x="-3" y="-4" width="6" height="118" rx="3" fill="#8A6A3E"/><ellipse cy="116" rx="26" ry="7" fill="#6A4E2A"/>
+      <path id="lampS" d="M-34 0 L34 0 L22 -50 L-22 -50Z" fill="url(#lampShade)" stroke="#C8963E" stroke-width="1.5"/>
+      <path d="M-34 0 L34 0" stroke="#C8963E" stroke-width="3"/>
+      <line x1="16" y1="2" x2="16" y2="44" id="cordL" stroke="#C8963E" stroke-width="2"/>
+      <g id="cordK" class="fest-hit"><circle cx="16" cy="48" r="14" fill="#000" opacity="0"/><circle id="cordB" cx="16" cy="48" r="6" fill="#E0443E" stroke="#8A2A20" stroke-width="1.5"/></g>
+    </g>
     <g id="hush" transform="translate(110 64)"><rect width="140" height="12" rx="6" fill="#1A1430" stroke="#8A7AB0" stroke-width="1.5"/><rect id="hushF" x="1.5" y="1.5" width="0" height="9" rx="4.5" fill="#7CD08A"/><text x="70" y="-6" text-anchor="middle" class="fest-small" fill="#E8E0FF">輕輕的…別吵醒虎爺</text></g>
     <text id="zzz" x="${TIGER[0] + 70}" y="${TIGER[1] - 50}" class="fest-small" fill="#FFF3C0">z z z</text>
     <rect id="dark" width="360" height="645" fill="#0A0818" opacity="0" pointer-events="none"/>`);
@@ -731,12 +788,18 @@ function sleepIn(st, o) {
     st.sfx.knock(); st.floatText('！', TIGER[0] - 30, TIGER[1] - 70, '#FFE08A');
     st.$('#zzz').textContent = '';
     st.say(wakes > 1 ? '又吵醒了…虎爺翻個身。<b>慢慢地</b>拉，像怕吵醒小嬰兒那樣。' : '太大力了！虎爺張開一隻眼睛。噓～<b>慢慢地</b>拉，量表不要變紅。', 'cat');
-    if (phase === 'cover') { top = Math.min(590, top + 60); drawBlanket(); }
+    if (phase === 'cover') { top = Math.min(START, top + 20); drawBlanket(); }
     st.later(1300, () => { waking = false; st.$('#zzz').textContent = 'z z z'; });
   }
+  // 被子蓋在虎爺身上：上緣隨身體起伏（中間高），左右兩邊垂到墊子外，下緣有一點弧度
   const drawBlanket = () => {
-    st.$('#blkP').setAttribute('d', `M30 ${top} Q180 ${top - 18} 330 ${top} L340 645 L20 645Z`);
-    st.$('#blkDots').innerHTML = [0, 1, 2, 3, 4].map((i) => `<circle cx="${70 + i * 55}" cy="${top + 30 + (i % 2) * 16}" r="7" fill="#E0544A"/>`).join('');
+    const L = 64, R = 300, hump = 14 * (START - top) / (START - FULL);
+    const edge = `M${L} ${top + 10} C${L + 40} ${top - hump} ${R - 40} ${top - hump} ${R} ${top + 10}`;
+    const body = `${edge} C${R + 14} ${top + 30} ${R + 18} ${BOT - 14} ${R + 6} ${BOT} Q${TIGER[0]} ${BOT + 12} ${L - 6} ${BOT} C${L - 18} ${BOT - 14} ${L - 14} ${top + 30} ${L} ${top + 10}Z`;
+    st.$('#blkP').setAttribute('d', body); st.$('#blkS').setAttribute('d', body);
+    // 白色被頭（摺邊）
+    st.$('#blkFold').setAttribute('d', `${edge} L${R + 2} ${top + 22} C${R - 40} ${top + 12 - hump} ${L + 40} ${top + 12 - hump} ${L - 2} ${top + 22}Z`);
+    st.$('#blkStitch').setAttribute('d', `M${L + 14} ${top + 38} C${L + 50} ${top + 28 - hump} ${R - 50} ${top + 28 - hump} ${R - 14} ${top + 38}`);
   };
   drawBlanket();
   st.progress(0, 2);
@@ -747,53 +810,61 @@ function sleepIn(st, o) {
       if (phase !== 'end') hear(p);
       if (waking) return;
       if (phase === 'cover') {
-        const want = clamp(p.y - st.lift() * .4, 400, 600);
+        const want = clamp(p.y - st.lift() * .4, FULL, START);
         if (want < top) { top = want; drawBlanket(); }
-        if (top <= 442) { phase = 'lamp'; st.progress(1, 2); st.sfx.pop(); st.burst('heart', TIGER[0], TIGER[1] - 40, 6); st.say('蓋好了，虎爺打呼嚕。最後把右上角燈的<b>拉繩</b>輕輕往下拉，關燈睡覺。', 'cat'); }
+        if (top <= FULL + 2) { phase = 'lamp'; st.progress(1, 2); st.sfx.pop(); st.burst('heart', TIGER[0], TIGER[1] - 40, 6); st.say('蓋好了，虎爺打呼嚕。最後把右上角燈的<b>拉繩</b>輕輕往下拉，關燈睡覺。', 'cat'); }
       } else if (phase === 'lamp' && pulling) {
-        const dy = clamp(p.y - st.lift() * .4 - 244, 0, 50);
-        cord = dy; st.$('#cordK').setAttribute('cy', 74 + dy); st.$('#cordL').setAttribute('y2', 70 + dy);
+        const dy = clamp(p.y - st.lift() * .4 - 284, 0, 50);
+        cord = dy; st.$('#cordK').setAttribute('transform', `translate(0 ${dy})`); st.$('#cordL').setAttribute('y2', 44 + dy);
         if (dy >= 40) lightsOff();
       }
     },
-    up() { if (phase === 'lamp') { cord = 0; st.$('#cordK').setAttribute('cy', 74); st.$('#cordL').setAttribute('y2', 70); } },
+    up() { if (phase === 'lamp') { cord = 0; st.$('#cordK').setAttribute('transform', ''); st.$('#cordL').setAttribute('y2', 44); } },
   });
   function lightsOff() {
     if (phase !== 'lamp') return; phase = 'end'; st.buttons([]);
-    st.sfx.knock(); st.$('#lamp path').setAttribute('fill', '#8A7A5A');
+    st.sfx.knock(); st.$('#lampS').setAttribute('fill', '#8A7A5A'); st.$('#lampG').setAttribute('opacity', '0');
     st.tween(700, (k, e) => st.$('#dark').setAttribute('opacity', (e * .55).toFixed(2)));
     st.progress(2, 2); st.$('#hush').style.display = 'none';
     ['Z', 'z', 'Z'].forEach((z, i) => st.later(400 + i * 500, () => st.floatText(z, TIGER[0] + 60 + i * 14, TIGER[1] - 60 - i * 16, '#FFF3C0')));
     st.later(1600, () => o.done(`${wakes ? `中間吵醒虎爺 ${wakes} 次，最後還是哄睡了。` : '一次都沒吵醒虎爺，好溫柔！'}晚安。初三在家好好休息，把過年的元氣補回來。`));
   }
-  st.buttons([{ label: '幫我蓋好、關燈', on: () => { top = 437; drawBlanket(); phase = 'lamp'; lightsOff(); } }]);
+  st.buttons([{ label: '幫我蓋好、關燈', on: () => { top = FULL; drawBlanket(); phase = 'lamp'; lightsOff(); } }]);
 }
 
 // 初四：接神，擺四果
 function jieshen(st, o) {
-  const ITEMS = [['fruit', fruitUrl, 70, 80, '水果'], ['flowers', flowersUrl, 44, 80, '鮮花'], ['cakes', cakesUrl, 76, 67, '糕餅'], ['tea', teaUrl, 72, 51, '清茶']];
-  const SPOTS = [[78, 392], [146, 388], [214, 388], [282, 392]];
-  const REST = [[60, 530], [140, 525], [220, 532], [300, 536]];
+  // 供品底部對齊桌面（y = TOP），同一條線上才不會歪；sitImg 會加貼桌陰影
+  const TOP = 389;
+  const ITEMS = [['fruit', fruitUrl, 58, 66, '水果'], ['flowers', flowersUrl, 38, 68, '鮮花'], ['cakes', cakesUrl, 62, 55, '糕餅'], ['tea', teaUrl, 58, 41, '清茶']];
+  const SPOTS = [[92, TOP], [150, TOP], [210, TOP], [268, TOP]];
+  const REST = [[58, 566], [138, 572], [222, 572], [302, 566]];
   let filled = [], pos = [0, 0];
-  st.set(`${backdrop('chunjie-jieshen', { wall: ['#F4D2A8', '#E0A878'], table: 400, tableColor: ['#B8302A', '#8A2420'], extra: `<path d="M0 0 H360 V60 Q180 100 0 60Z" fill="#E0443E"/><g id="beams" opacity="0">${[60, 140, 220, 300].map((x) => `<path d="M${x} 0 L${x - 20} 380 L${x + 20} 380Z" fill="#FFE9A0" opacity=".35"/>`).join('')}</g>`, over: `<g id="beams" opacity="0">${[60, 140, 220, 300].map((x) => `<path d="M${x} 0 L${x - 20} 380 L${x + 20} 380Z" fill="#FFE9A0" opacity=".35"/>`).join('')}</g>` })}
-    ${SPOTS.map(([x, y], i) => `<ellipse id="spot${i}" cx="${x}" cy="${y + 10}" rx="28" ry="8" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 5"/>`).join('')}
-    ${ITEMS.map(([k, url, w, h], i) => `<g id="it-${k}" class="fest-hit" filter="url(#fToy)">${img(url, w, h)}</g>`).join('')}`);
+  const beams = `<g id="beams" opacity="0">${[90, 150, 210, 270].map((x) => `<path d="M${x} 0 L${x - 26} ${TOP} L${x + 26} ${TOP}Z" fill="#FFE9A0" opacity=".3"/>`).join('')}</g>`;
+  const cloud = (w) => `<g opacity=".95">${[[-w * .32, 6, w * .26], [0, 0, w * .34], [w * .32, 6, w * .26], [-w * .12, 12, w * .3], [w * .14, 12, w * .3]].map(([x, y, r]) => `<ellipse cx="${x.toFixed(1)}" cy="${y}" rx="${r.toFixed(1)}" ry="${(r * .42).toFixed(1)}" fill="#FFF8E6"/>`).join('')}<ellipse cy="14" rx="${(w * .55).toFixed(1)}" ry="6" fill="#F3D9A0" opacity=".6"/></g>`;
+  // 回來的神明：財神爺在中間最大，土地公、媽祖在兩邊（站在雲上，從天上降下來）
+  const GODS = [['cai', caishenUrl, 180, 250, 150, '財神爺'], ['tudi', tudiUrl, 70, 268, 108, '土地公'], ['mazu', mazuUrl, 290, 268, 108, '媽祖']];
+  st.set(`${backdrop('chunjie-jieshen', { wall: ['#F4D2A8', '#E0A878'], table: 400, tableColor: ['#B8302A', '#8A2420'], extra: `<path d="M0 0 H360 V60 Q180 100 0 60Z" fill="#E0443E"/>${beams}`, over: beams })}
+    <g id="gods">${GODS.map(([k, url, x, y, h, name]) => `<g id="god-${k}" opacity="0" transform="translate(${x} ${y - 260})"><ellipse cy="${-h * .5}" rx="${h * .55}" ry="${h * .62}" fill="url(#fGlow)" opacity=".85"/><image href="${url}" x="${-h * .36}" y="${-h}" width="${h * .72}" height="${h}" preserveAspectRatio="xMidYMax meet"/><g transform="translate(0 2)">${cloud(h * .8)}</g><text y="${26}" text-anchor="middle" class="fest-small" fill="#7A2A18" stroke="#FFF8E6" stroke-width="3" paint-order="stroke">${name}</text></g>`).join('')}</g>
+    ${SPOTS.map(([x, y], i) => `<ellipse id="spot${i}" cx="${x}" cy="${y - 1}" rx="24" ry="5" fill="rgb(255 244 216 / .18)" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 4"/>`).join('')}
+    ${ITEMS.map(([k, url, w, h]) => `<g id="it-${k}" class="fest-hit">${sitImg(url, w, h)}</g>`).join('')}`);
   ITEMS.forEach(([k], i) => place(st.$('#it-' + k), ...REST[i]));
   st.progress(0, 4);
-  st.say('初四接神：送上天的眾神今天回到人間。把四樣供品擺上供桌，歡迎祂們回來。', 'temple');
+  st.say('初四接神：年前送上天的眾神，今天要回到人間了，<b>財神爺</b>也一起回來！把四樣供品擺上供桌，歡迎祂們回來。', 'temple');
   const freeSpot = () => { let b = -1; SPOTS.forEach((s, i) => { if (!filled.includes(i) && (b < 0 || D(pos, s) < D(pos, SPOTS[b]))) b = i; }); return b; };
-  ITEMS.forEach(([k, , , , name], i) => {
+  const putOn = (el, s) => { place(el, ...SPOTS[s]); st.$('#spot' + s).setAttribute('opacity', '0'); };
+  ITEMS.forEach(([k], i) => {
     const el = st.$('#it-' + k); let done = false;
     st.hold(el, {
-      magnet: () => { if (done) return null; const s = freeSpot(); return s >= 0 ? [SPOTS[s][0], SPOTS[s][1] - 20, 44] : null; },
+      magnet: () => { if (done) return null; const s = freeSpot(); return s >= 0 ? [...SPOTS[s], 40] : null; },
       onStart() { if (!done) st.zoom(180, 430, 280); },
       onMove(x, y) { if (done) return; pos = [x, y]; place(el, x, y); },
       onUp() {
         if (done) return; st.reset();
         const s = freeSpot();
-        if (s >= 0 && D(pos, [SPOTS[s][0], SPOTS[s][1] - 20]) < 34) {
-          done = true; filled.push(s); place(el, SPOTS[s][0], SPOTS[s][1] - 20);
-          st.$('#spot' + s).setAttribute('opacity', '0'); st.sfx.pop(); st.burst('star', SPOTS[s][0], SPOTS[s][1] - 30, 8);
+        if (s >= 0 && D(pos, SPOTS[s]) < 36) {
+          done = true; filled.push(s); putOn(el, s);
+          st.sfx.pop(); st.burst('star', SPOTS[s][0], SPOTS[s][1] - 30, 8);
           st.progress(filled.length, 4);
           if (filled.length === 4) welcome();
         } else flyTo(st, el, pos, REST[i], 300);
@@ -801,13 +872,20 @@ function jieshen(st, o) {
     });
   });
   function welcome() {
-    st.buttons([]); st.sfx.bowl();
+    st.buttons([]); st.sfx.bowl(); st.zoom(180, 300, 330);
     st.tween(1200, (k, e) => st.$('#beams').setAttribute('opacity', e.toFixed(2)));
     const rain = (n) => { if (n <= 0) return; st.emit('star', rand(30, 330), 0, { vy: rand(60, 120), vx: rand(-10, 10), life: 2.4, s0: 1, s1: .4 }); st.later(70, () => rain(n - 1)); };
     rain(40);
-    st.later(1800, () => o.done('眾神回到人間了，金光灑滿供桌。新的一年，請神明繼續保佑。'));
+    // 神明一位一位坐雲降下來，財神爺最後到
+    [1, 2, 0].forEach((gi, n) => st.later(500 + n * 650, () => {
+      const [k, , x, y] = GODS[gi], g = st.$('#god-' + k);
+      st.sfx.chime();
+      st.tween(1100, (t, e) => { g.setAttribute('opacity', Math.min(1, t * 2).toFixed(2)); g.setAttribute('transform', `translate(${x} ${(y - 260 * (1 - e)).toFixed(1)})`); });
+      if (k === 'cai') st.later(1100, () => { st.floatText('財神爺回來了！', 180, 92, '#FFE08A'); st.burst('coin', 180, 200, 18); });
+    }));
+    st.later(4200, () => o.done('眾神回到人間，財神爺也到了，金光灑滿供桌。新的一年，請神明繼續保佑、財源滾滾。'));
   }
-  st.buttons([{ label: '幫我擺好', on: () => { ITEMS.forEach(([k], i) => { if (!filled.includes(i)) place(st.$('#it-' + k), SPOTS[i][0], SPOTS[i][1] - 20); st.$('#spot' + i).setAttribute('opacity', '0'); }); filled = [0, 1, 2, 3]; st.progress(4, 4); welcome(); } }]);
+  st.buttons([{ label: '幫我擺好', on: () => { ITEMS.forEach(([k], i) => { if (!filled.includes(i)) putOn(st.$('#it-' + k), i); }); filled = [0, 1, 2, 3]; st.progress(4, 4); welcome(); } }]);
 }
 
 // 初五：開工放鞭炮，迎財神
