@@ -255,18 +255,19 @@ const dongzhi = {
       st.$('#kitchen').style.display = 'none';
       const pot = st.$('#cook > g'); pot.style.display = 'none';
       st.add(`<g id="altar">
+        ${hasArt('bg-dongzhi-altar') ? `<g transform="translate(180 322.5)">${art('bg-dongzhi-altar', 360, 645, '')}</g><text x="180" y="62" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text>` : `
         <rect width="360" height="645" fill="#8E3324"/>
         <rect width="360" height="300" fill="#B5432E"/><path d="M0 300h360" stroke="#E2B04A" stroke-width="4"/>
         <g transform="translate(180 54)"><rect x="-70" y="-24" width="140" height="44" rx="6" fill="#E0443E" stroke="#E2B04A" stroke-width="2"/><text y="8" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text></g>
         <path d="M18 316h324l-10 30H28z" fill="#6E2A14"/><rect x="28" y="346" width="304" height="140" fill="#7E3418"/>
-        <rect x="28" y="346" width="304" height="8" fill="#9C4A24"/>
+        <rect x="28" y="346" width="304" height="8" fill="#9C4A24"/>`}
         <g transform="translate(${GOD[0]} 214)"><ellipse cy="96" rx="58" ry="10" fill="#000" opacity=".2"/><image href="${mazuUrl}" x="-56" y="-104" width="112" height="204" preserveAspectRatio="xMidYMax meet"/></g>
         <g transform="translate(${ANC[0]} 236)">${art('dz-tablet', 92, 150, tablet)}</g>
         ${[[GOD[0], '拜神明'], [ANC[0], '拜祖先']].map(([x, t]) => `<g transform="translate(${x} 420)"><rect x="-38" y="-15" width="76" height="30" rx="5" fill="#E0443E" stroke="#E2B04A" stroke-width="2"/><text y="6" text-anchor="middle" class="fest-small" fill="#FFE29A">${t}</text></g>`).join('')}
         <g id="cenG" transform="translate(${GOD[0] + 44} 330)">${censer(false)}</g><g id="cenA" transform="translate(${ANC[0] - 44} 330)">${censer(false)}</g>
         <ellipse id="spotG" cx="${GOD[0]}" cy="${GOD[1] + 4}" rx="44" ry="12" fill="none" stroke="#FFE29A" stroke-width="3" stroke-dasharray="7 6"/>
         <ellipse id="spotA" cx="${ANC[0]}" cy="${ANC[1] + 4}" rx="44" ry="12" fill="none" stroke="#FFE29A" stroke-width="3" stroke-dasharray="7 6"/>
-        <rect y="486" width="360" height="160" fill="#C98A55"/><rect y="486" width="360" height="7" fill="#E8B07A"/>
+        ${hasArt('bg-dongzhi-altar') ? '' : '<rect y="486" width="360" height="160" fill="#C98A55"/><rect y="486" width="360" height="7" fill="#E8B07A"/>'}
         <g id="me" transform="translate(180 470)" opacity="0"><image href="${o.me.kneel}" x="-62" y="-136" width="124" height="136" preserveAspectRatio="xMidYMax meet"/></g>
       </g>`);
       // 碗搬到最上層（蓋在供桌上面）
@@ -386,6 +387,7 @@ const songshen = {
     st.progress(0, 3);
     st.say('臘月廿四送灶神回天庭報告。先拿<b>刷子</b>沾左邊罐子裡的麥芽糖，塗在灶君嘴上，讓祂上天只說好話。', 'temple');
     const paintMouth = (k) => { st.$('#zjSweet').setAttribute('opacity', (k * .9).toFixed(2)); };
+    st.buttons([{ label: '幫我塗', on: () => { if (phase === 'paint') { cov = 170; paintMouth(1); sweet(); } } }]);
     st.hold(brushEl, {
       magnet: () => (phase === 'paint' && honey <= 0 ? [...JAR_MOUTH, 40] : null),
       onStart() { if (phase === 'paint') st.zoom(170, 300, 270); last = null; },
@@ -394,7 +396,7 @@ const songshen = {
         tip = [x, y]; place(brushEl, x, y, 1, -18);
         if (D(tip, JAR_MOUTH) < 22 && honey < 1) { honey = 1; st.$('#brushTip').setAttribute('opacity', '1'); st.sfx.pop(); st.say('沾到了，黏黏的。現在塗在灶君的<b>嘴巴</b>上，來回刷幾下。', 'temple'); }
         if (honey > 0 && D(tip, MOUTH) < 24 && last) {
-          const m = D(tip, last); cov += m; honey -= m / 140;
+          const m = D(tip, last); cov += m; honey -= m / 240;
           paintMouth(clamp(cov / 170, 0, 1));
           if (Math.random() < .2) st.emit('spark', x, y, { color: '#F3B040', speed: 18, life: .5 });
           if (honey <= 0) { honey = 0; st.$('#brushTip').setAttribute('opacity', '0'); if (cov < 170) st.say('糖用完了，再去罐子沾一點。', 'temple'); }
@@ -406,7 +408,7 @@ const songshen = {
     });
     function sweet() {
       phase = 'dust'; st.progress(1, 3);
-      st.$('#zjMouth').setAttribute('d', 'M-9 2 Q0 12 9 2');
+      st.$('#zjMouth')?.setAttribute('d', 'M-9 2 Q0 12 9 2'); // 用 Gemini 灶君圖時沒有這條嘴巴線
       flyTo(st, brushEl, tip, BR_REST, 300); st.reset();
       st.burst('heart', MOUTH[0], MOUTH[1], 8, { color: '#F3B040' }); st.sfx.chime();
       st.floatText('甜甜嘴', MOUTH[0], MOUTH[1] - 60, '#C8382E');
