@@ -424,8 +424,11 @@ export function initGate(api) {
   const calCode = () => `<path d="M0 -14 L-14 6 M0 -14 L14 6" stroke="#6A4A2A" stroke-width="1.6"/><circle cx="0" cy="-14" r="3" fill="#F3C64A"/>
       <rect x="-24" y="4" width="48" height="16" rx="2" fill="#C8302A"/><text x="0" y="16" text-anchor="middle" class="sm-cal-h">農民曆</text>
       <rect x="-22" y="20" width="44" height="46" fill="#F3E6CC" stroke="#B89A6A" stroke-width="1"/>`;
-  const pageCode = (n) => `<rect x="-22" y="20" width="44" height="46" fill="#FFFBF2" stroke="#C8A878" stroke-width="1"/>
-      <text x="0" y="50" text-anchor="middle" class="sm-cal-d">${n}</text><text x="0" y="61" text-anchor="middle" class="sm-cal-s">宜・忌</text>`;
+  // 紙面的位置：有 Gemini 圖時對齊圖上的空白紙（sm-cal 208×344 → 52×86）
+  const CP = A('sm-cal') ? { x: -21.5, y: 5.5, w: 41.5, h: 53, fill: '#F2E6CE', line: 'none' } : { x: -22, y: 20, w: 44, h: 46, fill: '#FFFBF2', line: '#C8A878' };
+  const cy = (k) => (CP.y + CP.h * k).toFixed(1);
+  const pageCode = (n) => `<rect x="${CP.x}" y="${CP.y}" width="${CP.w}" height="${CP.h}" fill="${CP.fill}" stroke="${CP.line}" stroke-width="1"/>
+      <text x="0" y="${cy(.66)}" text-anchor="middle" class="sm-cal-d">${n}</text><text x="0" y="${cy(.9)}" text-anchor="middle" class="sm-cal-s">宜・忌</text>`;
   const pigeonCode = `<ellipse cx="0" cy="0" rx="9" ry="6" fill="#B8BCC4"/><circle cx="7" cy="-5" r="4.4" fill="#9AA0AA"/><path d="M10 -5l4 1.2-4 1.2z" fill="#E0A440"/><circle cx="8" cy="-6" r="1" fill="#222"/><path d="M-3 -3q-6 -4 -9 2q5 2 9 0z" fill="#8C929C"/><path d="M-1 6v3M3 6v3" stroke="#D07060" stroke-width="1.2"/>`;
 
   const svg = mount($('#smHost'), `${bgOr('sm', `${BG('#BFE0F2', '#F6E6C8', 'smBg')}
@@ -441,8 +444,8 @@ export function initGate(api) {
       ${DOORS.map((d) => `<g class="place-hit sm-door" data-door="${d.id}" tabindex="0" role="button" aria-label="走${d.name}"><rect x="${d.x - 36}" y="210" width="72" height="${SILL - 210}" fill="#FFF8EA" opacity=".001"/><text x="${d.x}" y="238" text-anchor="middle" class="sm-door-t">${d.name}</text></g>`).join('')}
     </g>
     <g id="smCal" class="place-hit" transform="translate(${CAL[0]} ${CAL[1]})" tabindex="0" role="button" aria-label="撕一頁農民曆，看今天宜什麼">
-      ${pic('sm-cal', -26, -18, 52, 86, calCode())}
-      <g id="smUnder"><rect x="-22" y="20" width="44" height="46" fill="#FFFBF2" stroke="#C8A878" stroke-width="1"/><circle cx="0" cy="34" r="9" fill="#3E8A4A"/><text x="0" y="38" text-anchor="middle" class="sm-cal-yi">宜</text><text id="smUnderT" x="0" y="57" text-anchor="middle" class="sm-cal-s"></text></g>
+      ${pic('sm-cal', -26, -18, 52, 86, calCode())}${A('sm-cal') ? '<text x="0" y="1.5" text-anchor="middle" class="sm-cal-h gold">農民曆</text>' : ''}
+      <g id="smUnder">${A('sm-cal') ? '' : `<rect x="${CP.x}" y="${CP.y}" width="${CP.w}" height="${CP.h}" fill="${CP.fill}" stroke="${CP.line}" stroke-width="1"/>`}<circle cx="0" cy="${cy(.3)}" r="9" fill="#3E8A4A"/><text x="0" y="${(CP.y + CP.h * .3 + 4).toFixed(1)}" text-anchor="middle" class="sm-cal-yi">宜</text><text id="smUnderT" x="0" y="${cy(.8)}" text-anchor="middle" class="sm-cal-s"></text></g>
       <g id="smPage">${pageCode(dayOf())}</g>
       <rect x="-28" y="-18" width="56" height="92" fill="#000" opacity="0"/>
     </g>

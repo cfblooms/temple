@@ -991,3 +991,4 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
 .sm-yiji-col p { margin: 6px 0 0; line-height: 1.7; font-size: 15px; }
 @media (prefers-reduced-motion: reduce) { .sm-new .sm-lion-body, #smCal.sm-new, .sm-peck { animation: none; } }
 .sm-cal-yi { font: 900 11px var(--font-serif); fill: #FFF; }
+.sm-cal-h.gold { fill: #F6D27A; font-size: 8.5px; }
