@@ -165,7 +165,7 @@ export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName
         <span>${q.done ? '✓' : ''}</span><div class="q-txt"><b>${esc(T.name)}</b><small>${esc(T.how)}・${T.sec}</small></div>
         ${q.done ? '<em>完成</em>' : `<button type="button" class="chip" data-act="${T.act}">前往</button>`}</li>`; }).join('')}</ol>
       <div class="stamp-row">
-        <div class="stamp ${t.claimed ? 'on' : ''}" aria-hidden="true">${t.claimed ? '印' : ''}</div>
+        <div class="day-stamp ${t.claimed ? 'on' : ''}" aria-hidden="true">${t.claimed ? '印' : ''}</div>
         <div><b>今日印章</b><small>${t.claimed ? '已收下' : n ? '可以領了' : '完成任一件就能領'}・加碼已領 ${t.extra}/2</small></div>
         ${!t.claimed && n ? '<button type="button" class="btn gold" id="qClaim">收下今日印章</button>' : ''}
       </div>
