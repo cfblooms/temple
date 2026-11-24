@@ -1061,3 +1061,10 @@ img { color: transparent; }
 .wish-ask h3 { margin: 0; }
 .wish-ask .hint { color: #7A4A32; }
 .wish-ask .btn { justify-self: start; }
+/* 雲端存檔：選人偶頁最下面 */
+.cloud-box { border: 1.5px solid var(--line); border-radius: 14px; padding: 10px 12px; }
+.cloud-box summary { cursor: pointer; font-size: 15px; min-height: 32px; display: flex; align-items: center; }
+.cloud-box[open] { display: grid; gap: 10px; }
+.cloud-code { display: flex; gap: 6px; }
+.cloud-code input { flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 9px 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); font-family: ui-monospace, monospace; }
+.cloud-code .btn { padding: 8px 14px; font-size: 15px; }

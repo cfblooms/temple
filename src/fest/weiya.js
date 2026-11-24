@@ -51,7 +51,7 @@ const weiya = {
       <defs><mask id="wyBite" maskUnits="userSpaceOnUse" x="-200" y="-200" width="400" height="400"><rect x="-200" y="-200" width="400" height="400" fill="#fff"/><g id="bites"></g></mask></defs>
       <g id="gua" class="fest-hit" data-nograb style="display:none" filter="url(#fToy)"><g mask="url(#wyBite)">${art('wy-gua', 200, 140, bunShut)}</g></g>
       ${WY.map((f) => `<g id="wy-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)">${f.tray()}<text y="38" text-anchor="middle" class="fest-small" fill="#FFF4D8" stroke="#5A2A10" stroke-width="3" paint-order="stroke">${f.name}</text></g>`).join('')}
-      <text id="tip" x="180" y="592" text-anchor="middle" class="fest-tip">按住料拖到刈包上</text>`);
+      <text id="tip" x="180" y="616" text-anchor="middle" class="fest-tip">按住料拖到刈包上</text>`);
     WY.forEach((f, i) => place(st.$('#wy-' + f.id), ...REST[i]));
     const tip = (t) => { st.$('#tip').textContent = t; };
     st.progress(0, 4);

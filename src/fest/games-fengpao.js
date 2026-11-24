@@ -103,7 +103,7 @@ const fengpao = {
       <g id="torch" class="fest-hit" filter="url(#fToy)" style="display:none"><rect x="-20" y="-60" width="40" height="120" fill="#000" opacity="0"/><g id="ember" transform="translate(0 -52)"><circle r="10" fill="url(#fGlow)"/><circle r="3.5" fill="#FF6A2A"/></g>${art('fp-torch', 30, 110, torchSvg)}</g>
       <g id="hud" style="display:none"><rect x="230" y="14" width="120" height="34" rx="17" fill="rgb(255 246 232 / .9)"/><text id="wangTxt" x="290" y="37" text-anchor="middle" class="fest-small" font-size="16" fill="#9A2420">旺 0</text>
         <g id="shields" transform="translate(60 31)"></g><rect x="60" y="54" width="240" height="6" rx="3" fill="rgb(255 246 232 / .3)"/><rect id="timeBar" x="60" y="54" width="240" height="6" rx="3" fill="#F3C64A"/></g>
-      <text id="tip" x="180" y="630" text-anchor="middle" class="fest-tip">把護具拖到自己身上</text>`);
+      <text id="tip" x="180" y="584" text-anchor="middle" class="fest-tip">把護具拖到自己身上</text>`);
     const av = st.$('#av'), rk = st.$('#rockets'), torch = st.$('#torch');
     GEAR.forEach((g) => place(st.$('#gear-' + g.id), ...g.at));
     st.progress(0, 3);

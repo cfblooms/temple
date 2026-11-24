@@ -382,18 +382,25 @@ const jar = (w, h) => `<ellipse cy="${h * .38}" rx="${w * .42}" ry="${h * .08}" 
   <ellipse cy="${-h * .2}" rx="${w * .34}" ry="${h * .08}" fill="#E8A030" stroke="#8A5A2E" stroke-width="2"/>
   <rect x="${-w * .18}" y="${-h * .02}" width="${w * .36}" height="${h * .22}" fill="#E0443E"/><text y="${h * .16}" text-anchor="middle" class="fest-small" fill="#FFE29A">糖</text>`;
 const brush = () => `<rect x="-20" y="-10" width="40" height="80" fill="#000" opacity="0"/><path d="M0 0 L-5 -2 L-4 10 L4 10 L5 -2Z" fill="#F3E2C0" stroke="#8A6234" stroke-width="1"/><circle id="brushTip" cy="-1" r="4.4" fill="#E8A030" opacity="0"/><rect x="-3" y="10" width="6" height="58" rx="3" fill="#B0703E"/>`;
-const duster = () => `<rect x="-24" y="-22" width="48" height="94" fill="#000" opacity="0"/><g><ellipse cy="-6" rx="20" ry="13" fill="#E07A3A"/><ellipse cx="-8" cy="-10" rx="12" ry="9" fill="#F2A04A"/><ellipse cx="9" cy="-8" rx="12" ry="9" fill="#C9572C"/><ellipse cy="-14" rx="10" ry="7" fill="#F7C25A"/></g><rect x="-3" y="4" width="6" height="66" rx="3" fill="#8A5A2E"/>`;
+const duster = () => {
+  // 雞毛撢子：木柄＋一束放射狀的雞毛（橘、褐、米白），底部紅線綁紮，柄尾有紅穗
+  const cols = ['#8A4A22', '#B8662E', '#D9893C', '#E8B46A', '#F3D9A8', '#C9772F'];
+  const feather = (a, len, c, w) => `<g transform="rotate(${a} 0 8)"><path d="M0 8 C${-w} ${8 - len * .3} ${-w * 1.1} ${8 - len * .75} 0 ${8 - len} C${w * 1.1} ${8 - len * .75} ${w} ${8 - len * .3} 0 8Z" fill="${c}" stroke="#6A3A18" stroke-width=".9"/><path d="M0 8 L0 ${8 - len + 4}" stroke="#5A2E12" stroke-width="1.1" opacity=".7"/><path d="M0 ${8 - len * .3} L${-w * .8} ${8 - len * .45} M0 ${8 - len * .5} L${w * .85} ${8 - len * .64} M0 ${8 - len * .68} L${-w * .6} ${8 - len * .8}" stroke="#FFF2D0" stroke-width=".9" opacity=".55" fill="none"/></g>`;
+  const back = [-58, -40, -22, -4, 14, 32, 50].map((a, k) => feather(a, 54 - Math.abs(a) * .18, cols[k % 3], 8)).join('');
+  const front = [-48, -30, -12, 6, 24, 42].map((a, k) => feather(a, 44 - Math.abs(a) * .15, cols[3 + (k % 3)], 7)).join('');
+  return `<rect x="-26" y="-60" width="52" height="144" fill="#000" opacity="0"/><ellipse cy="82" rx="10" ry="3" fill="#000" opacity=".15"/>${back}${front}<path d="M-6 8 L6 8 L5 20 L-5 20Z" fill="#B8301E" stroke="#7A1E12" stroke-width="1"/><path d="M-5 11 H5 M-5 15 H5" stroke="#F3C64A" stroke-width="1.2"/><rect x="-3.4" y="18" width="6.8" height="62" rx="3.4" fill="url(#dsHandle)" stroke="#6A3A18" stroke-width="1"/><path d="M-3.4 40 H3.4 M-3.4 60 H3.4" stroke="#6A3A18" stroke-width="1.2"/><circle cy="76" r="1.6" fill="#3A2010"/><path d="M0 78 Q-5 88 -2 96 M0 78 Q5 88 2 96" stroke="#C8382E" stroke-width="1.8" fill="none" stroke-linecap="round"/><defs><linearGradient id="dsHandle" x1="0" x2="1"><stop offset="0" stop-color="#B8844A"/><stop offset=".5" stop-color="#E0B070"/><stop offset="1" stop-color="#8A5A2E"/></linearGradient></defs>`;
+};
 
 const songshen = {
   play(st, o) {
     const ZJ_DY = hasArt('ss-zaojun') ? -14 : 4; // Gemini 灶君圖的嘴巴比畫面中心高一點
-    const PRINT = [180, 200], MOUTH = [180, 200 + ZJ_DY], JAR = [72, 404], JAR_MOUTH = [72, 386];
-    const BR_REST = [292, 400], DU_REST = [292, 515];
-    const DUST = [[54, 452], [128, 440], [198, 460], [250, 446], [318, 470], [116, 300], [246, 120]];
+    const PRINT = [180, 200], MOUTH = [180, 200 + ZJ_DY], JAR = [72, 430], JAR_MOUTH = [72, 378];
+    const BR_REST = [292, 400], DU_REST = [296, 478];
+    const DUST = [[44, 440], [128, 434], [204, 440], [268, 436], [326, 442], [116, 300], [246, 120]];
     let phase = 'paint', honey = 0, cov = 0, tip = [...BR_REST], dust = DUST.map(() => 1), last = null;
     st.set(`${backdrop('songshen', { wall: ['#EFD8B8', '#D9B48A'], table: 420, extra: `<rect x="0" y="380" width="360" height="44" fill="#A56A3E"/>` })}
-      <g id="print" transform="translate(${PRINT[0]} ${PRINT[1]})">${art('ss-zaojun', 170, 230, zaojun)}<ellipse id="zjSweet" cx="0" cy="${ZJ_DY}" rx="11" ry="5.5" fill="#E8A030" opacity="0"/></g>
-      <g transform="translate(${JAR[0]} ${JAR[1]})">${art('ss-jar', 70, 70, jar)}</g>
+      <path d="M112 92 L180 50 L248 92" stroke="#8A5A2E" stroke-width="1.6" fill="none"/><circle cx="180" cy="50" r="3.6" fill="#5A3A1E"/><g id="print" filter="url(#fToy)" transform="translate(${PRINT[0]} ${PRINT[1]})">${art('ss-zaojun', 170, 230, zaojun)}<ellipse id="zjSweet" cx="0" cy="${ZJ_DY}" rx="11" ry="5.5" fill="#E8A030" opacity="0"/></g>
+      <g transform="translate(${JAR[0]} ${JAR[1]})">${sitArt('ss-jar', 70, 70, jar, .42)}</g>
       <g id="stove" transform="translate(180 530)"${hasArt('bg-songshen') ? ' style="display:none"' : ''}><rect x="-170" y="-90" width="340" height="200" fill="#B5643C"/><path d="M-170 -50h340M-170 -10h340M-170 30h340M-90 -90v40M40 -90v40M-20 -50v40M110 -50v40M-120 -10v40M60 -10v40" stroke="#8E4A2A" stroke-width="2"/><path d="M-50 110 v-70 a50 50 0 0 1 100 0 v70z" fill="#3A1E12"/><path d="M-26 108c-6-22 8-30 10-42 8 10 4 18 10 24 4-6 2-14 8-18 6 14 10 22 4 36z" fill="#FF8A3A"/></g>
       ${DUST.map(([x, y], i) => `<g id="dust${i}" transform="translate(${x} ${y})"><ellipse rx="20" ry="9" fill="#9A8C80" opacity=".75"/><circle cx="-8" cy="-3" r="5" fill="#B5A79A" opacity=".8"/><circle cx="7" cy="2" r="4" fill="#857668" opacity=".7"/></g>`).join('')}
       <g id="brush" class="fest-hit" transform="translate(${BR_REST[0]} ${BR_REST[1]})" filter="url(#fToy)">${brush()}</g>
