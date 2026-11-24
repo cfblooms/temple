@@ -2,7 +2,7 @@
 //   zx 伴讀自習室：點一根蠟燭當番茄鐘，燒完一根就是讀完一段
 //   xd 睡前熄燈室：擦掉心鏡上的灰、慢慢敲三下磬、畫面慢慢暗下來
 //   rj 媽祖遶境看板：輸入今天走的步數，換成隨香公里，神轎沿著遶境路線前進
-//   sm 朱紅牌樓山門：走龍門、跨門檻不踩門檻，再進正殿
+//   sm 朱紅牌樓山門：摸石獅、撕農民曆、嚇鴿子，走龍門、跨門檻不踩門檻，再進正殿
 //   wa 淨身石槽：楊柳枝沾抹草水，把身上的灰點點拍掉
 // 每個地方都是 360 × 645 的一整張 SVG（跟攤位一樣），圖都是程式畫的，之後有 Gemini 圖再換。
 import { reduce, tween, pick, daily, yesterdayKey } from './stall.js';
@@ -356,12 +356,78 @@ export function initBoard(api) {
   };
 }
 
-/* ================= 朱紅牌樓山門：龍門進、跨門檻 ================= */
+/* ================= 朱紅牌樓山門：摸石獅、撕農民曆、廟埕鴿子、龍門進、跨門檻 ================= */
+// 石獅：面對廟，右邊（龍邊）是公獅踩繡球，左邊（虎邊）是母獅護小獅。每天各摸一次，各說一句今天的話。
+const LION_M = [
+  '繡球滾一滾，卡住的事今天會鬆一點。',
+  '公獅說：該開口的事，今天就開口。',
+  '摸過繡球，出門腰挺直，運氣會跟上來。',
+  '今天適合把拖了很久的那件小事做完。',
+  '公獅說：錢慢慢來，先把身體顧好。',
+  '繡球轉一圈：別人的意見聽聽就好，方向你自己定。',
+  '今天有人會幫你一把，記得說謝謝。',
+  '公獅說：先做最難的那件，下午就輕鬆了。',
+  '摸過繡球，今天面試、開會、報告都順。',
+  '公獅說：今天不用證明什麼，做好自己的份就好。',
+];
+const LION_F = [
+  '母獅說：今天記得打一通電話給家人。',
+  '小獅在打呵欠，提醒你今天早點睡。',
+  '母獅說：照顧別人之前，先照顧好自己。',
+  '摸過小獅，家裡大小今天都平平安安。',
+  '母獅說：今天吃一頓好的，不要隨便打發。',
+  '小獅蹭了蹭你：有些話，抱一下就懂了。',
+  '母獅說：累了就休息，不是偷懶。',
+  '今天適合跟老朋友說聲好久不見。',
+  '母獅說：家裡的長輩，今天多陪一下。',
+  '小獅滾了一圈：今天會有一件讓你笑出來的小事。',
+];
+// 廟口農民曆：每天撕一頁，宜三件、忌兩件（生活版，不是真的擇日）
+const CAL_YI = ['早點睡', '喝溫開水', '整理抽屜', '跟家人吃飯', '散步十分鐘', '曬太陽', '回一封拖很久的訊息', '說謝謝', '換新床單', '吃一頓熱的', '學一件小事', '洗個熱水澡', '請朋友喝飲料', '收拾桌面', '存一點錢', '把衣服晾好', '去看海', '聽一首老歌', '伸懶腰', '早上吃早餐', '寫下三件感謝的事', '下班準時走', '幫植物澆水', '慢慢吃飯', '跟自己說辛苦了'];
+const CAL_JI = ['深夜滑購物網站', '空腹喝咖啡', '跟自己生氣', '熬夜追劇', '話說太滿', '翹腳太久', '把心事悶著', '一直滑手機', '為小事吵架', '比較別人的人生', '亂答應事情', '吃太飽才睡', '忘記喝水', '衝動剁手', '低頭走路不看路'];
+
 export function initGate(api) {
-  const { $, state, save, say, sfx, burst, emit, openSheet, dayKey, cam, me, goHall } = api;
+  const { $, state, save, say, sfx, burst, emit, openSheet, dayKey, cam, me, goHall, daily, lunar } = api;
   const sm = state.sm || (state.sm = { last: '', streak: 0, total: 0 });
   const SILL = 452; // 門檻的高度
+  const ME = [240, 560]; // 選對龍門之後人站的位置（不要擋到右下角的公獅）
+  const LIONS = { f: { x: 50, y: 594, name: '母獅', part: '小獅' }, m: { x: 310, y: 594, name: '公獅', part: '繡球' } };
+  const CAL = [30, 238]; // 農民曆掛在左邊柱子上（左上角）
+  const PIGEONS = [[104, 606, 1], [134, 618, -1], [222, 612, 1], [252, 602, -1]];
   const DOORS = [{ id: 'tiger', x: 70, name: '虎門' }, { id: 'mid', x: 180, name: '中門' }, { id: 'dragon', x: 290, name: '龍門' }];
+  const seed = (salt) => { let h = 2166136261; for (const c of `${salt}|${dayKey()}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 10000) / 10000; }; };
+  const pickN = (arr, n, salt) => { const r = seed(salt), a = [...arr], out = []; while (out.length < n && a.length) out.push(a.splice(Math.floor(r() * a.length), 1)[0]); return out; };
+  const dayOf = (d = new Date()) => d.getDate();
+
+  // 程式畫的石獅（之後有 Gemini 圖 sm-lion-m / sm-lion-f 就換掉）；原點在底座中間
+  const lionCode = (k) => {
+    const s = k === 'm' ? -1 : 1; // 公獅在右邊、臉朝左；母獅在左邊、臉朝右
+    const paw = k === 'm'
+      ? `<g class="sm-rub-part"><circle cx="${-24 * -s}" cy="-30" r="13" fill="#D9CFBC" stroke="#8C8272" stroke-width="2"/><path d="M${-24 * -s - 9} -34q9 6 18 0M${-24 * -s - 9} -26q9 -6 18 0" stroke="#A89C86" stroke-width="1.6" fill="none"/></g>`
+      : `<g class="sm-rub-part"><circle cx="${24 * s}" cy="-30" r="11" fill="#D9CFBC" stroke="#8C8272" stroke-width="2"/><circle cx="${24 * s - 4}" cy="-32" r="1.6" fill="#5A5048"/><circle cx="${24 * s + 4}" cy="-32" r="1.6" fill="#5A5048"/><path d="M${24 * s - 3} -26q3 2 6 0" stroke="#5A5048" stroke-width="1.4" fill="none"/></g>`;
+    return `<rect x="-42" y="-22" width="84" height="22" rx="4" fill="#9A9488" stroke="#6A645A" stroke-width="2"/>
+      <ellipse cx="0" cy="-40" rx="30" ry="24" fill="#C9C1B1" stroke="#8C8272" stroke-width="2"/>
+      <circle cx="0" cy="-74" r="30" fill="#B5AB98" stroke="#8C8272" stroke-width="2"/>
+      ${[0, 1, 2, 3, 4, 5, 6, 7].map((i) => { const a = i / 8 * Math.PI * 2; return `<circle cx="${(Math.cos(a) * 25).toFixed(1)}" cy="${(-74 + Math.sin(a) * 25).toFixed(1)}" r="7" fill="#A89E8A"/>`; }).join('')}
+      <circle cx="${4 * s}" cy="-72" r="19" fill="#DAD2C2"/>
+      <g class="sm-eyes"><circle cx="${4 * s - 7}" cy="-77" r="4" fill="#3E342C"/><circle cx="${4 * s + 7}" cy="-77" r="4" fill="#3E342C"/><circle cx="${4 * s - 6}" cy="-78.5" r="1.3" fill="#FFF"/><circle cx="${4 * s + 8}" cy="-78.5" r="1.3" fill="#FFF"/></g>
+      <ellipse cx="${4 * s}" cy="-68" rx="5" ry="3.5" fill="#8C7A6A"/><path d="M${4 * s - 8} -61q8 6 16 0" stroke="#5A4A3E" stroke-width="2" fill="#C8504A"/>
+      ${paw}`;
+  };
+  const lionG = (k) => { const L = LIONS[k]; return `<g id="smLion${k}" class="place-hit sm-lion" data-lion="${k}" transform="translate(${L.x} ${L.y})" tabindex="0" role="button" aria-label="摸摸${L.name}">
+      <ellipse cx="0" cy="2" rx="46" ry="7" fill="#000" opacity=".18"/>
+      <g class="sm-lion-body">${pic(`sm-lion-${k}`, -48, -112, 96, 116, lionCode(k))}</g>
+      <circle class="sm-ring-bg" cx="0" cy="-56" r="40" fill="none" stroke="#FFF4E0" stroke-width="5" opacity="0"/>
+      <circle class="sm-ring" cx="0" cy="-56" r="40" fill="none" stroke="#F3C64A" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 252" transform="rotate(-90 0 -56)" opacity="0"/>
+      <g class="sm-done" opacity="0"><circle cx="${k === 'm' ? -34 : 34}" cy="-104" r="11" fill="#C8302A" stroke="#FFF4E0" stroke-width="2"/><path d="M${k === 'm' ? -39 : 29} -104l4 4 7 -8" stroke="#FFF4E0" stroke-width="2.6" fill="none" stroke-linecap="round"/></g>
+      <rect x="-48" y="-118" width="96" height="124" fill="#000" opacity="0"/></g>`; };
+  const calCode = () => `<path d="M0 -14 L-14 6 M0 -14 L14 6" stroke="#6A4A2A" stroke-width="1.6"/><circle cx="0" cy="-14" r="3" fill="#F3C64A"/>
+      <rect x="-24" y="4" width="48" height="16" rx="2" fill="#C8302A"/><text x="0" y="16" text-anchor="middle" class="sm-cal-h">農民曆</text>
+      <rect x="-22" y="20" width="44" height="46" fill="#F3E6CC" stroke="#B89A6A" stroke-width="1"/>`;
+  const pageCode = (n) => `<rect x="-22" y="20" width="44" height="46" fill="#FFFBF2" stroke="#C8A878" stroke-width="1"/>
+      <text x="0" y="50" text-anchor="middle" class="sm-cal-d">${n}</text><text x="0" y="61" text-anchor="middle" class="sm-cal-s">宜・忌</text>`;
+  const pigeonCode = `<ellipse cx="0" cy="0" rx="9" ry="6" fill="#B8BCC4"/><circle cx="7" cy="-5" r="4.4" fill="#9AA0AA"/><path d="M10 -5l4 1.2-4 1.2z" fill="#E0A440"/><circle cx="8" cy="-6" r="1" fill="#222"/><path d="M-3 -3q-6 -4 -9 2q5 2 9 0z" fill="#8C929C"/><path d="M-1 6v3M3 6v3" stroke="#D07060" stroke-width="1.2"/>`;
+
   const svg = mount($('#smHost'), `${bgOr('sm', `${BG('#BFE0F2', '#F6E6C8', 'smBg')}
     <circle cx="300" cy="80" r="26" fill="#FFF3C0"/>
     <rect x="0" y="470" width="360" height="175" fill="#C8B89A"/><path d="M0 500h360M0 540h360M0 590h360M60 470v175M150 470v175M240 470v175M320 470v175" stroke="#B0A080" stroke-width="2"/>
@@ -372,29 +438,58 @@ export function initGate(api) {
       <rect x="10" y="${SILL}" width="340" height="18" rx="3" fill="#7A4A22" stroke="#4A2A12" stroke-width="2"/>`)}
     <g id="smArch">
       <text x="180" y="184" text-anchor="middle" class="sm-plaque">心靈大廟</text>
-      ${DOORS.map((d) => `<g class="place-hit sm-door" data-door="${d.id}" tabindex="0" role="button" aria-label="走${d.name}"><rect x="${d.id === 'mid' ? 144 : d.x - 36}" y="210" width="${d.id === 'mid' ? 72 : 72}" height="${SILL - 210}" fill="#FFF8EA" opacity=".001"/><text x="${d.x}" y="238" text-anchor="middle" class="sm-door-t">${d.name}</text></g>`).join('')}
+      ${DOORS.map((d) => `<g class="place-hit sm-door" data-door="${d.id}" tabindex="0" role="button" aria-label="走${d.name}"><rect x="${d.x - 36}" y="210" width="72" height="${SILL - 210}" fill="#FFF8EA" opacity=".001"/><text x="${d.x}" y="238" text-anchor="middle" class="sm-door-t">${d.name}</text></g>`).join('')}
     </g>
-    <g id="smMe" transform="translate(290 560)"><ellipse cx="0" cy="34" rx="30" ry="6" fill="#000" opacity=".18"/><circle r="30" fill="#FFF4E0" stroke="#E0A440" stroke-width="3"/><clipPath id="smMeC"><circle r="27"/></clipPath><image id="smMeImg" x="-27" y="-27" width="54" height="54" clip-path="url(#smMeC)" preserveAspectRatio="xMidYMid slice"/></g>
+    <g id="smCal" class="place-hit" transform="translate(${CAL[0]} ${CAL[1]})" tabindex="0" role="button" aria-label="撕一頁農民曆，看今天宜什麼">
+      ${pic('sm-cal', -26, -18, 52, 86, calCode())}
+      <g id="smUnder"><rect x="-22" y="20" width="44" height="46" fill="#FFFBF2" stroke="#C8A878" stroke-width="1"/><circle cx="0" cy="34" r="9" fill="#3E8A4A"/><text x="0" y="38" text-anchor="middle" class="sm-cal-yi">宜</text><text id="smUnderT" x="0" y="57" text-anchor="middle" class="sm-cal-s"></text></g>
+      <g id="smPage">${pageCode(dayOf())}</g>
+      <rect x="-28" y="-18" width="56" height="92" fill="#000" opacity="0"/>
+    </g>
+    <g id="smPigeons">${PIGEONS.map(([x, y, f], i) => `<g class="sm-pigeon" data-i="${i}" transform="translate(${x} ${y})"><g class="sm-peck" style="animation-delay:${i * .7}s"><g transform="scale(${f} 1)">${pic('sm-pigeon', -14, -16, 28, 28, pigeonCode)}</g></g></g>`).join('')}
+      <rect id="smPigeonHit" class="place-hit" x="86" y="586" width="188" height="44" fill="#000" opacity="0" role="button" aria-label="廟埕的鴿子"/></g>
+    ${lionG('f')}${lionG('m')}
+    <g id="smMe" transform="translate(180 560)"><ellipse cx="0" cy="34" rx="30" ry="6" fill="#000" opacity=".18"/><circle r="30" fill="#FFF4E0" stroke="#E0A440" stroke-width="3"/><clipPath id="smMeC"><circle r="27"/></clipPath><image id="smMeImg" x="-27" y="-27" width="54" height="54" clip-path="url(#smMeC)" preserveAspectRatio="xMidYMid slice"/></g>
     <g id="smFoot" class="place-hit" style="display:none" tabindex="0" role="button" aria-label="抬腳跨過門檻"><ellipse cx="0" cy="0" rx="16" ry="24" fill="#3B2A22"/><ellipse cx="0" cy="-8" rx="11" ry="13" fill="#5A4234"/><rect x="-30" y="-36" width="60" height="72" fill="#000" opacity="0"/></g>
-    <text id="smTip" x="180" y="620" text-anchor="middle" class="place-small"></text>`, 'sm-svg');
+    <text id="smTip" x="180" y="506" text-anchor="middle" class="place-small"></text>`, 'sm-svg');
   const S = (id) => svg.querySelector('#' + id);
-  let phase = 'door', foot = [290, 520], inSill = 0, slips = 0;
-  const FOOT_REST = [290, 530];
+  let phase = 'door', foot = [ME[0], 520], inSill = 0, slips = 0;
+  const FOOT_REST = [ME[0], 530];
+
+  /* ---------- 今天的進度 ---------- */
+  const lionDay = () => { if (sm.lionDate !== dayKey()) { sm.lionDate = dayKey(); sm.lionToday = {}; } return sm.lionToday; };
+  const calToday = () => sm.calDate === dayKey();
+  function paintToday() {
+    const lt = lionDay();
+    for (const k of ['m', 'f']) S('smLion' + k).querySelector('.sm-done').setAttribute('opacity', lt[k] ? '1' : '0');
+    S('smPage').style.display = calToday() ? 'none' : '';
+    S('smUnder').style.display = calToday() ? '' : 'none';
+    S('smUnderT').textContent = yiji().yi[0].slice(0, 6);
+    S('smCal').classList.toggle('sm-new', !calToday());
+    for (const k of ['m', 'f']) S('smLion' + k).classList.toggle('sm-new', !lt[k]);
+  }
+  const tipDoor = () => { S('smTip').textContent = '進廟要從哪一個門走？點一下門'; };
+
   function reset() {
     phase = 'door'; slips = 0; inSill = 0; cam?.reset?.(0);
     S('smMeImg').setAttribute('href', me().face); put(S('smMe'), 180, 560);
-    S('smFoot').style.display = 'none'; S('smTip').textContent = '進廟要從哪一個門走？';
-    say('來到山門了。牌樓下有三個門，<b>進廟要走哪一個？</b>點一下門。', 'temple');
+    S('smFoot').style.display = 'none'; tipDoor(); paintToday();
+    const lt = lionDay(), todo = [!lt.m || !lt.f ? '<b>摸摸門口的石獅</b>' : '', !calToday() ? '<b>撕一頁農民曆</b>' : ''].filter(Boolean);
+    say(todo.length
+      ? `來到山門了。進廟前，先${todo.join('、')}，看看今天的好運落在哪；再點<b>龍門</b>進廟。`
+      : '來到山門了。石獅摸過、農民曆也撕了，<b>進廟要走哪一個門？</b>點一下門。', 'temple');
   }
+
+  /* ---------- 門、門檻 ---------- */
   function pickDoor(id) {
     if (phase !== 'door') return;
     if (id === 'mid') { sfx.knock(); say('<b>中門</b>是神明走的，平常人不走中門喔。再選一次。', 'temple'); return; }
     if (id === 'tiger') { sfx.knock(); say('<b>虎門</b>是出廟時走的（龍進虎出）。進廟要走另一邊。', 'temple'); return; }
     phase = 'sill'; sfx.pop();
-    tween(500, (k) => put(S('smMe'), 180 + 110 * k, 560));
+    tween(500, (k) => put(S('smMe'), 180 + (ME[0] - 180) * k, 560));
     say('對！<b>龍門</b>進、虎門出。接著抬腳<b>跨過門檻</b>：按住腳往上拉，要一下子跨過去，<b>不要踩在門檻上</b>。', 'temple');
     S('smTip').textContent = '按住腳，快快往上跨過門檻';
-    setTimeout(() => { S('smFoot').style.display = ''; foot = [...FOOT_REST]; put(S('smFoot'), ...foot); cam?.zoom?.(290, 470, 230); }, 520);
+    setTimeout(() => { S('smFoot').style.display = ''; foot = [...FOOT_REST]; put(S('smFoot'), ...foot); cam?.zoom?.(ME[0], 470, 230); }, 520);
   }
   svg.querySelectorAll('.sm-door').forEach((el) => {
     el.addEventListener('click', () => pickDoor(el.dataset.door));
@@ -406,7 +501,7 @@ export function initGate(api) {
     onDown: () => phase === 'sill',
     onMove(x, y) {
       if (phase !== 'sill') return;
-      foot = [Math.max(250, Math.min(330, x)), Math.min(FOOT_REST[1], y)]; put(S('smFoot'), ...foot);
+      foot = [Math.max(ME[0] - 44, Math.min(ME[0] + 44, x)), Math.min(FOOT_REST[1], y)]; put(S('smFoot'), ...foot);
       const over = foot[1] > SILL - 18 && foot[1] < SILL + 30;
       if (over) { if (!inSill) inSill = performance.now(); else if (performance.now() - inSill > 320) stepped(); }
       else inSill = 0;
@@ -422,21 +517,141 @@ export function initGate(api) {
   }
   function crossed() {
     phase = 'in'; S('smFoot').style.display = 'none'; cam?.reset?.(500);
-    tween(700, (k) => put(S('smMe'), 290, 560 - k * 180, 0, 1 - k * .4)).then(() => {
-      burst('spark', 290, 360, reduce ? 4 : 18); sfx.chime();
+    tween(700, (k) => put(S('smMe'), ME[0], 560 - k * 180, 0, 1 - k * .4)).then(() => {
+      burst('spark', ME[0], 360, reduce ? 4 : 18); sfx.chime();
       const first = streakOf(sm, dayKey); save();
-      if (first) wallet.earn(3, '跨過山門', 290, 330);
+      if (first) wallet.earn(3, '跨過山門', ME[0], 330);
       S('smTip').textContent = '';
-      say(`跨進山門了${slips ? '' : '，一次就成功'}！從這裡開始，就從日常走進廟裡。${first ? '福氣 +3。' : ''}按<b>進正殿</b>去參拜吧。`, 'temple');
+      const lt = lionDay(), miss = !lt.m && !lt.f ? '（門口的石獅還沒摸，按<b>再跨一次</b>回來摸也行）' : '';
+      say(`跨進山門了${slips ? '' : '，一次就成功'}！從這裡開始，就從日常走進廟裡。${first ? '福氣 +3。' : ''}按<b>進正殿</b>去參拜吧。${miss}`, 'temple');
     });
   }
+
+  /* ---------- 摸石獅：手指在石獅身上來回搓，圈圈滿了就算 ---------- */
+  const RUB_NEED = 520; // 手指來回搓的總距離（螢幕像素）
+  for (const k of ['m', 'f']) {
+    const L = LIONS[k], el = S('smLion' + k), ring = el.querySelector('.sm-ring'), ringBg = el.querySelector('.sm-ring-bg');
+    let on = false, last = null, dist = 0, lastSpark = 0;
+    const paintRing = () => { const v = Math.min(1, dist / RUB_NEED); ring.setAttribute('stroke-dasharray', `${(v * 251.3).toFixed(1)} 252`); };
+    const showRing = (o) => { ring.setAttribute('opacity', o); ringBg.setAttribute('opacity', o ? '.7' : '0'); };
+    el.addEventListener('pointerdown', (e) => {
+      if (phase === 'sill' || phase === 'in') return;
+      e.preventDefault(); el.setPointerCapture(e.pointerId); on = true; last = [e.clientX, e.clientY];
+      if (lionDay()[k]) dist = 0;
+      cam?.zoom?.(L.x, L.y - 70, 220); showRing(1); paintRing();
+      el.classList.add('rubbing');
+      S('smTip').textContent = '';
+      if (!lionDay()[k] && dist < 1) say(`手指在${L.name}身上<b>來回搓一搓</b>，金色圈圈滿了就好。`, 'temple');
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!on) return;
+      const d = Math.hypot(e.clientX - last[0], e.clientY - last[1]); last = [e.clientX, e.clientY];
+      dist += Math.min(d, 40); paintRing();
+      const now = performance.now();
+      if (now - lastSpark > 120) { lastSpark = now; const p = svgPt(svg, e); emit('spark', p.x, p.y - 30); if (!reduce) el.querySelector('.sm-lion-body').style.transform = `rotate(${(Math.random() - .5) * 3}deg)`; }
+      if (dist >= RUB_NEED) { on = false; rubbed(k); }
+    });
+    const up = () => {
+      if (!on) return; on = false; el.classList.remove('rubbing'); el.querySelector('.sm-lion-body').style.transform = '';
+      if (dist < RUB_NEED) { showRing(0); cam?.reset?.(300); tipDoor(); if (dist > 30) say(`再多搓幾下，${L.name}的圈圈滿了才算。`, 'temple'); }
+    };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && phase !== 'sill') { e.preventDefault(); dist = RUB_NEED; rubbed(k); } });
+    el._done = () => { el.classList.remove('rubbing'); el.querySelector('.sm-lion-body').style.transform = ''; dist = 0; setTimeout(() => { showRing(0); paintRing(); }, 700); };
+  }
+  function rubbed(k) {
+    const L = LIONS[k], el = S('smLion' + k), lt = lionDay(), first = !lt[k];
+    el._done(); sfx.chime(); burst('spark', L.x, L.y - 80, reduce ? 5 : 22);
+    el.classList.remove('sm-glow'); void el.getBBox(); el.classList.add('sm-glow');
+    setTimeout(() => el.classList.remove('sm-glow'), 1400);
+    const line = pickN(k === 'm' ? LION_M : LION_F, 1, 'lion' + k)[0];
+    if (first) {
+      lt[k] = true; sm.lionDays = (sm.lionDays || 0) + (lt.m && lt.f ? 1 : 0);
+      sm.lionTotal = (sm.lionTotal || 0) + 1; save();
+      wallet.earn(2, `摸${L.name}`, L.x, L.y - 120);
+      daily()?.hit('lion');
+    }
+    cam?.reset?.(900); tipDoor(); paintToday();
+    const other = k === 'm' ? 'f' : 'm';
+    const next = !lt[other] ? `另一邊的<b>${LIONS[other].name}</b>也摸一下？` : !calToday() ? '柱子上的<b>農民曆</b>撕一頁看看？' : '好了，點<b>龍門</b>進廟吧。';
+    say(`摸了${L.name}的${L.part}。<b>${line}</b>${first ? ' 福氣 +2。' : ''}${next}`, 'temple');
+    // 奇遇：石獅眨眼（小機率，每次摸都有機會）
+    if (daily()?.chance(0.06)) setTimeout(() => daily().qiyu('lionwink', () => {
+      const eyes = el.querySelector('.sm-eyes'); if (eyes) { eyes.style.transformOrigin = `${L.x}px ${L.y - 77}px`; eyes.classList.add('sm-wink'); setTimeout(() => eyes.classList.remove('sm-wink'), 900); }
+      burst('spark', L.x, L.y - 78, 14);
+    }), 900);
+  }
+
+  /* ---------- 撕農民曆：按住紙往下拉，拉夠長就撕下來 ---------- */
+  const yiji = () => ({ yi: pickN(CAL_YI, 3, 'yi'), ji: pickN(CAL_JI, 2, 'ji') });
+  function calSheet() {
+    const { yi, ji } = yiji(), L = lunar?.();
+    openSheet('今日農民曆', `<div class="sm-yiji">
+      <div class="sm-yiji-date"><b>${dayOf()}</b><span>${new Date().getMonth() + 1} 月・${L?.text || ''}</span></div>
+      <div class="sm-yiji-col yi"><em>宜</em><p>${yi.join('<br>')}</p></div>
+      <div class="sm-yiji-col ji"><em>忌</em><p>${ji.join('<br>')}</p></div></div>
+      <p class="hint">這是心靈大廟的生活版農民曆，每天撕一頁，看看就好、做一件就很棒。撕過 ${sm.calN || 0} 頁。</p>`);
+  }
+  {
+    const el = S('smCal'), page = S('smPage');
+    let on = false, y0 = 0, dy = 0;
+    el.addEventListener('pointerdown', (e) => {
+      if (phase === 'sill') return;
+      e.preventDefault();
+      if (calToday()) { calSheet(); return; }
+      el.setPointerCapture(e.pointerId); on = true; y0 = e.clientY; dy = 0;
+      cam?.zoom?.(CAL[0] + 60, CAL[1] + 40, 200);
+      S('smTip').textContent = ''; say('按住紙，<b>往下拉</b>就撕下來。', 'temple');
+    });
+    el.addEventListener('pointermove', (e) => {
+      if (!on) return;
+      // 紙的下緣跟著手指往下，紙在手指上面，不會被手指擋住
+      dy = Math.max(0, e.clientY - y0); const v = Math.min(1, dy / 70);
+      page.setAttribute('transform', `translate(${(v * 4).toFixed(1)} ${(v * 14).toFixed(1)}) rotate(${(v * 8).toFixed(1)} -22 20)`);
+      if (dy > 70) { on = false; tear(); }
+    });
+    const up = () => { if (!on) return; on = false; page.setAttribute('transform', ''); cam?.reset?.(200); tipDoor(); if (dy > 8) say('再往下拉長一點，紙才撕得下來。', 'temple'); };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
+    el.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && phase !== 'sill') { e.preventDefault(); if (calToday()) calSheet(); else tear(); } });
+  }
+  function tear() {
+    const page = S('smPage');
+    sfx.pop?.(); sm.calDate = dayKey(); sm.calN = (sm.calN || 0) + 1; save();
+    tween(reduce ? 200 : 900, (k) => { page.setAttribute('transform', `translate(${(k * 50).toFixed(1)} ${(14 + k * 260).toFixed(1)}) rotate(${(8 + k * 160).toFixed(1)} 0 43)`); page.setAttribute('opacity', (1 - k * k).toFixed(2)); }, (k) => k).then(() => {
+      page.setAttribute('transform', ''); page.setAttribute('opacity', '1'); paintToday();
+    });
+    wallet.earn(1, '撕農民曆', CAL[0] + 20, CAL[1]);
+    cam?.reset?.(400); tipDoor();
+    const { yi, ji } = yiji();
+    say(`今天<b>宜</b>：${yi.join('、')}。<b>忌</b>：${ji.join('、')}。點農民曆可以再看一次。`, 'temple');
+    setTimeout(calSheet, reduce ? 300 : 1000);
+  }
+
+  /* ---------- 廟埕鴿子：點一下飛起來，過一下又回來啄米 ---------- */
+  let flying = false;
+  S('smPigeonHit').addEventListener('click', () => {
+    if (flying) return; flying = true; sfx.clap?.(4);
+    const birds = [...svg.querySelectorAll('.sm-pigeon')];
+    birds.forEach((b, i) => {
+      const [x, y] = PIGEONS[i], dir = i < 2 ? -1 : 1;
+      b.classList.add('flying');
+      tween(reduce ? 300 : 1400, (k) => put(b, x + dir * (60 + i * 18) * k, y - 520 * k * k - 40 * k, 0, 1 - k * .3), (k) => k);
+    });
+    setTimeout(() => {
+      birds.forEach((b, i) => { const [x, y] = PIGEONS[i]; tween(reduce ? 200 : 1200, (k) => put(b, x + (1 - k) * (i < 2 ? -80 : 80), y - (1 - k) * 260, 0, 1)).then(() => b.classList.remove('flying')); });
+      setTimeout(() => { flying = false; }, 1300);
+    }, 6000);
+  });
+
   $('#smBar').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-sm]'); if (!b) return;
     if (b.dataset.sm === 'again') reset();
     else if (b.dataset.sm === 'hall') goHall();
-    else openSheet('山門小知識', `<p><b>龍進虎出</b>：面對廟，右手邊是龍門（進），左手邊是虎門（出）。中門是神明走的。</p>
+    else openSheet('山門小知識', `<p><b>石獅</b>：面對廟，右邊（龍邊）是公獅，腳踩繡球；左邊（虎邊）是母獅，腳邊護著小獅。很多人進廟前會摸一摸，討個好兆頭。</p>
+      <p><b>龍進虎出</b>：面對廟，右手邊是龍門（進），左手邊是虎門（出）。中門是神明走的。</p>
       <p><b>不踩門檻</b>：門檻像是神明的肩膀，也是擋住外面煩惱的那條線，要跨過去，不要踩。</p>
-      <p class="hint">跨過山門 ${sm.total} 次，連續 ${sm.streak} 天。</p>`);
+      <p><b>農民曆</b>：老一輩出門前會翻一下今天宜什麼、忌什麼。這裡的是生活版，看看就好。</p>
+      <p class="hint">跨過山門 ${sm.total} 次，連續 ${sm.streak} 天；兩隻石獅都摸過 ${sm.lionDays || 0} 天；農民曆撕了 ${sm.calN || 0} 頁。</p>`);
   });
   return { enter: reset, leave() { cam?.reset?.(0); } };
 }
