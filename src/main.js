@@ -36,6 +36,7 @@ import { initXitai } from './xitai.js';
 import { initTiangong } from './tiangong.js';
 import { tossJiao } from './jiaotoss.js';
 import { initAnalytics } from './analytics.js'; // Umami 使用數據（沒設定就不載入）
+import { initCloud } from './cloud.js'; // 匿名雲端存檔＋復原碼
 import { initGuide } from './guide.js'; // 參拜流程進度條（新手引導）
 import { initAmulet } from './amulet.js';
 import { initFest } from './fest/index.js';
@@ -105,7 +106,9 @@ const state = {
   fortune: null, // { no, cat, wish, date }
 };
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+// 雲端備份（cloud.js）：每次存檔記下時間，4 秒後悄悄備份；試玩模式、內嵌預覽不備份
+const cloud = initCloud({ key: KEY, state, bootT: state._t || 0, enabled: KEY === REAL_KEY && window.top === window.self && location.protocol.startsWith('http') });
+const save = () => { state._t = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} cloud.schedule(); };
 wallet.bind(state, save, { emit });
 const stats = initAnalytics({ state, save, enabled: KEY === REAL_KEY && window.top === window.self });
 // 只在這次參拜有效的狀態
@@ -1103,7 +1106,32 @@ function openAvatar() {
         <img src="${c.face}" alt="" loading="lazy"><span>${c.name}</span></button>`).join('')}
     </div>
     <p class="hint">之後會加「上傳照片，生成自己的人偶」。</p>
-    <button class="btn" id="avSave">完成，回到大殿</button>`);
+    <button class="btn" id="avSave">完成，回到大殿</button>
+    <details class="cloud-box"><summary>換手機也能接回進度</summary>
+      <p class="hint" id="cloudState"></p>
+      <div class="field"><span>你的復原碼（請自己存好，不要給別人）</span><div class="cloud-code"><input type="text" id="cloudCode" readonly value="${esc(cloud.code())}"><button type="button" class="btn ghost" id="cloudCopy">複製</button></div></div>
+      <label class="field"><span>在新手機上：貼上舊手機的復原碼</span><input type="text" id="cloudIn" placeholder="貼上復原碼" autocomplete="off" spellcheck="false"></label>
+      <button type="button" class="btn gold" id="cloudGo">接回進度</button>
+      <p class="hint">存檔（包含寫下的心願）會備份在本站雲端，只用來還原你的進度，不會拿去做別的用途。</p>
+    </details>`);
+  const st = cloud.status;
+  $('#cloudState').textContent = !cloud.enabled ? '試玩模式不會備份。' : st.on ? (st.last ? `已備份到雲端（${new Date(st.last).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}）。` : '雲端備份已開啟。') : '目前只存在這支手機（雲端連不上）。';
+  $('#cloudCopy').addEventListener('click', async (e) => { try { await navigator.clipboard.writeText(cloud.code()); e.target.textContent = '已複製'; } catch { $('#cloudCode').select(); e.target.textContent = '請長按複製'; } });
+  $('#cloudGo').addEventListener('click', async (e) => {
+    const v = $('#cloudIn').value.trim(); if (!v) return;
+    if (v === cloud.code()) { $('#cloudState').textContent = '這就是這支手機的復原碼喔。'; return; }
+    if (!confirmRestore()) return;
+    e.target.disabled = true; e.target.textContent = '接回中…';
+    const r = await cloud.restore(v);
+    e.target.disabled = false; e.target.textContent = '接回進度';
+    $('#cloudState').textContent = r === 'bad' ? '復原碼格式不對，請整段貼上。' : r === 'none' ? '找不到這個復原碼的存檔。' : r === 'offline' ? '現在連不上雲端，等一下再試。' : '';
+  });
+  function confirmRestore() {
+    const b = $('#cloudGo');
+    if (b.dataset.sure) return true;
+    b.dataset.sure = '1'; b.textContent = '確定？這支手機的進度會被換掉（再按一次）';
+    return false;
+  }
   body.querySelector('.char-grid').addEventListener('click', (e) => {
     const b = e.target.closest('.char'); if (!b) return;
     pick = b.dataset.id;
