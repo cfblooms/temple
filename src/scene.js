@@ -190,7 +190,7 @@ export const SCENE_SVG = (bg) => `
         <path d="M0 -15 C6 -8 6 -1 0 1 C-6 -1 -6 -8 0 -15 Z" fill="url(#flameG)"/>
         <path d="M0 -8 C2.4 -5 2.4 -1 0 0 C-2.4 -1 -2.4 -5 0 -8 Z" fill="#E8F4FF"/>
       </g>
-      ${act('hand-lighter') ? `<image href="${act('hand-lighter')}" x="-46" y="-2" width="48" height="48"/>` : `<image href="${lighterUrl}" x="-38" y="-1" width="40" height="40"/>`}
+      ${act('hand-lighter') ? `<image href="${act('hand-lighter')}" x="-41.5" y="-5.1" width="50" height="51.2"/>` : `<image href="${lighterUrl}" x="-38" y="-1" width="40" height="40"/>`}
     </g>
     <g id="toolSticks" style="display:none">
       <path d="M-6 2 L-2 58 M0 -2 L0 58 M6 2 L2 58" stroke="#9A4A2E" stroke-width="2.6" stroke-linecap="round"/>
