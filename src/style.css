@@ -177,7 +177,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 
 /* 籤筒 in sheet */
 .tube-stage { display: grid; place-items: center; padding: 6px 0; }
-.tube-stage svg { width: 140px; height: 170px; }
+.tube-stage svg { width: 140px; height: 248px; }
 .stick-no { font-family: var(--font-serif); font-weight: 900; font-size: 26px; color: var(--red); text-align: center; letter-spacing: .1em; }
 
 /* 籤詩 slip */
@@ -281,7 +281,7 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 @media (prefers-reduced-motion: reduce) { .yue-plaque, .yue-plaque.pop, .yue-candy.pop { animation: none; } }
 
 /* ---------- 自己擲筊 ---------- */
-.jt { position: fixed; inset: 0; z-index: 60; background: radial-gradient(ellipse at 50% 70%, rgb(60 20 10 / .86), rgb(20 8 4 / .95)); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px)); touch-action: none; user-select: none; -webkit-user-select: none; }
+.jt { position: fixed; inset: 0; z-index: 60; background: radial-gradient(ellipse at 50% 70%, rgb(60 20 10 / .42), rgb(20 8 4 / .72)); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px)); touch-action: none; user-select: none; -webkit-user-select: none; }
 .jt[hidden] { display: none; }
 .jt-tip { position: absolute; top: 16%; left: 16px; right: 16px; text-align: center; color: #FFF1DA; font-size: 18px; line-height: 1.6; margin: 0; text-shadow: 0 1px 3px rgb(0 0 0 / .5); }
 .jt-tip b { color: #FFD77A; }
@@ -300,6 +300,26 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .jt-row[hidden] { display: none; }
 .jt-row button { border: 1.5px solid rgb(255 230 190 / .5); background: rgb(0 0 0 / .25); color: #FFF1DA; border-radius: 999px; padding: 8px 18px; font: inherit; font-size: 14px; }
 .jt-row button[hidden] { display: none; }
+.jt-row .jt-tap { background: rgb(255 215 122 / .2); border-color: #FFD77A; color: #FFE7B0; min-height: 44px; }
+/* 參拜流程進度條（guide.js） */
+.rite { position: absolute; left: 0; right: 0; margin: 0 auto; width: fit-content; top: 124px; z-index: 6; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 24px); padding: 4px 0 4px 10px; border-radius: 999px; background: rgb(40 18 10 / .74); color: #FFF1DA; box-shadow: 0 3px 10px rgb(0 0 0 / .22); white-space: nowrap; }
+.rite[hidden] { display: none; }
+.rite-h { font-size: 12.5px; font-weight: 700; letter-spacing: .02em; flex-shrink: 0; }
+.rite-x { border: 0; background: transparent; color: #FFE7B0; font-size: 16px; line-height: 1; min-width: 36px; min-height: 28px; cursor: pointer; }
+.rite-dots { list-style: none; display: flex; gap: 3px; margin: 0; padding: 0; }
+.rite-dots li { width: 10px; height: 5px; border-radius: 3px; background: rgb(255 241 218 / .25); }
+.rite-dots li.done { background: #FFD77A; }
+.rite-dots li.now { background: linear-gradient(90deg, #FFD77A, #FF9A5A); animation: riteNow 1.2s ease-in-out infinite alternate; }
+.rite.ok { background: rgb(130 76 10 / .88); }
+@keyframes riteNow { from { opacity: .5; } to { opacity: 1; } }
+#sceneWrap.tooling .rite { top: 10px; }
+.tap-easy { position: absolute; right: 12px; bottom: 12px; z-index: 7; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #FFD77A; background: rgb(60 24 10 / .82); color: #FFE7B0; font: inherit; font-size: 14px; font-weight: 700; box-shadow: 0 3px 10px rgb(0 0 0 / .25); }
+.wick-ring { fill: none; stroke: #FFE08A; stroke-width: 2; stroke-dasharray: 4 4; animation: wickRing 1.1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes wickRing { 0%, 100% { opacity: .5; scale: 1; } 50% { opacity: 1; scale: 1.18; } }
+.jiao-sh { fill: rgb(30 10 0 / .9); filter: blur(1.5px); }
+.stick-rise { animation: stickRise .75s cubic-bezier(.25,.8,.3,1) both; }
+@keyframes stickRise { from { transform: translateY(30px); } to { transform: translateY(-62px); } }
+@media (prefers-reduced-motion: reduce) { .wick-ring, .rite-dots li.now i, .stick-rise { animation-duration: .01s; animation-iteration-count: 1; } }
 .jt:focus { outline: none; }
 .jt-swipe { position: absolute; left: 0; right: 0; top: calc(70% + 64px); display: flex; flex-direction: column; align-items: center; gap: 4px; color: #FFE7B0; font-size: 13px; letter-spacing: .1em; pointer-events: none; }
 .jt-swipe[hidden] { display: none; }
@@ -808,6 +828,22 @@ button:focus-visible, [role="button"]:focus-visible, input:focus-visible { outli
 .quest-list li.done { opacity: .75; }
 .quest-list li.done > span { background: #5E9A4A; }
 .quest-list li.done b { text-decoration: line-through; }
+.quest-list li > span:empty { background: transparent; border: 2px dashed #D8B48A; }
+.quest-list .q-txt { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.quest-list .q-txt small { font-size: 11.5px; color: #8A6A50; line-height: 1.35; }
+.quest-list li .chip { min-height: 36px; padding: 0 14px; }
+.quest-list li em { font-style: normal; font-size: 12px; color: #5E9A4A; font-weight: 700; }
+.stamp-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #FFF0D6; flex-wrap: wrap; }
+.stamp-row > div:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+.stamp-row small { font-size: 12px; color: #8A6A50; }
+.stamp-row .btn { width: 100%; margin: 4px 0 0; }
+.stamp { width: 44px; height: 44px; border-radius: 10px; border: 2px dashed #D8B48A; display: grid; place-items: center; font-family: var(--font-serif); font-weight: 900; font-size: 22px; color: #FFF; }
+.stamp.on { border: 0; background: #C8352B; rotate: -8deg; box-shadow: inset 0 0 0 3px #E8705F; }
+.week-stamps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 6px; }
+.week-stamps i { aspect-ratio: 1; border-radius: 50%; border: 2px dashed #D8B48A; display: grid; place-items: center; font-style: normal; font-size: 12px; color: #8A6A50; }
+.week-stamps i.on { border: 0; background: #C8352B; color: #FFF; }
+.week-stamps i.now { outline: 2px solid #F3C64A; outline-offset: 2px; }
+.quest-chip.calm { opacity: .8; }
 .quest-h { margin: 14px 0 6px; font-size: 15px; }
 .quest-h small { font-weight: 400; color: inherit; opacity: .7; }
 .qiyu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
