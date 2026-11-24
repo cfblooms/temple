@@ -318,10 +318,10 @@ const loadedHtml = (ids) => { const d = DECK(); return ids.map((id, i) => { cons
 
 // 先把紙紮財寶裝上法船（點一下就飛上船），裝好再送去燒
 function loadBoat(st, o, names, next) {
-  const BC = [180, 300], BS = 2.5, SHELF = TREASURES.map((_, i) => [52 + (i % 4) * 85, i < 4 ? 500 : 568]);
+  const BC = [180, 300], BS = 2.5, SHELF = TREASURES.map((_, i) => [52 + (i % 4) * 85, i < 4 ? 482 : 546]);
   let loaded = [];
   st.set(`${backdrop('zhongyuan-boat', { wall: ['#1E2236', '#3A3A50'], table: 470, tableColor: ['#5A5050', '#3A3434'] })}
-    <rect x="12" y="452" width="336" height="150" rx="14" fill="#2A1A14" opacity=".55"/>
+    <rect id="lPanel" x="12" y="436" width="336" height="150" rx="14" fill="#2A1A14" opacity=".55"/>
     <g id="lBoat" transform="translate(${BC[0]} ${BC[1]}) scale(${BS})"><g filter="url(#fToy)">${art('zy-boat', 160, 110, boatArt)}${sailNames(names)}</g><g id="lDeck"></g></g>
     ${TREASURES.map((t, i) => `<g id="tr-${t.id}" class="fest-hit" data-t="${t.id}" transform="translate(${SHELF[i][0]} ${SHELF[i][1] + 16})">${hit(70, 70)}${treasure(t, 52, 48)}<text y="16" text-anchor="middle" class="fest-small" fill="#FFE29A">${t.name}</text></g>`).join('')}`);
   st.progress(0, 2);
@@ -341,6 +341,7 @@ function loadBoat(st, o, names, next) {
     });
     if (loaded.length === 4) st.say('法船越來越氣派了！還可以再裝，裝好了按「<b>法船啟航</b>」。', 'temple');
     if (loaded.length >= 4) st.buttons([{ label: '法船啟航', primary: true, on: go }, ...(loaded.length < 8 ? [{ label: '全部裝上', on: () => TREASURES.forEach((t, k) => st.later(k * 120, () => load(t.id))) }] : [])]);
+    if (loaded.length === 8) st.$("#lPanel")?.setAttribute("display", "none");
     if (loaded.length === 8) st.say('八樣財寶全部裝滿，法船金光閃閃！按「<b>法船啟航</b>」送祂們上路。', 'temple');
   };
   st.world.addEventListener('click', (e) => { const g = e.target.closest('[data-t]'); if (g) load(g.dataset.t); });
