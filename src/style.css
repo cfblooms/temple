@@ -964,4 +964,6 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
 /* 殿畫面放大（Sheara 2026-11-24）：手機畫面高度不夠時，場景框最多再寬 20%，多出來的上下裁掉（上面裁多、下面裁少），
    所有殿／攤位的圖層和特效一起移，座標不變。 */
 .scene-wrap { width: min(100cqw, 100cqh * 0.5581 * 1.2); height: min(100cqh, 100cqw * 1.7917); aspect-ratio: auto; }
-#sceneWrap > div[id$="Host"], #sceneWrap > #fx { bottom: auto; height: calc(100cqw * 1.7917); top: calc((100% - 100cqw * 1.7917) * .75); }
+#sceneWrap > div[id$="Host"]:not(#festHost), #sceneWrap > #fx { bottom: auto; height: calc(100cqw * 1.7917); top: calc((100% - 100cqw * 1.7917) * .75); }
+/* 節慶小遊戲用自己的 SVG（slice 撐滿），不跟殿一起位移裁切，否則底部按鈕會被切掉；參拜進度小塊也先收起來 */
+#sceneWrap:has(#festHost:not([hidden])) .rite { display: none; }
