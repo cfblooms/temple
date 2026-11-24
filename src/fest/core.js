@@ -75,6 +75,18 @@ export function todayFests(d = new Date()) {
   const L = lunarOf(d);
   return FESTIVALS.filter((x) => x.when(d, L)).map((f) => ({ f, L }));
 }
+// 節慶前後幾天內都能玩、都能蓋章（錯過當天的人也能回來補）
+export const FEST_SPAN = 3;
+// 今天附近（前後 FEST_SPAN 天）的節慶：off = 今天離節日幾天（正數＝節日已過、負數＝節日還沒到），L = 節日那天的農曆
+export function nearFests(d = new Date(), span = FEST_SPAN) {
+  const out = [], seen = new Set();
+  const offs = [0]; for (let i = 1; i <= span; i++) offs.push(i, -i);
+  for (const off of offs) {
+    const day = addDays(d, -off), L = lunarOf(day);
+    for (const f of FESTIVALS) if (!seen.has(f.id) && f.when(day, L)) { seen.add(f.id); out.push({ f, L, off }); }
+  }
+  return out;
+}
 // 每個節慶下一次是幾天後（掃未來 400 天，結果記起來）
 let upcoming = null, upcomingKey = '';
 export function nextDates() {

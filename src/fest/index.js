@@ -1,6 +1,6 @@
-// 節慶入口：場景左上角的燈籠按鈕 → 節慶印章冊；節日當天可以玩那個節慶的小遊戲並蓋章。
+// 節慶入口：場景左上角的燈籠按鈕 → 節慶印章冊；節日前後三天都可以玩那個節慶的小遊戲並蓋章。
 // 平常日也能「試玩」（不蓋章），方便預覽。
-import { FESTIVALS, festById, todayFest, todayFests, nextDates, makeStage, lunarOf } from './core.js';
+import { FESTIVALS, festById, nearFests, nextDates, makeStage, lunarOf, FEST_SPAN } from './core.js';
 import { GAMES as G1 } from './games-1.js';
 import { GAMES as G2 } from './games-2.js';
 import { GAMES as G3 } from './games-3.js';
@@ -16,6 +16,9 @@ const CN = '一二三四五';
 const dayOf = (id, L) => { const g = GAMES[id]; if (!g?.days) return 1; return g.dayOf ? g.dayOf(L) : Math.min(g.days.length, Math.max(1, L?.day || 1)); };
 const dayLabel = (id, i) => GAMES[id].dayLabels?.[i] ?? `初${CN[i]}`;
 const STAMP_DAYS = 330; // 一年內蓋過的章算「今年已蓋」
+// 福氣幣：每個節慶每天第一次正式玩完就給，越費工的給越多。蜂炮（看旺度）、遶境（平安符）遊戲裡自己會給，這裡不重複給。
+const FU = { chunjie: 10, tiangong: 15, qigui: 20, yuanxiao: 15, qingming: 20, duanwu: 25, qixi: 20, zhongyuan: 20, qianggu: 25, zhongqiu: 15, chongyang: 15, dongzhi: 25, weiya: 20, songshen: 15, chuxi: 20 };
+const wallet = Object.values(import.meta.glob('../wallet.js', { eager: true }))[0]?.wallet;
 
 export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc, dayKey, updateFish, chars, goHall }) {
   const wrap = $('#sceneWrap');
@@ -31,15 +34,16 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
   };
   const playable = (id) => !!GAMES[id];
   // 今天可以玩的節慶（同一天可能不只一個）
-  const todayList = () => todayFests().filter((x) => playable(x.f.id));
+  const todayList = () => nearFests().filter((x) => playable(x.f.id));
+  const when = (x) => (x.off === 0 ? '今天' : x.off > 0 ? `${x.off}天前` : `${-x.off}天後`);
 
   function paintChip() {
     const ts = todayList(), t = ts[0];
     if (t) {
       btn.classList.add('today');
       const g = GAMES[t.f.id], di = dayOf(t.f.id, t.L) - 1;
-      $('#festTxt').textContent = g.days && t.L ? `${dayLabel(t.f.id, di)}・${g.days[di]}` : `今天${t.f.name}${ts.length > 1 ? `＋${ts.length - 1}` : ''}`;
-      btn.setAttribute('aria-label', `今天是${ts.map((x) => x.f.name).join('、')}，來玩${ts.map((x) => x.f.game).join('、')}`);
+      $('#festTxt').textContent = t.off === 0 && g.days && t.L ? `${dayLabel(t.f.id, di)}・${g.days[di]}` : t.off === 0 ? `今天${t.f.name}${ts.length > 1 ? `＋${ts.length - 1}` : ''}` : `${t.f.name}${t.off > 0 ? '・還能補' : `・${-t.off}天後`}`;
+      btn.setAttribute('aria-label', `${ts.map((x) => `${when(x)}是${x.f.name}`).join('、')}，來玩${ts.map((x) => x.f.game).join('、')}`);
       return;
     }
     btn.classList.remove('today');
@@ -51,12 +55,12 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
 
   const md = (d) => `${d.getMonth() + 1}/${d.getDate()}`;
   function openAlbum() {
-    const ts = todayList(), isToday = (id) => ts.some((x) => x.f.id === id), nd = nextDates();
+    const ts = todayList(), isToday = (id) => ts.some((x) => x.f.id === id), nearOf = (id) => ts.find((x) => x.f.id === id), nd = nextDates();
     const list = [...FESTIVALS].sort((a, b) => (nd[a.id]?.days ?? 999) - (nd[b.id]?.days ?? 999));
     const got = FESTIVALS.filter((f) => stamped(f.id)).length;
     const body = openSheet('節慶印章冊', `
-      <p class="hint">每到一個節慶，當天來廟裡玩那天的小遊戲就能蓋一枚章，一年集滿 ${FESTIVALS.length} 枚。節慶前三天，左上角的燈籠會開始倒數。今年已經蓋了 <b>${got}</b> 枚。</p>
-      ${ts.map((x) => `<button type="button" class="btn" data-go="${x.f.id}">今天是${x.f.name}：${x.f.game}${stamped(x.f.id) && state.festStamps[x.f.id] === dayKey() ? '（已蓋章）' : ''}</button>`).join('')}
+      <p class="hint">每到一個節慶，<b>節日當天和前後 ${FEST_SPAN} 天</b>來廟裡玩那個節慶的小遊戲，就能蓋一枚章、拿福氣幣，一年集滿 ${FESTIVALS.length} 枚。今年已經蓋了 <b>${got}</b> 枚。</p>
+      ${ts.map((x) => `<button type="button" class="btn" data-go="${x.f.id}">${x.off === 0 ? '今天是' : `${when(x)}是`}${x.f.name}：${x.f.game}${stamped(x.f.id) && state.festStamps[x.f.id] === dayKey() ? '（已蓋章）' : ''}</button>`).join('')}
       <div class="stamp-grid">${list.map((f) => {
         const n = nd[f.id], s = stamped(f.id);
         return `<div class="stamp${s ? ' got' : ''}${isToday(f.id) ? ' now' : ''}">
@@ -65,12 +69,12 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
           ${playable(f.id) ? `<button type="button" class="chip" data-try="${f.id}">${isToday(f.id) ? '開始' : '試玩'}</button>` : '<span class="chip soon">籌備中</span>'}
         </div>`;
       }).join('')}</div>
-      <p class="muted small">試玩不會蓋章，只有節日當天玩才會蓋。</p>`);
+      <p class="muted small">試玩不會蓋章；節日當天和前後 ${FEST_SPAN} 天玩才會蓋。</p>`);
     body.addEventListener('click', (e) => {
       const b = e.target.closest('[data-go],[data-try]'); if (!b) return;
       const id = b.dataset.go || b.dataset.try;
       if (GAMES[id]?.days && !isToday(id)) { pickDay(id); return; }
-      closeSheet(); start(id, { real: isToday(id) });
+      closeSheet(); start(id, { real: isToday(id), L: nearOf(id)?.L, off: nearOf(id)?.off });
     });
   }
   // 好幾天的節慶試玩：選哪一天
@@ -82,7 +86,10 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
   }
 
   let stage = null, hidden = [];
-  function start(id, { real = false, day } = {}) {
+  let curOff = 0;
+  const canStamp = (id, real) => real && state.festStamps[id] !== dayKey() && ((GAMES[id]?.days && curOff === 0) || !stamped(id));
+  function start(id, { real = false, day, L: festL, off = 0 } = {}) {
+    curOff = off;
     const f = festById(id), game = GAMES[id];
     if (!game) return;
     if (stage) stop(true);
@@ -91,10 +98,10 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     hidden.forEach((el) => { el.dataset.festHid = '1'; el.hidden = true; });
     host.hidden = false; wrap.classList.add('festing');
     stage = makeStage(host, { sfx, say, onClose: () => stop() });
-    const L = lunarOf(new Date());
+    const L = festL || lunarOf(new Date()); // 補玩時用節日那天的農曆（春節第幾天、中元哪一天）
     sfx.chime();
     game.play(stage, {
-      real, day: day || dayOf(id, L),
+      real, reward: canStamp(id, real), day: day || dayOf(id, L), // reward：這次玩完會蓋章、能拿獎勵（遊戲自己發福氣幣時看這個）
       chars, me: chars.me(), esc, state, save,
       goHall: (h) => { stop(true); if (h) goHall(h); },
       done: (text) => finish(f, real, text),
@@ -102,11 +109,15 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
   }
   function finish(f, real, text) {
     let extra = '';
-    if (real && state.festStamps[f.id] !== dayKey()) { // 好幾天的節慶每天都有
+    // 好幾天的節慶（春節、中元）在正日每天都能蓋；其他節慶前後三天裡蓋一次就好
+    const can = canStamp(f.id, real);
+    if (real && !can) extra = '<br>這個節慶的章已經蓋過了，玩得開心！';
+    if (can) {
       const first = !stamped(f.id);
       state.festStamps[f.id] = dayKey(); state.fish += 6; save(); updateFish?.();
       extra = first ? `<br>節慶印章冊蓋上「${f.name}」，虎爺叼來小魚乾 ×6。` : '<br>虎爺叼來小魚乾 ×6，明天再來。';
-    } else if (!real) extra = '<br>（這是試玩，節日當天來玩才會蓋章。）';
+      if (FU[f.id] && wallet) { wallet.earn(FU[f.id], f.name); extra += `福氣幣 +${FU[f.id]}。`; }
+    } else if (!real) extra = `<br>（這是試玩，節日當天和前後 ${FEST_SPAN} 天來玩才會蓋章。）`;
     say(`${text}${extra}`, 'god');
     sfx.chime(); sfx.buzz?.([20, 50, 30]);
     stage?.buttons([{ label: '回到殿裡', primary: true, on: () => stop() }, { label: '印章冊', on: () => { stop(); openAlbum(); } }]);
@@ -124,16 +135,16 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
     sfx.knock();
     const ts = todayList();
     // 同一天有好幾個節慶：打開印章冊讓人選
-    if (ts.length === 1) start(ts[0].f.id, { real: true }); else openAlbum();
+    if (ts.length === 1) start(ts[0].f.id, { real: true, L: ts[0].L, off: ts[0].off }); else openAlbum();
   });
   paintChip();
   return {
     openAlbum, start, stop, paintChip,
     greetLine() { // 進廟的招呼加一句節慶
       const ts = todayList();
-      if (ts.length) { const left = ts.filter((x) => state.festStamps[x.f.id] !== dayKey()); return left.length ? `今天是<b>${left.map((x) => x.f.name).join('</b>和<b>')}</b>，點左上角的燈籠玩「${left.map((x) => x.f.game).join('」「')}」，可以蓋節慶印章。` : ''; }
+      if (ts.length) { const left = ts.filter((x) => state.festStamps[x.f.id] !== dayKey() && !(x.off !== 0 && stamped(x.f.id))); return left.length ? `${left.map((x) => `${when(x)}是<b>${x.f.name}</b>`).join('、')}，點左上角的燈籠玩「${left.map((x) => x.f.game).join('」「')}」，可以蓋節慶印章、拿福氣幣。` : ''; }
       const nd = nextDates(), soon = FESTIVALS.find((f) => nd[f.id] && nd[f.id].days > 0 && nd[f.id].days <= 3);
-      return soon ? `再 ${nd[soon.id].days} 天就是<b>${soon.name}</b>了，當天記得回來玩「${soon.game}」。` : '';
+      return soon ? `再 ${nd[soon.id].days} 天就是<b>${soon.name}</b>了，到時候記得回來玩「${soon.game}」。` : '';
     },
   };
 }

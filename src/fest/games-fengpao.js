@@ -253,7 +253,7 @@ const fengpao = {
       if (o.real || best > (o.state.fengpaoBest || 0)) { o.state.fengpaoBest = best; o.save(); }
       // 節日當天第一次玩：旺度換福氣幣（最多 20 枚）
       const today = new Date().toDateString();
-      if (o.real && wallet && o.state.fengpaoPaid !== today) { o.state.fengpaoPaid = today; o.save(); wallet.earn(Math.max(5, Math.round(score / 5)), '鹽水蜂炮', 180, 340); }
+      if ((o.reward ?? o.real) && wallet && o.state.fengpaoPaid !== today) { o.state.fengpaoPaid = today; o.save(); wallet.earn(Math.max(5, Math.round(score / 5)), '鹽水蜂炮', 180, 340); }
       av.setAttribute('opacity', '1'); av.setAttribute('transform', `translate(${px.toFixed(1)} ${FEET})`);
       st.reset();
       st.$('#tip').textContent = '';
