@@ -1433,7 +1433,7 @@ const STALLS = {
   zx: { name: '伴讀自習室', short: '自習室', mod: initStudy(xapi) },
   xd: { name: '睡前熄燈室', short: '熄燈室', mod: initSleep(xapi) },
   rj: { name: '媽祖遶境看板', short: '遶境看板', mod: initBoard(xapi) },
-  sm: { name: '朱紅牌樓山門', short: '山門', mod: initGate({ ...xapi, goHall: () => SHOW.main() }) },
+  sm: { name: '朱紅牌樓山門', short: '山門', mod: initGate({ ...xapi, goHall: () => SHOW.main(), daily: () => daily }) },
   wa: { name: '淨身石槽', short: '淨身', mod: initWash(xapi) },
 };
 let stall = null;
@@ -1454,6 +1454,7 @@ function showStall(k) {
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
   sfx.bowl(); paintGods();
   STALLS[k].mod.enter();
+  paintRite(); // 攤位裡不顯示參拜進度
   daily?.hit('stall', k);
   stats.scene(k);
 }
@@ -1475,6 +1476,7 @@ daily = initDaily({ $, state, save, sfx, wallet, halls: HALLS, stalls: STALLS, q
 daily.chip.addEventListener('click', () => {
   daily.open((name) => { // 任務卡的「前往」：直接帶到那個動作
     closeSheet();
+    if (name === 'gate') { showStall('sm'); return; } // 摸石獅要去山門
     if (stall || (name === 'tiger' && hall !== 'main')) (name === 'tiger' ? showHall : SHOW[hall])();
     setTimeout(() => act(name), stall ? 400 : 60);
   });

@@ -19,6 +19,7 @@ export const QIYU = [
   { id: 'moonday', name: '初一十五', hint: '農曆初一或十五來上香', text: '初一十五來上香，香火特別旺。' },
   { id: 'night', name: '夜深人靜', hint: '很晚很晚的時候來上香', text: '深夜的殿裡好安靜，只有你和神明。' },
   { id: 'early', name: '晨鐘', hint: '很早很早的時候來上香', text: '清晨的第一炷香，殿裡還有露水的味道。' },
+  { id: 'lionwink', name: '石獅眨眼', hint: '進廟前摸摸山門的石獅', text: '石獅子好像對你眨了一下眼睛，嘴角還翹了一下。' },
   { id: 'friend', name: '廟裡熟面孔', hint: '常常跟殿裡的香客聊天', text: '跟香客聊了十次天，大家都認得你了！' },
 ];
 
@@ -57,6 +58,7 @@ export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName
   const TASKS = {
     greet: { kind: 'light', name: '向今天的神明問安', how: '點一下神像', sec: '約 20 秒', act: 'deity' },
     tiger: { kind: 'light', name: '摸摸虎爺，看看祂今天的反應', how: '點一下供桌下的虎爺', sec: '約 20 秒', act: 'tiger' },
+    lion: { kind: 'light', name: '摸摸山門的石獅', how: '逛廟 → 山門，摸一隻就算', sec: '約 20 秒', act: 'gate' },
     card: { kind: 'light', name: '看一眼今日祈福卡', how: '打開祈福卡', sec: '約 20 秒', act: 'card' },
     candle: { kind: 'rite', name: '點亮一支蠟燭', how: '一支就算，也可以用「點一下點燭」', sec: '約 30 秒', act: 'candle' },
     incense: { kind: 'rite', name: '上一炷香', how: '在任何一殿上香都算', sec: '約 30 秒', act: 'incense' },
