@@ -300,13 +300,13 @@ export const mazu = {
 
     function photoTime(qly, sfe) {
       setTip('');
-      st.say('大仙尪仔說要跟你<b>合照</b>！擺好姿勢……', 'temple');
+      st.say('大仙尪仔說要跟你<b>合照</b>！想拍就按「合照」，不想拍可以直接<b>跳過</b>，繼續看遶境。', 'temple');
       qly.go(95); sfe.go(300);
       const pose = st.add(`<g data-nophoto></g>`);
       st.tween(500, (k, e) => { av.x = AV[0] + (180 - AV[0]) * e; });
       st.buttons([
-        { label: '📸 合照', primary: true, on: () => shoot() },
-        { label: '不用了', on: () => afterPhoto() },
+        { label: '跳過，繼續遶境', primary: true, on: () => afterPhoto() },
+        { label: '📸 合照', on: () => shoot() },
       ]);
       let shooting = false;
       async function shoot() {
@@ -504,7 +504,7 @@ export const mazu = {
             const d = new Date();
             const key = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
             o.state.amulets ||= {};
-            if (o.real && wallet && o.state.amulets.mazu !== key) wallet.earn(FU_REWARD, '媽祖生遶境平安符');
+            if ((o.reward ?? o.real) && wallet && o.state.amulets.mazu !== key) wallet.earn(FU_REWARD, '媽祖生遶境平安符');
             if (o.real) o.state.amulets.mazu = key;
             o.save?.();
             sed.go(-200, () => sed.kill());
