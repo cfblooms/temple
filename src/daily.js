@@ -1,10 +1,10 @@
 // 每天回來的理由：
-// 1. 神明委託：每天 3 件小任務，帶你到不同的殿和攤位走走。每件 +10 福氣幣，三件都做完再 +30。
+// 1. 每日輕任務：每天 3 個選項，完成其中 1 件就能領「今日印章」；另外兩件是加碼。一週任 3 天有印章就能領回顧卡。
 // 2. 奇遇：參拜時小機率發生的彩蛋（金色聖筊、神明眨眼、小虎爺跑過…），第一次遇到收進「奇遇圖鑑」並送福氣幣。
 // 3. 香火：每座殿各自累積「上過香的天數」，神明列的頭像外圈會一圈圈變滿，升等時會提示。
-// 存檔：state.quest = { date, list:[{ ev, arg, done }], bonus }，state.qiyu = { id: 次數 }，state.xh = { 殿: { days, last } }
+// 存檔：state.quest = { v:2, date, list:[{ id, done }], claimed, extra }，state.stampDays = [日期]，state.weekClaim，state.qiyu = { id: 次數 }，state.xh = { 殿: { days, last } }
 
-const QUEST_FU = 10, QUEST_ALL = 30, QIYU_FU = 20;
+const STAMP_FU = 15, EXTRA_FU = 5, WEEK_FU = 30, QIYU_FU = 20; // 今日印章、加碼（每天最多 2 次）、一週任三天
 const XH_LV = [1, 3, 7, 14, 30, 60, 100, 180]; // 第 N 級需要的上香天數
 
 export const QIYU = [
@@ -50,56 +50,76 @@ export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName
   };
   const showToast = (html) => { queue.push(html); if (!busy) next(); };
 
-  /* ---------- 神明委託 ---------- */
   const hallIds = Object.keys(halls);
   const H = (h) => halls[h];
+  /* ---------- 每日輕任務：每天三選一，完成一件就能領今日印章 ---------- */
+  // 依「第一階段每日輕任務規劃」：1 項超輕＋1 項參拜＋1 項探索；不看擲筊／抽籤結果；漏一天不扣任何東西。
+  const TASKS = {
+    greet: { kind: 'light', name: '向今天的神明問安', how: '點一下神像', sec: '約 20 秒', act: 'deity' },
+    tiger: { kind: 'light', name: '摸摸虎爺，看看祂今天的反應', how: '點一下供桌下的虎爺', sec: '約 20 秒', act: 'tiger' },
+    card: { kind: 'light', name: '看一眼今日祈福卡', how: '打開祈福卡', sec: '約 20 秒', act: 'card' },
+    candle: { kind: 'rite', name: '點亮一支蠟燭', how: '一支就算，也可以用「點一下點燭」', sec: '約 30 秒', act: 'candle' },
+    incense: { kind: 'rite', name: '上一炷香', how: '在任何一殿上香都算', sec: '約 30 秒', act: 'incense' },
+    jiao: { kind: 'explore', name: '向神明請示一次', how: '擲一次筊就好，結果如何都算完成', sec: '約 40 秒', act: 'jiao' },
+    draw: { kind: 'explore', name: '為一件在意的事求籤', how: '搖到籤、看到籤號就算', sec: '約 1 分鐘', act: 'draw' },
+    offer: { kind: 'explore', name: '擺上一份供品', how: '免費的鮮花、水果也可以', sec: '約 40 秒', act: 'offer' },
+  };
+  const KINDS = ['light', 'rite', 'explore'];
+  const ids = (k) => Object.keys(TASKS).filter((id) => TASKS[id].kind === k);
   function make() {
-    const rnd = seedRand(`quest|${dayKey()}`), pick = (a) => a[Math.floor(rnd() * a.length)];
-    const away = hallIds.filter((h) => h !== (state.home || 'main'));
-    const h1 = pick(away), h2 = pick(away.filter((h) => h !== h1));
-    const third = pick([
-      { ev: 'stall', arg: pick(Object.keys(stalls)) }, { ev: 'feed' }, { ev: 'offer' }, { ev: 'npc' }, { ev: 'stall', arg: pick(Object.keys(stalls)) },
-    ]);
-    return [{ ev: 'incense', arg: h1 }, { ev: rnd() < 0.5 ? 'sheng' : 'draw', arg: h2 }, third].map((q) => ({ ...q, done: false }));
+    const rnd = seedRand(`quest2|${dayKey()}`);
+    return KINDS.map((k) => { const a = ids(k); return { id: a[Math.floor(rnd() * a.length)], done: false }; });
   }
   function today() {
-    if (!state.quest || state.quest.date !== dayKey()) { state.quest = { date: dayKey(), list: make(), bonus: false }; save(); }
+    if (!state.quest || state.quest.date !== dayKey() || state.quest.v !== 2) { state.quest = { v: 2, date: dayKey(), list: make(), claimed: false, extra: 0 }; save(); }
     return state.quest;
   }
-  const label = (q) => {
-    const h = q.arg && H(q.arg);
-    switch (q.ev) {
-      case 'incense': return `到${h.name}給${h.god}上一炷香`;
-      case 'sheng': return `在${h.name}擲出一個聖筊`;
-      case 'draw': return `在${h.name}抽一支${qianName(q.arg)}`;
-      case 'stall': return `去${stalls[q.arg]?.name || '廟埕'}逛逛`;
-      case 'feed': return '餵虎爺一條小魚乾（點上方的小魚乾）';
-      case 'offer': return '在任何一殿擺一樣供品';
-      case 'npc': return '跟殿裡的香客聊聊天（點他一下）';
-      default: return '';
-    }
-  };
-  const go = (q) => (q.ev === 'incense' || q.ev === 'sheng' || q.ev === 'draw' ? q.arg : null);
-  function paintChip() {
-    const t = today(), n = t.list.filter((q) => q.done).length;
-    $('#questTxt').textContent = `委託 ${n}/3`;
-    chip.classList.toggle('all', n === 3);
-    chip.setAttribute('aria-label', `今日神明委託，完成 ${n} 件，共 3 件`);
+  // 印章：state.stampDays = ['2026-11-24', ...]（只記日期，不記連續）
+  const stampDays = () => state.stampDays || (state.stampDays = []);
+  function weekKeys(d = new Date()) { // 這週一到週日
+    const m = new Date(d); m.setHours(12, 0, 0, 0); m.setDate(m.getDate() - ((m.getDay() + 6) % 7));
+    return Array.from({ length: 7 }, (_, i) => { const x = new Date(m); x.setDate(m.getDate() + i); return dayKey(x); });
   }
-  function hit(ev, arg) {
+  const weekStamped = () => weekKeys().filter((k) => stampDays().includes(k)).length;
+  const weekKey = () => weekKeys()[0];
+  const weekReady = () => weekStamped() >= 3 && state.weekClaim !== weekKey();
+  const doneN = () => today().list.filter((q) => q.done).length;
+  function paintChip() {
+    const t = today(), n = doneN();
+    const ready = (n && !t.claimed) || weekReady();
+    $('#questTxt').textContent = ready ? '印章待領' : t.claimed ? '今日已收下' : '今日小任務 0/1';
+    chip.classList.toggle('all', !!ready);
+    chip.classList.toggle('calm', t.claimed && !ready);
+    chip.setAttribute('aria-label', ready ? '今日印章待領，點開領取' : t.claimed ? '今天的印章已經收下' : '今日小任務，挑一件做就能領今日印章');
+  }
+  function hit(ev) {
     const t = today();
-    const q = t.list.find((x) => !x.done && x.ev === ev && (x.arg === undefined || x.arg === arg));
+    const q = t.list.find((x) => !x.done && x.id === ev);
     if (!q) return;
-    q.done = true; save();
-    wallet.earn(QUEST_FU, '神明委託');
-    sfx.chime?.();
+    q.done = true;
+    const first = doneN() === 1;
     let extra = '';
-    if (!t.bonus && t.list.every((x) => x.done)) {
-      t.bonus = true; save(); wallet.earn(QUEST_ALL, '委託全部完成');
-      state.questDays = (state.questDays || 0) + 1; save();
-      extra = `<br><b>今天三件都完成了！</b>再 +${QUEST_ALL}，累積完成 ${state.questDays} 天。`;
-    }
-    showToast(`<b>委託完成</b>・${esc(label(q))}　福氣 +${QUEST_FU}${extra}`);
+    if (!first && t.extra < 2) { t.extra++; wallet.earn(EXTRA_FU, '加碼小任務'); extra = `　加碼福氣 +${EXTRA_FU}`; }
+    save(); sfx.chime?.();
+    showToast(first
+      ? `<b>小任務完成</b>・${esc(TASKS[ev].name)}<br>點右上角「印章待領」收下今日印章`
+      : `<b>加碼完成</b>・${esc(TASKS[ev].name)}${extra}`);
+    paintChip();
+  }
+  function claim() {
+    const t = today(); if (t.claimed || !doneN()) return;
+    t.claimed = true;
+    if (!stampDays().includes(dayKey())) stampDays().push(dayKey());
+    while (stampDays().length > 120) stampDays().shift();
+    save(); wallet.earn(STAMP_FU, '今日印章'); sfx.chime?.();
+    showToast(`<b>今天的心意已收下</b>　今日印章 ×1、福氣 +${STAMP_FU}<br>你可以繼續逛逛，也可以先休息。`);
+    paintChip();
+  }
+  function claimWeek() {
+    if (!weekReady()) return;
+    state.weekClaim = weekKey(); state.weekCards = (state.weekCards || 0) + 1; save();
+    wallet.earn(WEEK_FU, '一週回望'); sfx.chime?.();
+    showToast(`<b>一週回望</b>　這週來了 ${weekStamped()} 天，收下第 ${state.weekCards} 張回顧卡、福氣 +${WEEK_FU}`);
     paintChip();
   }
 
@@ -134,18 +154,34 @@ export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName
   }
 
   /* ---------- 面板：委託＋圖鑑＋香火 ---------- */
-  function open(goHall) {
+  function open(goAct) {
     const t = today();
     const found = QIYU.filter((e) => state.qiyu?.[e.id]).length;
-    const body = openSheet('今日神明委託', `
-      <p class="hint">每天三件小委託，到不同的殿走走。每件福氣 +${QUEST_FU}，三件都做完再 +${QUEST_ALL}。明天會換新的。</p>
-      <ol class="quest-list">${t.list.map((q, i) => `<li class="${q.done ? 'done' : ''}"><span>${q.done ? '✓' : i + 1}</span><b>${esc(label(q))}</b>${!q.done && go(q) ? `<button type="button" class="chip" data-go="${go(q)}">過去</button>` : ''}</li>`).join('')}</ol>
+    const back = !t.claimed && !doneN() && state.stampDays?.length && !stampDays().includes(dayKey(new Date(Date.now() - 864e5)));
+    const n = doneN(), wk = weekKeys(), ws = weekStamped();
+    const body = openSheet('今日在廟裡', `
+      <p class="hint">${back ? '歡迎回來，之前收下的印章都還在。今天想從哪裡開始？' : '挑一件想做的小事，<b>完成其中一件</b>就能領今日印章。另外兩件是加碼，不做也沒關係。'}</p>
+      <ol class="quest-list">${t.list.map((q) => { const T = TASKS[q.id]; return `<li class="${q.done ? 'done' : ''}">
+        <span>${q.done ? '✓' : ''}</span><div class="q-txt"><b>${esc(T.name)}</b><small>${esc(T.how)}・${T.sec}</small></div>
+        ${q.done ? '<em>完成</em>' : `<button type="button" class="chip" data-act="${T.act}">前往</button>`}</li>`; }).join('')}</ol>
+      <div class="stamp-row">
+        <div class="stamp ${t.claimed ? 'on' : ''}" aria-hidden="true">${t.claimed ? '印' : ''}</div>
+        <div><b>今日印章</b><small>${t.claimed ? '已收下' : n ? '可以領了' : '完成任一件就能領'}・加碼已領 ${t.extra}/2</small></div>
+        ${!t.claimed && n ? '<button type="button" class="btn gold" id="qClaim">收下今日印章</button>' : ''}
+      </div>
+      <h3 class="quest-h">一週回望 <small>這週 ${ws} 天・任 3 天就能領</small></h3>
+      <div class="week-stamps">${wk.map((k, i) => `<i class="${stampDays().includes(k) ? 'on' : ''}${k === dayKey() ? ' now' : ''}"><span>${'一二三四五六日'[i]}</span></i>`).join('')}</div>
+      ${weekReady() ? '<button type="button" class="btn gold" id="qWeek">領這週的回顧卡</button>' : state.weekClaim === weekKey() ? '<p class="hint">這週的回顧卡已經收下了。</p>' : '<p class="hint">不用連續，漏掉的日子也不會清空。</p>'}
       <h3 class="quest-h">奇遇圖鑑 <small>${found}/${QIYU.length}</small></h3>
-      <div class="qiyu-grid">${QIYU.map((e) => { const n = state.qiyu?.[e.id]; return `<div class="qiyu ${n ? 'on' : ''}"><b>${n ? e.name : '？？？'}</b><small>${n ? `遇過 ${n} 次` : esc(e.hint)}</small></div>`; }).join('')}</div>
+      <div class="qiyu-grid">${QIYU.map((e) => { const c = state.qiyu?.[e.id]; return `<div class="qiyu ${c ? 'on' : ''}"><b>${c ? e.name : '？？？'}</b><small>${c ? `遇過 ${c} 次` : esc(e.hint)}</small></div>`; }).join('')}</div>
       <h3 class="quest-h">各殿香火</h3>
       <p class="hint">每天在一座殿上香，那座殿的香火就 +1 天。神明列頭像的金色外圈滿了就升一級。</p>
       <div class="xh-grid">${hallIds.map((h) => { const x = xh(h); return `<div class="xh"><img src="${H(h).face}" alt=""><b>${H(h).god}</b><small>${x.lv ? `Lv.${x.lv}` : '還沒拜過'}・${x.days} 天</small></div>`; }).join('')}</div>`);
-    body.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) goHall(b.dataset.go); });
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-act]'); if (b) { goAct(b.dataset.act); return; }
+      if (e.target.closest('#qClaim')) { claim(); open(goAct); return; }
+      if (e.target.closest('#qWeek')) { claimWeek(); open(goAct); }
+    });
   }
 
   paintChip();

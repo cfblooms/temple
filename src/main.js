@@ -4,7 +4,7 @@ import { SCENE_SVG } from './scene.js';
 import { CHARS, DEFAULT_CHAR, charById } from './chars.js';
 import { FORTUNES, CATEGORIES, DAILY, cn } from './fortunes.js';
 import { QIAN_LISTS } from './qian-more.js'; // 籤詩加量（各殿 24 首、心安籤 36 首）
-import { initDaily } from './daily.js'; // 神明委託、奇遇、香火
+import { initDaily } from './daily.js'; // 每日輕任務、奇遇、香火
 import { initNpc } from './npc.js'; // 殿裡的其他香客
 import { initFx, emit, burst, onTick, setFxView, REDUCED_MOTION } from './fx.js';
 import * as sfx from './audio.js';
@@ -417,6 +417,7 @@ let flicker = false;
 function lightOne(id) {
   if (lit[id]) return;
   lit[id] = true; rite()[id] = true; save();
+  daily?.hit('candle');
   paintWickRings();
   sfx.pop(); sfx.buzz(8);
   S('flame' + id).setAttribute('opacity', '1');
@@ -591,6 +592,7 @@ async function throwJiao(tip, cancel = true) {
       });
       if (k >= 1 && h >= 1 && !landed) {
         landed = true; sfx.knock(0.09); sfx.buzz([10, 40, 10]);
+        daily?.hit('jiao'); // 擲一次就算，結果如何都算完成
         setTimeout(() => resolve(key), 350); // 停穩了才說結果
         zoomOut(2100);
         setTimeout(() => blocks.forEach((b) => b.sh.setAttribute('opacity', '0')), 2300);
@@ -617,7 +619,6 @@ async function freeJiao() {
   say(JIAO[key].text, 'god');
   session.shengRun = key === 'sheng' ? session.shengRun + 1 : 0;
   if (key === 'sheng' && daily) {
-    daily.hit('sheng', hall);
     if (daily.chance(0.012)) daily.qiyu('goldjiao', () => { for (const k of ['A', 'B']) S('jiao' + k).classList.add('gold-jiao'); burst('spark', 182, 590, 30); setTimeout(() => { for (const k of ['A', 'B']) S('jiao' + k).classList.remove('gold-jiao'); }, 4000); });
     else if (session.shengRun === 3) daily.qiyu('triple', () => burst('spark', 182, 590, 24));
   }
@@ -725,6 +726,7 @@ async function shake() {
   $('#stickNo', body).textContent = `第${cn(draft.no)}籤`;
   $('#shakeHint', body).innerHTML = '<b>還差一步：</b>拿這支籤擲筊請示神明，擲出聖筊才算數。';
   session.confirming = true; paintRite();
+  daily?.hit('draw'); // 看到籤號就算完成，不看擲筊結果
   const btn = $('#goConfirm', body); btn.hidden = false; btn.focus();
   btn.addEventListener('click', confirmStick);
 }
@@ -740,7 +742,6 @@ async function confirmStick() {
   if (key === 'sheng') {
     sfx.chime();
     if (daily) {
-      daily.hit('draw', hall);
       const qf = QIAN_LISTS[hall]?.find((x) => x.no === draft.no);
       if (qf?.level === '上上') setTimeout(() => daily.qiyu('topqian'), 1200);
     }
@@ -814,6 +815,7 @@ async function openCard() {
   const dIdx = [...dayKey()].reduce((a, c) => a + c.charCodeAt(0), 0) % DAILY.length;
   const url = await renderCard({ avatar: charById(state.char).kneel, name: state.name, dateLine, fortune: f, category: cat?.name, wish: state.fortune?.wish, daily: DAILY[dIdx], bg: hallImg() });
   if ($('#sheet').hidden) return;
+  daily?.hit('card');
   const shareText = f
     ? `我在心靈大廟抽到第${cn(f.no)}籤「${f.title}」${f.level}：${f.poem.join('，')}。`
     : `今日神明小指引：${DAILY[dIdx]}`;
@@ -855,7 +857,7 @@ function checkin() {
 }
 
 function petTiger() {
-  catHappy();
+  catHappy(); daily?.hit('tiger');
   state.affection += 1; save();
   const gain = checkin();
   if (gain) {
@@ -1052,6 +1054,7 @@ function placeItem(id) {
   if (list.length >= SHRINE_MAX) { say(`供桌上已經擺了 ${SHRINE_MAX} 樣買來的供品，明天再來換新的吧。`); return; }
   if (!pantry.take(id)) return;
   list.push(id); save(); paintShrine(list.length - 1); paintBasket();
+  daily?.hit('offer');
   const [cx, by] = shrineSlots()[list.length - 1], dy = HALLS[hall].burnerDy;
   sfx.pop(); sfx.buzz(10);
   burst('spark', cx, by - 10 + dy, 6);
@@ -1079,6 +1082,7 @@ function endOffer(delay = 300) {
 }
 function greetDeity() {
   const h = S('halo'); h.setAttribute('opacity', '.75');
+  daily?.hit('greet');
   burst('spark', 182, 290, 12);
   const i = Math.floor(Math.random() * DAILY.length);
   say(DAILY[i], 'god');
@@ -1431,11 +1435,15 @@ buildMap();
 // 神明生日：地圖上的戲台標籤改成「今日開演」
 { const bd = STALLS.xi.mod.birthdayToday(); const el = document.querySelector('[data-area="xitai"]'); if (bd.length && el) { el.textContent = '酬神戲台・今日開演'; el.classList.add('live'); } }
 
-// 每天回來的理由：神明委託、奇遇、香火（daily.js）；殿裡的其他香客（npc.js）
+// 每天回來的理由：每日輕任務、奇遇、香火（daily.js）；殿裡的其他香客（npc.js）
 guide = initGuide({ wrap: $('#sceneWrap'), state, save, sfx });
 daily = initDaily({ $, state, save, sfx, wallet, halls: HALLS, stalls: STALLS, qianName: (h) => (h === 'main' ? '心安籤' : SUB[h].qianName), openSheet, dayKey, esc, burst, lunar });
 daily.chip.addEventListener('click', () => {
-  daily.open((h) => { closeSheet(); if (h !== hall || stall) SHOW[h](); });
+  daily.open((name) => { // 任務卡的「前往」：直接帶到那個動作
+    closeSheet();
+    if (stall || (name === 'tiger' && hall !== 'main')) (name === 'tiger' ? showHall : SHOW[hall])();
+    setTimeout(() => act(name), stall ? 400 : 60);
+  });
   // 收起來的參拜流程提示，可以在這裡再打開
   if (state.guide?.off) {
     $('#sheetBody').insertAdjacentHTML('beforeend', '<button type="button" class="btn ghost" id="riteOn">重新顯示參拜流程提示</button>');
