@@ -18,7 +18,7 @@ export function initGuide({ wrap, state, save, sfx }) {
     <ol class="rite-dots" aria-hidden="true">${STEPS.map(() => '<li></li>').join('')}</ol>
     <b class="rite-h"></b>
     <button type="button" class="rite-x" aria-label="收起參拜流程提示">×</button>`;
-  wrap.appendChild(el);
+  wrap.closest('.stage').after(el); // 放在殿畫面下面、動作列上面，不蓋住神像
   let doneTimer = 0, last = '';
 
   el.querySelector('.rite-x').addEventListener('click', () => {
