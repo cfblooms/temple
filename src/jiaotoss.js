@@ -1,4 +1,5 @@
-// 自己擲筊：手指按住筊杯在心裡稟報，再往上一甩把筊丟出去。沒有「幫我擲」，一定要自己甩。
+// 自己擲筊：手指按住筊杯在心裡稟報，再往上一甩把筊丟出去。
+// 平常沒有「幫我擲」；同一次甩了兩次都沒丟出去，才出現小小的「按一下擲筊」（Sheara 2026-11-24 決定）。
 // 全螢幕蓋在最上層（連底部抽屜也蓋過去），所有殿共用（正殿、各殿、月老求紅線、財神發財金）。
 // 筊杯一按住就浮在手指上方，手指不會擋到筊；手指往上滑超過一點點就直接丟出去，不用等放開。
 import jiaoFlat from './assets/jiao-flat.webp';
@@ -24,7 +25,7 @@ function build() {
     <div class="jt-pair"><img class="jt-a" alt="" draggable="false"><img class="jt-b" alt="" draggable="false"></div>
     <div class="jt-swipe" aria-hidden="true"><i></i><span>按住・往上滑</span></div>
     <p class="jt-result"></p>
-    <div class="jt-row"><button type="button" class="jt-cancel">先不擲</button></div>`;
+    <div class="jt-row"><button type="button" class="jt-tap" hidden>按一下擲筊</button><button type="button" class="jt-cancel">先不擲</button></div>`;
   document.body.appendChild(el);
 }
 const img = (face) => (face === 'flat' ? jiaoFlat : jiaoRound);
@@ -37,7 +38,8 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
   if (!el) build();
   const tipEl = el.querySelector('.jt-tip'), pair = el.querySelector('.jt-pair'), res = el.querySelector('.jt-result');
   const swipe = el.querySelector('.jt-swipe'), row = el.querySelector('.jt-row'), cancelBtn = el.querySelector('.jt-cancel');
-  const a = el.querySelector('.jt-a'), b = el.querySelector('.jt-b');
+  const a = el.querySelector('.jt-a'), b = el.querySelector('.jt-b'), tapBtn = el.querySelector('.jt-tap');
+  tapBtn.hidden = true;
   a.src = jiaoRound; b.src = jiaoRound; a.className = 'jt-a round'; b.className = 'jt-b round';
   pair.className = 'jt-pair'; res.textContent = ''; res.className = 'jt-result';
   row.hidden = false; cancelBtn.hidden = !cancel; swipe.hidden = false;
@@ -57,14 +59,14 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
   place(pos, false);
 
   return new Promise((resolve) => {
-    let hold = null, samples = [], done = false, timer = 0, kb = false;
+    let hold = null, samples = [], done = false, timer = 0, kb = false, misses = 0;
     const onResize = () => { if (!hold && !done) place(rest(), false); };
     const cleanup = () => {
       el.removeEventListener('touchmove', noScroll); el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
       el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up);
       el.removeEventListener('keydown', keyDown); el.removeEventListener('keyup', keyUp);
       removeEventListener('resize', onResize);
-      cancelBtn.onclick = null; clearTimeout(timer);
+      cancelBtn.onclick = null; tapBtn.onclick = null; clearTimeout(timer);
     };
     const finish = (ok, vy = -900) => {
       done = true; cleanup();
@@ -80,7 +82,10 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
       hold = null; clearTimeout(timer);
       pair.classList.remove('hold', 'ready');
     };
-    const miss = (html) => { tipEl.innerHTML = html; place(rest(), true); swipe.hidden = false; };
+    const miss = (html) => {
+      tipEl.innerHTML = html; place(rest(), true); swipe.hidden = false;
+      if (++misses >= 2 && tapBtn.hidden) { tapBtn.hidden = false; tipEl.innerHTML = `${html}<br><small>滑不太順的話，按下面「按一下擲筊」也可以。</small>`; }
+    };
 
     const noScroll = (e) => { if (!e.target.closest('button')) e.preventDefault(); }; // 不讓頁面或外層視窗被一起拖動
     const down = (e) => {
@@ -134,6 +139,7 @@ export function tossJiao({ tip = '在心裡稟報想問的事', faces = null, ke
     el.addEventListener('keydown', keyDown); el.addEventListener('keyup', keyUp);
     addEventListener('resize', onResize);
     cancelBtn.onclick = () => finish(false);
+    tapBtn.onclick = () => { if (!done) { release(); finish(true); } };
   });
 
   // 從手指放開的地方飛上去：甩得越快飛越高。有 faces 就翻轉落地給你看結果，沒有就飛出畫面上方。

@@ -1,6 +1,9 @@
 import candleUrl from './assets/candle.webp';
 import candleRUrl from './assets/candle-r.webp';
 import lighterUrl from './assets/lighter.webp';
+// 參拜動作圖（可選）：有生圖就自動換掉，沒有就用現在的（生圖清單/27-參拜動作-1124.md）
+const ACT = import.meta.glob('./assets/act/*.webp', { eager: true, import: 'default' });
+const act = (k) => ACT[`./assets/act/${k}.webp`];
 import flowersUrl from './assets/offer/flowers.webp';
 import flowersRUrl from './assets/offer/flowers-r.webp';
 import fruitUrl from './assets/offer/fruit.webp';
@@ -169,8 +172,16 @@ export const SCENE_SVG = (bg) => `
   </g>
 
   <!-- 筊杯 -->
+  <!-- 筊杯落地的接觸陰影：跟著筊杯的 x，貼在地上，筊越高越淡越大 -->
+  <ellipse id="jiaoShA" class="jiao-sh" rx="14" ry="3.6" opacity="0" pointer-events="none"/>
+  <ellipse id="jiaoShB" class="jiao-sh" rx="14" ry="3.6" opacity="0" pointer-events="none"/>
   <g id="jiaoLayer" filter="url(#lit)">${jiaoBlock('jiaoA')}${jiaoBlock('jiaoB')}</g>
   <!-- 拿在手上的工具：打火機／三炷香（尖端在 0,0） -->
+  <!-- 點燭時兩支燭芯都畫目標圈（還沒點的才顯示） -->
+  <g id="wickRings" style="display:none" pointer-events="none">
+    <circle id="wickRingL" class="wick-ring" cx="106" cy="345" r="13"/>
+    <circle id="wickRingR" class="wick-ring" cx="258" cy="345" r="13"/>
+  </g>
   <circle id="aim" r="15" fill="none" stroke="#FFE08A" stroke-width="2" stroke-dasharray="4 4" opacity="0" pointer-events="none"/>
   <g id="tool" style="display:none" pointer-events="none" filter="url(#toy)">
     <g id="toolLighter">
@@ -179,7 +190,7 @@ export const SCENE_SVG = (bg) => `
         <path d="M0 -15 C6 -8 6 -1 0 1 C-6 -1 -6 -8 0 -15 Z" fill="url(#flameG)"/>
         <path d="M0 -8 C2.4 -5 2.4 -1 0 0 C-2.4 -1 -2.4 -5 0 -8 Z" fill="#E8F4FF"/>
       </g>
-      <image href="${lighterUrl}" x="-57" y="-1.5" width="60" height="60"/>
+      ${act('hand-lighter') ? `<image href="${act('hand-lighter')}" x="-41.5" y="-5.1" width="50" height="51.2"/>` : `<image href="${lighterUrl}" x="-38" y="-1" width="40" height="40"/>`}
     </g>
     <g id="toolSticks" style="display:none">
       <path d="M-6 2 L-2 58 M0 -2 L0 58 M6 2 L2 58" stroke="#9A4A2E" stroke-width="2.6" stroke-linecap="round"/>
