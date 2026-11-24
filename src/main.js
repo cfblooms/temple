@@ -35,6 +35,7 @@ import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
 import { initTiangong } from './tiangong.js';
 import { tossJiao } from './jiaotoss.js';
+import { initAnalytics } from './analytics.js'; // Umami 使用數據（沒設定就不載入）
 import { initGuide } from './guide.js'; // 參拜流程進度條（新手引導）
 import { initAmulet } from './amulet.js';
 import { initFest } from './fest/index.js';
@@ -106,6 +107,7 @@ const state = {
 try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 wallet.bind(state, save, { emit });
+const stats = initAnalytics({ state, save, enabled: KEY === REAL_KEY && window.top === window.self });
 // 只在這次參拜有效的狀態
 const session = { lit: false, incenseUntil: 0, xiaoRun: 0, busy: false, drawFails: 0, shengRun: 0, confirming: false };
 let daily = null, npc = null; // 最後面才建立（要等各殿、攤位都準備好）
@@ -727,6 +729,7 @@ async function shake() {
   $('#shakeHint', body).innerHTML = '<b>還差一步：</b>拿這支籤擲筊請示神明，擲出聖筊才算數。';
   session.confirming = true; paintRite();
   daily?.hit('draw'); // 看到籤號就算完成，不看擲筊結果
+  stats.draw();
   const btn = $('#goConfirm', body); btn.hidden = false; btn.focus();
   btn.addEventListener('click', confirmStick);
 }
@@ -740,6 +743,7 @@ async function confirmStick() {
   session.busy = false;
   if (key === 'sheng') session.confirming = false;
   if (key === 'sheng') {
+    stats.rite(hall);
     sfx.chime();
     if (daily) {
       const qf = QIAN_LISTS[hall]?.find((x) => x.no === draft.no);
@@ -1309,6 +1313,7 @@ function switchHall(h) {
   state.home = h; save(); paintGods();
   markNext();
   npc?.paint(h);
+  stats.scene(h);
   if (daily) {
     if (h === 'main' && state.offer?.date === dayKey() && state.offer.items.length && daily.chance(0.1)) daily.qiyu('tigersnack', catHappy);
     else if (switchHall.n++ && daily.chance(0.03)) daily.qiyu('kitten', kittenRun);
@@ -1422,6 +1427,7 @@ function showStall(k) {
   sfx.bowl(); paintGods();
   STALLS[k].mod.enter();
   daily?.hit('stall', k);
+  stats.scene(k);
 }
 document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', showMap)); // 攤位從地圖進來，也回地圖
 const shop = initShop({ state, save, openSheet, closeSheet, say, sfx, esc, hall: () => hall, godName: (h) => HALLS[h]?.god, onChange: () => { paintBasket(); if (offerUI) renderTray(); } });
