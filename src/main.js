@@ -35,6 +35,7 @@ import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
 import { initTiangong } from './tiangong.js';
 import { tossJiao } from './jiaotoss.js';
+import { initGuide } from './guide.js'; // 參拜流程進度條（新手引導）
 import { initAmulet } from './amulet.js';
 import { initFest } from './fest/index.js';
 import { lunarFix, lunarOf, FESTIVALS } from './fest/core.js';
@@ -106,7 +107,7 @@ try { Object.assign(state, JSON.parse(localStorage.getItem(KEY) || '{}')); } cat
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
 wallet.bind(state, save, { emit });
 // 只在這次參拜有效的狀態
-const session = { lit: false, incenseUntil: 0, xiaoRun: 0, busy: false, drawFails: 0, shengRun: 0 };
+const session = { lit: false, incenseUntil: 0, xiaoRun: 0, busy: false, drawFails: 0, shengRun: 0, confirming: false };
 let daily = null, npc = null; // 最後面才建立（要等各殿、攤位都準備好）
 
 /* ---------- 日期與農曆 ---------- */
@@ -255,6 +256,24 @@ function markNext() {
   const d = drawnToday();
   const next = !session.lit ? 'candle' : session.incenseUntil < Date.now() && !d ? 'incense' : !d ? 'draw' : hall === 'main' ? 'card' : '';
   document.querySelectorAll('.bar button[data-act]').forEach((b) => b.classList.toggle('next', b.dataset.act === next));
+  paintRite();
+}
+// 參拜流程進度條：點燭 → 上香 → 抽籤 → 擲筊確認（guide.js 負責畫）
+let guide = null;
+function riteStatus() {
+  if (stall || $('#sceneWrap').hidden) return null;
+  const key = `${hall}|${dayKey()}`;
+  if (drawnToday()) return { done: true, key };
+  if (session.confirming) return { step: 3, key, tip: '問神明：「這是你要給我的籤嗎？」擲出聖筊才算數' };
+  if (!session.lit) { const n = (lit.L ? 1 : 0) + (lit.R ? 1 : 0); return { step: 0, key, sub: `亮 ${n}／2`, tip: tool.kind === 'lighter' ? '按住畫面打火，移到燭芯的虛線圈停一下；不想拖，按「點一下點燭」' : undefined }; }
+  if (!rite().until) return { step: 1, key };
+  return { step: 2, key };
+}
+function paintRite() { guide?.paint(riteStatus()); }
+// 今天每座殿點過的蠟燭、上過的香要存檔，重新整理後進度還在
+function rite(h = hall) {
+  if (!state.rite || state.rite.date !== dayKey()) state.rite = { date: dayKey(), h: {} };
+  return state.rite.h[h] || (state.rite.h[h] = { L: false, R: false, until: 0 });
 }
 
 /* ---------- 手上的工具：打火機、三炷香 ---------- */
@@ -289,17 +308,61 @@ function aimAt(p) {
   a.setAttribute('opacity', (0.55 + 0.45 * Math.sin(performance.now() / 180)).toFixed(2));
 }
 function equip(kind, then) {
-  tool.kind = kind; tool.then = then || null; tool.hold = 0; tool.down = false; tool.sticksLit = false;
+  tool.kind = kind; tool.then = then || null; tool.hold = 0; tool.down = false; tool.sticksLit = false; tool.auto = false;
   S('tool').style.display = '';
   S('toolLighter').style.display = kind === 'lighter' ? '' : 'none';
   S('toolSticks').style.display = kind === 'sticks' ? '' : 'none';
   S('handTips').setAttribute('opacity', '0');
   svg.style.touchAction = 'none'; $('#sceneWrap').classList.add('tooling');
-  placeTool(kind === 'lighter' ? 212 : 230, 470);
+  // 從人偶手上拿出來，停在人偶右上方，不擋到臉
+  const [rx, ry] = kind === 'lighter' ? LIGHTER_REST : [272, 432];
+  pullOut(rx, ry);
   onTick(toolTick);
   zoomIn();
+  if (kind === 'lighter') { S('wickRings').style.display = ''; paintWickRings(); tapBtn(true); }
+}
+const LIGHTER_REST = [282, 424], HAND = [182, 488];
+function pullOut(x, y) {
+  const t0 = performance.now(), D = REDUCED_MOTION ? 1 : 320;
+  onTick(() => {
+    const k = Math.min(1, (performance.now() - t0) / D), e = 1 - (1 - k) ** 3;
+    if (!tool.kind || tool.down) { S('tool').removeAttribute('opacity'); return false; }
+    placeTool(HAND[0] + (x - HAND[0]) * e, HAND[1] + (y - HAND[1]) * e);
+    S('tool').setAttribute('opacity', (0.3 + 0.7 * e).toFixed(2));
+    if (k >= 1) { S('tool').removeAttribute('opacity'); return false; }
+  });
+}
+function paintWickRings() { for (const k of ['L', 'R']) S('wickRing' + k).style.display = lit[k] ? 'none' : ''; }
+// 簡易模式：不用按住拖曳，按一下打火機自己飛過去點
+let tapEl = null;
+function tapBtn(on) {
+  if (!on) { tapEl?.remove(); tapEl = null; return; }
+  if (tapEl) return;
+  tapEl = document.createElement('button');
+  tapEl.type = 'button'; tapEl.className = 'tap-easy'; tapEl.textContent = '點一下點燭';
+  tapEl.addEventListener('click', autoLight);
+  $('#sceneWrap').appendChild(tapEl);
+}
+async function autoLight() {
+  if (tool.kind !== 'lighter' || tool.auto) return;
+  tool.auto = true; tapBtn(false);
+  for (const k of ['L', 'R']) {
+    if (lit[k] || tool.kind !== 'lighter') continue;
+    const [x0, y0] = [tool.x, tool.y], [x1, y1] = WICK[k], t0 = performance.now(), D = REDUCED_MOTION ? 1 : 420;
+    await new Promise((ok) => onTick(() => {
+      const q = Math.min(1, (performance.now() - t0) / D), e = q < .5 ? 2 * q * q : 1 - (-2 * q + 2) ** 2 / 2;
+      placeTool(x0 + (x1 - x0) * e, y0 + (y1 - y0) * e - 24 * Math.sin(Math.PI * q));
+      if (q >= 1) { ok(); return false; }
+    }));
+    tool.down = true; sfx.knock();
+    await sleep(REDUCED_MOTION ? 50 : 450); // toolTick 會在燭芯上停 0.35 秒點著
+    if (!lit[k]) lightOne(k);
+    tool.down = false;
+  }
+  tool.auto = false;
 }
 function unequip(outDelay = 500) {
+  tapBtn(false); S('wickRings').style.display = 'none';
   tool.kind = null; tool.down = false; zoomOut(outDelay);
   S('tool').style.display = 'none'; S('lighterFlame').style.display = 'none'; aimAt(null);
   svg.style.touchAction = ''; $('#sceneWrap').classList.remove('tooling');
@@ -340,49 +403,65 @@ function toolTick(t, dt) {
   }
 }
 svg.addEventListener('pointerdown', (e) => {
-  if (!tool.kind) return;
+  if (!tool.kind || tool.auto) return;
   e.preventDefault(); svg.setPointerCapture(e.pointerId);
   tool.down = true; if (tool.kind === 'lighter') sfx.knock();
   follow(svgPt(e));
 });
-svg.addEventListener('pointermove', (e) => { if (tool.kind && tool.down) follow(svgPt(e)); });
-const lift = () => { tool.down = false; };
+svg.addEventListener('pointermove', (e) => { if (tool.kind && tool.down && !tool.auto) follow(svgPt(e)); });
+const lift = () => { if (!tool.auto) tool.down = false; };
 svg.addEventListener('pointerup', lift); svg.addEventListener('pointercancel', lift);
 
 /* ---------- 點燭 ---------- */
 let flicker = false;
 function lightOne(id) {
   if (lit[id]) return;
-  lit[id] = true;
+  lit[id] = true; rite()[id] = true; save();
+  paintWickRings();
   sfx.pop(); sfx.buzz(8);
   S('flame' + id).setAttribute('opacity', '1');
   burst('spark', WICK[id][0], WICK[id][1] - 10, 14);
-  if (!flicker) {
-    flicker = true;
-    onTick((t) => {
-      // 規格書的燭光公式：alpha = 0.8 + 0.2 * sin(time * frequency)
-      if (lit.L) {
-        S('glowL').setAttribute('opacity', (0.8 + 0.2 * Math.sin(t * 7)).toFixed(3));
-        S('flameL').setAttribute('transform', `translate(106 346) scale(${(.65 * (0.95 + 0.07 * Math.sin(t * 11))).toFixed(3)} ${(.65 * (0.97 + 0.08 * Math.sin(t * 9))).toFixed(3)})`);
-      }
-      if (lit.R) {
-        S('glowR').setAttribute('opacity', (0.8 + 0.2 * Math.sin(t * 5.3 + 1)).toFixed(3));
-        S('flameR').setAttribute('transform', `translate(258 346) scale(${(.65 * (0.95 + 0.07 * Math.sin(t * 10 + 2))).toFixed(3)} ${(.65 * (0.97 + 0.08 * Math.sin(t * 8 + 1))).toFixed(3)})`);
-      }
-      if (session.lit) S('halo').setAttribute('opacity', (0.45 + 0.12 * Math.sin(t * 1.5)).toFixed(3));
-    });
-  }
+  startFlicker();
   if (lit.L && lit.R) {
     session.lit = true; markNext();
     const then = tool.then;
-    if (tool.kind === 'lighter') setTimeout(() => { unequip(then ? 500 : 1300); then && then(); }, 450);
-    if (!then && !tool.quiet) say('兩支蠟燭都點亮了，殿裡暖起來了。接著上香吧。');
-  } else if (tool.kind === 'lighter') say('點著一支了！再把火移到另一支蠟燭芯上。');
+    if (tool.kind === 'lighter') setTimeout(() => { putBack(() => { unequip(then ? 500 : 1300); then && then(); }); }, 450);
+    if (!then && !tool.quiet) say('兩支蠟燭都點亮了（2／2），殿裡暖起來了。接著<b>上香</b>吧。');
+  } else if (tool.kind === 'lighter') say('點著一支了！<b>已點亮 1／2</b>，再把火移到另一支蠟燭芯上。');
+  paintRite();
+}
+// 點完把打火機收回人偶手上
+function putBack(then) {
+  if (!tool.kind || REDUCED_MOTION) { then(); return; }
+  const [x0, y0] = [tool.x, tool.y], t0 = performance.now(), D = 300;
+  tool.auto = true;
+  onTick(() => {
+    const k = Math.min(1, (performance.now() - t0) / D), e = k * k;
+    placeTool(x0 + (HAND[0] - x0) * e, y0 + (HAND[1] - y0) * e);
+    S('tool').setAttribute('opacity', (1 - 0.8 * e).toFixed(2));
+    if (k >= 1) { tool.auto = false; S('tool').removeAttribute('opacity'); then(); return false; }
+  });
+}
+function startFlicker() {
+  if (flicker) return;
+  flicker = true;
+  onTick((t) => {
+    // 規格書的燭光公式：alpha = 0.8 + 0.2 * sin(time * frequency)
+    if (lit.L) {
+      S('glowL').setAttribute('opacity', (0.8 + 0.2 * Math.sin(t * 7)).toFixed(3));
+      S('flameL').setAttribute('transform', `translate(106 346) scale(${(.65 * (0.95 + 0.07 * Math.sin(t * 11))).toFixed(3)} ${(.65 * (0.97 + 0.08 * Math.sin(t * 9))).toFixed(3)})`);
+    }
+    if (lit.R) {
+      S('glowR').setAttribute('opacity', (0.8 + 0.2 * Math.sin(t * 5.3 + 1)).toFixed(3));
+      S('flameR').setAttribute('transform', `translate(258 346) scale(${(.65 * (0.95 + 0.07 * Math.sin(t * 10 + 2))).toFixed(3)} ${(.65 * (0.97 + 0.08 * Math.sin(t * 8 + 1))).toFixed(3)})`);
+    }
+    if (session.lit) S('halo').setAttribute('opacity', (0.45 + 0.12 * Math.sin(t * 1.5)).toFixed(3));
+  });
 }
 function startLighter(then, text) {
   if (session.lit) { say('燭火已經點著了，很亮喔。接著可以上香。'); return; }
   equip('lighter', then);
-  say(text || '拿起打火機了。<b>按住畫面</b>打出火，把火苗移到蠟燭芯（虛線圈）上停一下。兩支都要點。');
+  say(text || '拿起打火機了。<b>按住畫面</b>打出火，把火苗移到蠟燭芯（虛線圈）上停一下，兩支都要點。不想拖曳，按「點一下點燭」也可以。');
 }
 function lightCandlesNow() { tool.quiet = true; lightOne('L'); lightOne('R'); tool.quiet = false; }
 
@@ -391,7 +470,7 @@ const BURN = 180; // 秒
 const STICKS = [[172, 214, 162, 168], [180, 214, 180, 162], [188, 214, 198, 168]];
 function startIncense() {
   if (session.incenseUntil > Date.now()) { say('香還在燒，心意神明收到了。可以抽籤或擲筊問事。'); return; }
-  if (!session.lit) { startLighter(startIncense, '香要從燭火點，先拿打火機把兩支蠟燭點亮。<b>按住畫面</b>打火，移到蠟燭芯上。'); return; }
+  if (!session.lit) { startLighter(startIncense, '香要從燭火點，先拿打火機把兩支蠟燭點亮。<b>按住畫面</b>打火，移到蠟燭芯上，或按「點一下點燭」。'); return; }
   equip('sticks');
   say('拿起三炷香了。<b>按住畫面</b>把香頭移到燭火上點著。');
 }
@@ -401,6 +480,7 @@ function bow() {
 }
 function plantIncense() {
   session.incenseUntil = Date.now() + BURN * 1000;
+  rite().until = session.incenseUntil; save();
   routeDone(hall);
   sfx.pop(); sfx.buzz(8); bow();
   burst('spark', 182, 305 + HALLS[hall].burnerDy, 10);
@@ -485,26 +565,35 @@ async function throwJiao(tip, cancel = true) {
       { el: S('jiaoA'), x0: 172, y0: 480, x1: rand(132, 158), y1: rand(580, 596) + jdy, spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
       { el: S('jiaoB'), x0: 192, y0: 480, x1: rand(206, 232), y1: rand(584, 600) + jdy, spin: rand(540, 900) * (Math.random() < .5 ? -1 : 1), end: rand(-25, 25) },
     ];
-    const dur = REDUCED_MOTION ? 0.2 : 0.95;
-    let t0 = null, landed = false;
+    const dur = REDUCED_MOTION ? 0.2 : 0.95, HOP = REDUCED_MOTION ? 0 : 0.32; // 落地後再彈一下才停
+    let t0 = null, landed = false, thud = false;
     cam.zoom(182, 560 + jdy, 250, 380); // 鏡頭靠近地板看筊杯落地
-    blocks.forEach((b) => b.el.setAttribute('opacity', '1'));
+    blocks.forEach((b, i) => { b.el.setAttribute('opacity', '1'); b.sh = S(i ? 'jiaoShB' : 'jiaoShA'); b.sh.setAttribute('cy', (b.y1 + 9).toFixed(1)); });
     onTick((t) => {
       if (t0 === null) t0 = t;
-      const k = Math.min(1, (t - t0) / dur);
+      const el = t - t0, k = Math.min(1, el / dur), h = Math.min(1, Math.max(0, (el - dur) / (HOP || 1)));
+      if (k >= 1 && !thud) { thud = true; sfx.knock(); sfx.buzz(10); }
       blocks.forEach((b, i) => {
-        const x = b.x0 + (b.x1 - b.x0) * k;
-        const y = b.y0 + (b.y1 - b.y0) * k - 150 * 4 * k * (1 - k);
-        const rot = b.end + b.spin * (1 - k);
+        const hopY = HOP ? 9 * Math.sin(Math.PI * h) * (1 - h * .4) : 0;
+        const x = b.x0 + (b.x1 - b.x0) * k + (k >= 1 ? (i ? 4 : -4) * h : 0);
+        const air = 150 * 4 * k * (1 - k);
+        const y = b.y0 + (b.y1 - b.y0) * k - air - hopY;
+        const rot = b.end + b.spin * (1 - k) + (k >= 1 ? (i ? 10 : -10) * Math.sin(Math.PI * h) : 0);
         const flipping = k < 1 && Math.floor((b.spin * k) / 150) % 2 === 0;
         setFace(b.el, k < 1 ? (flipping ? 'flat' : 'round') : faces[i]);
         const sc = 1 + 0.35 * Math.sin(Math.PI * k);
         b.el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${rot.toFixed(1)}) scale(${sc.toFixed(3)} ${(sc * (k < 1 ? Math.abs(Math.cos((b.spin * k) * Math.PI / 300)) * .6 + .4 : 1)).toFixed(3)})`);
+        // 接觸陰影：筊越高越淡、越大；落地時最清楚
+        const lift = Math.min(1, (air + hopY * 6) / 150);
+        b.sh.setAttribute('cx', x.toFixed(1));
+        b.sh.setAttribute('rx', (14 + 10 * lift).toFixed(1));
+        b.sh.setAttribute('opacity', (k < .15 ? k / .15 * .25 : .55 - .4 * lift).toFixed(2));
       });
-      if (k >= 1 && !landed) {
-        landed = true; sfx.knock(); sfx.knock(0.09); sfx.buzz([10, 40, 10]);
-        setTimeout(() => resolve(key), 250);
-        zoomOut(1900);
+      if (k >= 1 && h >= 1 && !landed) {
+        landed = true; sfx.knock(0.09); sfx.buzz([10, 40, 10]);
+        setTimeout(() => resolve(key), 350); // 停穩了才說結果
+        zoomOut(2100);
+        setTimeout(() => blocks.forEach((b) => b.sh.setAttribute('opacity', '0')), 2300);
         return false;
       }
     });
@@ -588,6 +677,7 @@ const draft = { cat: 'peace', wish: '', no: 0 };
 const askNow = () => (state.ask && state.ask.date === dayKey() && !state.ask.no && state.ask.hall === hall ? state.ask : null);
 function openDraw() {
   if (session.busy) return;
+  session.confirming = false; paintRite();
   const ask = askNow(), askT = ask && ASK_TOPICS.find((t) => t.id === ask.topic);
   if (askT) { draft.cat = askT.cat; if (ask.q) draft.wish = ask.q; }
   if (session.incenseUntil < Date.now() && !session.lit) say('通常會先點燭、上香再抽籤，不過心誠最重要，直接來也可以。');
@@ -608,25 +698,33 @@ function openDraw() {
   });
 }
 
-const TUBE = `<svg viewBox="0 0 140 170" aria-hidden="true"><g class="tube" id="bigTube"><image href="${tubeUrl}" x="38" y="6" width="63" height="160"/></g>
-  <g id="outStick" style="display:none"><rect x="96" y="0" width="12" height="70" rx="5" fill="#E8C77A" transform="rotate(18 102 35)"/><rect x="96" y="0" width="12" height="12" rx="5" fill="#C8352B" transform="rotate(18 102 35)"/></g></svg>`;
+const STICK_ART = Object.values(import.meta.glob('./assets/act/qian-stick.webp', { eager: true, import: 'default' }))[0];
+// 籤枝畫在籤筒「後面」：從筒口慢慢冒出來，冒出來以後籤號印在籤枝上
+const TUBE = `<svg viewBox="0 -78 140 248" aria-hidden="true"><g class="tube" id="bigTube">
+  <g id="outStick" style="display:none"><g class="stick-rise">${STICK_ART ? `<image href="${STICK_ART}" x="60" y="-6" width="19" height="124" preserveAspectRatio="none"/>` : `<rect x="62" y="-4" width="15" height="120" rx="5" fill="#E8C77A" stroke="#B88A3A" stroke-width="1"/><rect x="62" y="-4" width="15" height="14" rx="5" fill="#C8352B"/>`}<text id="stickTxt" x="69.5" y="24" text-anchor="middle" font-size="11" font-weight="900" fill="#8A2A1E" font-family="serif"></text></g></g>
+  <image href="${tubeUrl}" x="38" y="6" width="63" height="160"/></g></svg>`;
 
 async function shake() {
   const body = openSheet('搖籤筒', `
     <div class="tube-stage">${TUBE}</div>
     <p class="stick-no" id="stickNo">沙沙沙……</p>
     <p class="hint" id="shakeHint">籤筒稍微往前傾，輕輕搖到一支籤跳出來。</p>
-    <button class="btn" id="goConfirm" hidden>擲筊請示神明</button>`);
+    <button class="btn" id="goConfirm" hidden>拿這支籤請示神明（擲筊）</button>`);
   const tube = $('#bigTube', body);
   tube.classList.add('shake'); sfx.rattle(1.4); sfx.buzz([20, 40, 20, 40, 20]);
   await sleep(REDUCED_MOTION ? 300 : 1500);
   if ($('#sheet').hidden) return;
   tube.classList.remove('shake');
   draft.no = 1 + Math.floor(Math.random() * (hall === 'main' ? FORTUNES.length : SUB[hall].qianCount));
+  // 籤號直排印在籤枝上
+  $('#stickTxt', body).innerHTML = [...cn(draft.no)].map((c, i) => `<tspan x="69.5" dy="${i ? 12 : 0}">${c}</tspan>`).join('');
   $('#outStick', body).style.display = '';
-  $('#stickNo', body).textContent = `第${cn(draft.no)}籤`;
-  $('#shakeHint', body).textContent = '要擲出聖筊，神明確認是這一支，才算數。';
   sfx.knock();
+  await sleep(REDUCED_MOTION ? 50 : 750);
+  if ($('#sheet').hidden) return;
+  $('#stickNo', body).textContent = `第${cn(draft.no)}籤`;
+  $('#shakeHint', body).innerHTML = '<b>還差一步：</b>拿這支籤擲筊請示神明，擲出聖筊才算數。';
+  session.confirming = true; paintRite();
   const btn = $('#goConfirm', body); btn.hidden = false; btn.focus();
   btn.addEventListener('click', confirmStick);
 }
@@ -638,6 +736,7 @@ async function confirmStick() {
   await sleep(300);
   const key = await throwJiao(`請示神明：抽到的是第${cn(draft.no)}籤嗎？`, false);
   session.busy = false;
+  if (key === 'sheng') session.confirming = false;
   if (key === 'sheng') {
     sfx.chime();
     if (daily) {
@@ -663,6 +762,7 @@ async function confirmStick() {
   } else {
     session.drawFails++;
     if (session.drawFails >= 3) {
+      session.confirming = false; paintRite();
       say(`${JIAO[key].name}。已經連續三次不是了，神明也許想讓你先靜一下。可以敲敲左下角的磬，深呼吸，再來搖籤。`, 'god');
       return;
     }
@@ -1178,13 +1278,11 @@ function showMap() {
     : '今天的巡禮都走完了，圓滿！');
 }
 
-// 每座殿各自記得蠟燭、香的狀態（這次參拜的，不存檔）
-const hallState = {};
 function switchHall(h) {
   if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); SUB[hall]?.leave?.();
-  hallState[hall] = { lit, sLit: session.lit, until: session.incenseUntil };
   hall = h;
-  const st = hallState[h] || { lit: { L: false, R: false }, sLit: false, until: 0 };
+  const r = rite(h); // 今天這殿點過的蠟燭、上過的香（有存檔，重新整理也還在）
+  const st = { lit: { L: r.L, R: r.R }, sLit: r.L && r.R, until: r.until };
   lit = st.lit; session.lit = st.sLit; session.incenseUntil = st.until;
   const H = HALLS[h], dy = H.base - 536;
   BURNER = [182, 356 + H.burnerDy];
@@ -1196,6 +1294,7 @@ function switchHall(h) {
   S('burnerG').setAttribute('transform', `translate(0 ${H.burnerDy})`);
   paintShrine(); $('#basketBtn').hidden = false;
   for (const k of ['L', 'R']) { S('flame' + k).setAttribute('opacity', lit[k] ? '1' : '0'); if (!lit[k]) S('glow' + k).setAttribute('opacity', '0'); }
+  if (lit.L || lit.R) startFlicker();
   if (session.incenseUntil > Date.now()) runIncense(); else { incenseRun++; S('incense').style.display = 'none'; }
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
   $('#bar').hidden = h !== 'main';
@@ -1333,8 +1432,16 @@ buildMap();
 { const bd = STALLS.xi.mod.birthdayToday(); const el = document.querySelector('[data-area="xitai"]'); if (bd.length && el) { el.textContent = '酬神戲台・今日開演'; el.classList.add('live'); } }
 
 // 每天回來的理由：神明委託、奇遇、香火（daily.js）；殿裡的其他香客（npc.js）
+guide = initGuide({ wrap: $('#sceneWrap'), state, save, sfx });
 daily = initDaily({ $, state, save, sfx, wallet, halls: HALLS, stalls: STALLS, qianName: (h) => (h === 'main' ? '心安籤' : SUB[h].qianName), openSheet, dayKey, esc, burst, lunar });
-daily.chip.addEventListener('click', () => daily.open((h) => { closeSheet(); if (h !== hall || stall) SHOW[h](); }));
+daily.chip.addEventListener('click', () => {
+  daily.open((h) => { closeSheet(); if (h !== hall || stall) SHOW[h](); });
+  // 收起來的參拜流程提示，可以在這裡再打開
+  if (state.guide?.off) {
+    $('#sheetBody').insertAdjacentHTML('beforeend', '<button type="button" class="btn ghost" id="riteOn">重新顯示參拜流程提示</button>');
+    $('#riteOn').addEventListener('click', () => { guide.reset(); closeSheet(); paintRite(); say('參拜流程提示打開了：點燭 → 上香 → 抽籤 → 擲筊確認，畫面上方會告訴你在第幾步。'); });
+  }
+});
 npc = initNpc({ svg, chars: CHARS, me: () => charById(state.char), halls: HALLS, dayKey, sfx, hit: () => {
   daily.hit('npc');
   state.npcTalk = (state.npcTalk || 0) + 1; save();
