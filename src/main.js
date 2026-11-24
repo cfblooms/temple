@@ -35,6 +35,7 @@ import { initJieqian, TOPICS as ASK_TOPICS } from './jieqian.js';
 import { initXitai } from './xitai.js';
 import { initTiangong } from './tiangong.js';
 import { tossJiao } from './jiaotoss.js';
+import { initToday } from './today.js'; // 「今日」膠囊：節慶倒數＋每日小任務合成一顆
 import { initGuide } from './guide.js'; // 參拜流程進度條（新手引導）
 import { initAmulet } from './amulet.js';
 import { initFest } from './fest/index.js';
@@ -261,7 +262,7 @@ function markNext() {
 // 參拜流程進度條：點燭 → 上香 → 抽籤 → 擲筊確認（guide.js 負責畫）
 let guide = null;
 function riteStatus() {
-  if (stall || $('#sceneWrap').hidden) return null;
+  if (stall || hall !== 'main' || $('#sceneWrap').hidden) return null; // 參拜步驟卡只在正殿出現
   const key = `${hall}|${dayKey()}`;
   if (drawnToday()) return { done: true, key };
   if (session.confirming) return { step: 3, key, tip: '問神明：「這是你要給我的籤嗎？」擲出聖筊才算數' };
@@ -682,18 +683,15 @@ function openDraw() {
   const ask = askNow(), askT = ask && ASK_TOPICS.find((t) => t.id === ask.topic);
   if (askT) { draft.cat = askT.cat; if (ask.q) draft.wish = ask.q; }
   if (session.incenseUntil < Date.now() && !session.lit) say('通常會先點燭、上香再抽籤，不過心誠最重要，直接來也可以。');
+  // 先抽再說：抽籤前不用填資料，心裡默念就好；抽到籤以後才邀請寫下心願（showFortune）
+  if (!askT) draft.wish = '';
   const body = openSheet(`向${hall === 'main' ? '神明' : SUB[hall].god}稟報`, `
-    <p class="hint">抽籤前先報上自己是誰、想問什麼。一次問一件事，同一件事不要一直重抽。</p>
+    <p class="hint">在心裡跟神明說想問的事，一次問一件。</p>
     ${askT ? `<p class="hint">問事：<b>${askT.name}</b>${ask.q ? `「${esc(ask.q)}」` : ''}。抽到籤、擲出聖筊後，拿去廟埕給廟公解。</p>` : ''}
-    <label class="field"><span>稱呼</span><input type="text" id="drawName" maxlength="12" value="${esc(state.name)}"></label>
     ${hall === 'main' ? `<div class="field"><span>想問的方向</span>${chipGroup('cat', CATEGORIES, draft.cat)}</div>` : `<p class="hint">今天抽的是<b>${SUB[hall].qianName}</b>。</p>`}
-    <label class="field"><span>心願（選填，會印在祈福卡上）</span><input type="text" id="drawWish" maxlength="30" placeholder="例：期末考順利歐趴" value="${esc(draft.wish)}"></label>
-    <button class="btn" id="goShake">稟報完畢，搖籤筒</button>`);
+    <button class="btn" id="goShake">搖籤筒</button>`);
   bindChips(body, (_, v) => { draft.cat = v; });
   $('#goShake').addEventListener('click', () => {
-    const n = $('#drawName').value.trim();
-    if (n) { state.name = n; save(); paintAvatar(); }
-    draft.wish = $('#drawWish').value.trim();
     session.drawFails = 0;
     shake();
   });
@@ -788,6 +786,13 @@ function showFortune() {
       <p>${f.gist}</p>
       <p><span class="tag">${cat.name}</span>${f[cat.id]}</p>
       ${state.fortune.wish ? `<p class="hint">你的心願：${esc(state.fortune.wish)}</p>` : ''}
+      ${state.fortune.wish ? '' : `<div class="wish-ask" id="wishAsk">
+        <h3>要把這件事留在廟裡嗎？</h3>
+        <p class="hint">寫下來，會印在祈福卡上。不寫也可以。</p>
+        <label class="field"><span>稱呼</span><input type="text" id="drawName" maxlength="12" value="${esc(state.name)}"></label>
+        <label class="field"><span>心願</span><input type="text" id="drawWish" maxlength="30" placeholder="例：期末考順利歐趴"></label>
+        <button class="btn gold" id="saveWish" type="button">留在廟裡</button>
+      </div>`}
       <h3>神明小叮嚀</h3>
       <p>${f.tip}</p>
       <details><summary class="hint">看其他方向的解釋</summary>
@@ -797,7 +802,14 @@ function showFortune() {
     <p class="hint">籤詩是心靈參考，重要的決定還是要和信任的人商量。</p>
     <div class="row"><button class="btn" id="toCard">做成祈福卡</button><button class="btn ghost" id="keep">收下籤詩</button></div>
     <button class="btn gold" id="toGong">拿去給廟公解籤</button>
-    <button class="btn ghost" id="askOther">問另一件事，重新稟報</button>`);
+    <button class="btn ghost" id="askOther">問另一件事</button>`);
+  $('#saveWish')?.addEventListener('click', () => {
+    const n = $('#drawName').value.trim(), w = $('#drawWish').value.trim();
+    if (n) { state.name = n; paintAvatar(); }
+    if (w) state.fortune.wish = w;
+    save(); sfx.chime?.();
+    $('#wishAsk').innerHTML = w ? `<p class="hint">你的心願：${esc(w)}。已經留在廟裡了。</p>` : '<p class="hint">好，稱呼記下了。</p>';
+  });
   $('#toGong').addEventListener('click', () => {
     state.ask = { date: dayKey(), topic: ASK_TOPICS.find((t) => t.cat === state.fortune.cat)?.id || 'work', hall: 'main', q: state.fortune.wish || '', no: state.fortune.no, read: false };
     save(); closeSheet(); showStall('jq');
@@ -1273,7 +1285,7 @@ function openStep(id) {
 function showMap() {
   if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); SUB[hall]?.leave?.();
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#sanBar').hidden = true; $('#gyBar').hidden = true; $('#ggBar').hidden = true; $('#zsBar').hidden = true; $('#tsBar').hidden = true; $('#muBar').hidden = true; $('#mlBar').hidden = true; leaveStall(); $('#jgHost').hidden = true; jg.reset(); $('#tgBar').hidden = true; $('#mapView').hidden = false;
-  $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
+  $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute(); paintRite();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
   const fn = fahuiNews(state, dayKey()); document.querySelector('.area[data-area="fahui"]')?.classList.toggle('due', fn.due);
   if (!routeDay()) { say(fn.line || '點<b>紅色標籤</b>就能進去逛。初一、十五和節日有<b>全廟巡禮</b>。'); return; }
@@ -1306,7 +1318,8 @@ function switchHall(h) {
   for (const k of ['cai', 'yue', 'tudi', 'wen', 'ji', 'san', 'gy', 'gg', 'zs', 'ts', 'mu', 'ml', 'tg']) { $(`#${k}Host`).hidden = k !== h; $(`#${k}Bar`).hidden = k !== h; }
   leaveStall(); $('#sceneHost').hidden = false; $('#jgHost').hidden = h !== 'ts'; jg.reset();
   sfx.bowl();
-  state.home = h; save(); paintGods();
+  state.home = h; state.recentHalls = [h, ...(state.recentHalls || []).filter((x) => x !== h)].slice(0, 6); save();
+  $('#godBar').hidden = false; paintGods();
   markNext();
   npc?.paint(h);
   if (daily) {
@@ -1325,16 +1338,28 @@ function kittenRun() {
 // 神明列：可以左右滑。已開放的殿在前面，其他是「籌備中」
 const SOON = [
 ];
+// 神明列：預設只放「今日三尊」（現在這殿、今天過生日的神明、最近拜過的），右邊「全部神明」展開 14 位；展開過就記住
+const FEST_GOD = [['媽祖', 'main'], ['土地公', 'tudi'], ['濟公', 'ji'], ['文昌', 'wen'], ['三太子', 'san'], ['觀音', 'gy'], ['註生', 'zs'], ['關聖', 'gg'], ['瑤池', 'mu'], ['趙公明', 'cai'], ['財神', 'cai']];
+function todayGods() {
+  const fg = fest ? FEST_GOD.filter(([k]) => fest[3].includes(k)).map(([, id]) => id) : [];
+  const ids = [hall, ...fg, ...(state.recentHalls || []), 'main', 'cai', 'yue'].filter((id) => HALLS[id]);
+  const keep = new Set([...new Set(ids)].slice(0, 3));
+  return Object.keys(HALLS).filter((id) => keep.has(id)); // 照固定順序排，換殿時頭像不會跳來跳去
+}
 function paintGods() {
-  const bar = $('#godBar');
-  bar.innerHTML = Object.entries(HALLS).map(([id, H]) => { const x = daily?.xh(id); return `<button type="button" class="god${id === hall && !stall ? ' on' : ''}" data-god="${id}" role="tab" aria-selected="${id === hall}" style="--xh:${x ? x.pct.toFixed(3) : 0}">${x?.lv ? `<i class="xh-lv">${x.lv}</i>` : ''}<img src="${H.face}" alt=""><span>${H.god}</span></button>`; }).join('')
+  const bar = $('#godBar'), open = !!state.godsOpen;
+  const pick = open ? Object.keys(HALLS) : todayGods();
+  const n = Object.keys(HALLS).length;
+  bar.classList.toggle('compact', !open);
+  bar.innerHTML = pick.map((id) => { const H = HALLS[id], x = daily?.xh(id); return `<button type="button" class="god${id === hall && !stall ? ' on' : ''}" data-god="${id}" role="tab" aria-selected="${id === hall}" style="--xh:${x ? x.pct.toFixed(3) : 0}">${x?.lv ? `<i class="xh-lv">${x.lv}</i>` : ''}<img src="${H.face}" alt=""><span>${H.god}</span></button>`; }).join('')
     + SOON.map(([name, face], i) => `<button type="button" class="god soon" data-soon="${i}" aria-label="${name}（籌備中）"><img src="${face}" alt=""><span>${name}</span></button>`).join('')
-;
+    + `<button type="button" class="god more" data-more="1" aria-expanded="${open}" aria-label="${open ? '收起，只看今日三尊' : `全部神明（${n} 位）`}"><i aria-hidden="true">${open ? '‹' : n}</i><span>${open ? '收起' : '全部神明'}</span></button>`;
   // 廟埕攤位（辦桌、收驚、打小人）不放神明列，從地圖走過去
   const on = bar.querySelector('.god.on');
-  if (on) bar.scrollLeft = Math.max(0, on.offsetLeft - 12);
+  if (on && open) bar.scrollLeft = Math.max(0, on.offsetLeft - 12);
 }
 $('#godBar').addEventListener('click', (e) => {
+  if (e.target.closest('[data-more]')) { state.godsOpen = !state.godsOpen; save(); sfx.knock(); paintGods(); if (!state.godsOpen) $('#godBar').scrollLeft = 0; return; }
   const s = e.target.closest('[data-soon]');
   if (s) { const [name, , text] = SOON[+s.dataset.soon]; sfx.knock(); say(`${text}。${name}的殿正在準備中，敬請期待。`); return; }
   const st = e.target.closest('[data-stall]'); if (st) { showStall(st.dataset.stall); return; }
@@ -1419,11 +1444,11 @@ function showStall(k) {
   for (const s of Object.keys(STALLS)) { $(`#${s}Host`).hidden = s !== k; $(`#${s}Bar`).hidden = s !== k; }
   $('#sceneHost').hidden = true; $('#basketBtn').hidden = true;
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
-  sfx.bowl(); paintGods();
+  sfx.bowl(); paintGods(); paintRite();
+  $('#godBar').hidden = true; // 攤位、夜市不能參拜，神明列收起來（回神明殿從「逛廟」）
   STALLS[k].mod.enter();
   daily?.hit('stall', k);
 }
-document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('click', showMap)); // 攤位從地圖進來，也回地圖
 const shop = initShop({ state, save, openSheet, closeSheet, say, sfx, esc, hall: () => hall, godName: (h) => HALLS[h]?.god, onChange: () => { paintBasket(); if (offerUI) renderTray(); } });
 paintBasket();
 $('#btnFu').addEventListener('click', () => { if (offerUI) endOffer(0); shop.openShop(); });
@@ -1450,6 +1475,7 @@ daily.chip.addEventListener('click', () => {
     $('#riteOn').addEventListener('click', () => { guide.reset(); closeSheet(); paintRite(); say('參拜流程提示打開了：點燭 → 上香 → 抽籤 → 擲筊確認，畫面上方會告訴你在第幾步。'); });
   }
 });
+initToday({ $, wrap: $('#sceneWrap'), openSheet, closeSheet, sfx });
 npc = initNpc({ svg, chars: CHARS, me: () => charById(state.char), halls: HALLS, dayKey, sfx, hit: () => {
   daily.hit('npc');
   state.npcTalk = (state.npcTalk || 0) + 1; save();
@@ -1458,6 +1484,8 @@ npc = initNpc({ svg, chars: CHARS, me: () => charById(state.char), halls: HALLS,
 if (TEST) initTestPanel({ openSheet, closeSheet, festivals: FESTIVALS, lunarOf, lunarText: (d) => lunar(d)?.text, deityFests: FESTS, festMod, saveKey: KEY, realKey: REAL_KEY });
 // 打開就直接進上次拜的那位神明；地圖是「逛逛全廟」
 SHOW[HALLS[state.home] ? state.home : 'main']();
+// 靜態首屏（index.html 的 #boot）淡出，換成真的殿
+{ const boot = document.getElementById('boot'); if (boot) { requestAnimationFrame(() => boot.classList.add('gone')); setTimeout(() => boot.remove(), 600); } }
 
 // PWA：只在正式網站（非內嵌預覽）註冊離線快取
 if (import.meta.env.PROD && 'serviceWorker' in navigator && window.top === window.self) {

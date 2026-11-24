@@ -965,3 +965,99 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
    所有殿／攤位的圖層和特效一起移，座標不變。 */
 .scene-wrap { width: min(100cqw, 100cqh * 0.5581 * 1.2); height: min(100cqh, 100cqw * 1.7917); aspect-ratio: auto; }
 #sceneWrap > div[id$="Host"], #sceneWrap > #fx { bottom: auto; height: calc(100cqw * 1.7917); top: calc((100% - 100cqw * 1.7917) * .75); }
+
+/* ===== 首屏整理（依 UI/UX 健檢 2026-11-24）===== */
+/* 圖還沒載完時，不要把替代文字畫在畫面上（螢幕閱讀器照樣念得到） */
+img { color: transparent; }
+
+/* 兩顆膠囊（節慶倒數、今日小任務）合成一顆「今日」；原本兩顆留在 DOM 裡給「今日」面板點，畫面上不顯示 */
+.fest-chip, .quest-chip { display: none !important; }
+.today-chip { position: absolute; top: 64px; left: 10px; z-index: 3; display: inline-flex; align-items: center; gap: 5px; min-height: 36px; padding: 4px 12px 4px 6px; border: 0; border-radius: 999px; background: rgb(255 246 232 / .94); color: #6A2A1A; font: inherit; font-size: 14px; line-height: 1.2; box-shadow: 0 2px 6px rgb(0 0 0 / .3); white-space: nowrap; }
+.today-chip::before { content: ''; position: absolute; inset: -5px -2px; }
+.today-chip svg { width: 22px; height: 22px; flex: none; }
+.today-chip b { font-weight: 700; }
+.today-chip span { font-size: 13px; color: #8A4A2A; }
+.today-chip.ready { background: #F3C64A; color: #5A2A0A; }
+.today-chip.ready span { color: #5A2A0A; }
+.today-chip.ready::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #E0443E; }
+.today-chip.fest { background: #E0443E; color: #FFF4E0; animation: beckonFest 1.8s ease-in-out infinite; }
+.today-chip.fest span { color: #FFF4E0; }
+.app:has(#fhHost:not([hidden])) .today-chip, #sceneWrap.close-up .today-chip { opacity: 0; pointer-events: none; }
+@container (max-width: 300px) { .today-chip span { display: none; } }
+@media (prefers-reduced-motion: reduce) { .today-chip.fest { animation: none; } }
+.today-list { display: grid; gap: 10px; }
+.today-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 10px 14px; border: 1.5px solid #E6C9A0; border-radius: 14px; background: #FFF8EC; color: #3B1F17; text-align: left; }
+.today-row svg { width: 30px; height: 30px; flex: none; }
+.today-row > span { flex: 1; display: grid; gap: 2px; min-width: 0; }
+.today-row b { font-size: 16px; }
+.today-row small { font-size: 14px; color: #7A4A32; }
+.today-row > i { font-style: normal; font-size: 24px; color: #C2372B; }
+.today-row.hot { border-color: #E0A82A; box-shadow: 0 0 0 2px rgb(240 190 60 / .45); }
+
+/* 參拜步驟卡：放在「今日」膠囊下面，不擋到它 */
+.rite { top: 108px; }
+.rite-h { font-size: 12px; }
+.rite-h span { white-space: nowrap; }
+.rite-x { position: relative; }
+.rite-x::before { content: ''; position: absolute; inset: -10px -6px; }
+
+/* 神明列：預設只放今日三尊＋「全部神明」 */
+.gods.compact { right: auto; -webkit-mask-image: none; mask-image: none; overflow: visible; }
+.god { width: 52px; font-size: 12px; }
+.god.more i { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgb(40 18 10 / .62); border: 2px dashed rgb(255 244 224 / .85); color: #FFF4E0; font-style: normal; font-size: 15px; font-weight: 700; box-shadow: 0 2px 6px rgb(0 0 0 / .35); }
+.god.more[aria-expanded="true"] i { font-size: 22px; }
+
+/* 廟公台詞：字大一點；說太長時右下角有明顯的「看全文」 */
+.say { font-size: 14px; line-height: 1.3; height: calc(2 * 1.3em + 11px); } /* 字大一點但總高度不變（殿畫面不縮） */
+.say-who { font-size: 12px; }
+.say.more { padding-right: 10px; }
+.say.more::after { content: '看全文 ▾'; right: 6px; bottom: 3px; padding: 0 4px 0 14px; font-size: 12px; line-height: 1.4; background: linear-gradient(90deg, transparent, var(--paper) 12px); }
+.say.open::after { content: '收起 ▴'; }
+
+/* 字級與觸控區：小按鈕看起來一樣大，可以點的範圍至少 44×44 */
+.lunar { font-size: 13px; }
+.icon-btn { width: 38px; height: 38px; position: relative; }
+.icon-btn::before { content: ''; position: absolute; inset: -4px; }
+.me { position: relative; }
+.me::before { content: ''; position: absolute; inset: -3px; }
+.lunar { position: relative; }
+.lunar::before { content: ""; position: absolute; inset: -7px 0; }
+.fu { min-height: 36px; position: relative; }
+.fu::before { content: ''; position: absolute; inset: -4px 0; }
+.fish { font-size: 14px; }
+.basket-chip { min-height: 36px; min-width: 40px; padding: 4px 9px 4px 7px; justify-content: center; }
+.basket-chip::before { content: ''; position: absolute; inset: -5px -3px; }
+.hint, .field > span { font-size: 14px; }
+.field input[type="text"] { font-size: 16px; } /* 小於 16px 時 iPhone 會自動放大畫面 */
+/* 動作列：每個場景按鈕數不同，欄數跟著按鈕數走；少的時候不會拉得超寬 */
+.bar { grid-template-columns: none !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 96px); justify-content: center; gap: 3px; }
+.bar button { font-size: 13px; justify-content: center; padding: 3px 0 2px; } /* 字放大，但按鈕總高度跟原本一樣 */
+@media (max-width: 439px) { .fish svg { width: 18px; height: 11px; } .fish { font-size: 14px; } }
+
+/* 桌機：左邊殿、右邊說明和動作（不再是中間一條 430px 的手機直欄） */
+@media (min-width: 900px) and (min-height: 560px) {
+  body { background-color: var(--bg); background-image: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--line) 35%, transparent) 0 2px, transparent 3px), linear-gradient(45deg, transparent 47%, color-mix(in srgb, var(--line) 22%, transparent) 48% 52%, transparent 53%), linear-gradient(-45deg, transparent 47%, color-mix(in srgb, var(--line) 22%, transparent) 48% 52%, transparent 53%); background-size: 36px 36px; }
+  /* 直向排、會換欄的 flex：殿排第一個、撐滿整個高度，自己佔左邊一欄；其他（上方列、廟公、動作列）自動排到右邊一欄 */
+  .app { max-width: 1180px; flex-flow: column wrap; align-content: center; column-gap: 32px; row-gap: 12px; padding: 20px 32px; }
+  .app > .stage { order: -1; flex: none; height: 100%; width: min(720px, 100% - 392px, (100dvh - 40px) * .67); }
+  .app > :not(.stage) { width: 360px; }
+  .top { flex-wrap: wrap; row-gap: 8px; white-space: normal; }
+  .me-name { display: inline; }
+  .lunar { order: -1; flex: 1 0 100%; text-align: left; font-size: 15px; white-space: normal; }
+  .top-right { margin-left: auto; }
+  .say { height: auto; min-height: 0; overflow: visible; font-size: 16px; line-height: 1.6; padding: 10px 14px; background: var(--paper); }
+  .say .say-text { display: block; -webkit-line-clamp: unset; }
+  .say.more::after { display: none; }
+  .bar { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)) !important; grid-auto-columns: auto; gap: 8px; }
+  .bar button { font-size: 15px; min-height: 68px; border-radius: 14px; }
+  .bar button svg { width: 28px; height: 28px; }
+  .map-wrap { width: min(100cqw, 760px); }
+}
+/* 地圖標籤：手機上最小 11px（原本 9.5px 太難讀） */
+.area { font-size: max(2.3cqw, 11px); }
+.area.main { font-size: max(2.75cqw, 12px); }
+/* 抽到籤以後才邀請寫心願 */
+.wish-ask { display: grid; gap: 8px; margin: 6px 0; padding: 12px 14px; border: 1.5px dashed #E0B878; border-radius: 14px; background: #FFF8EC; color: #3B1F17; }
+.wish-ask h3 { margin: 0; }
+.wish-ask .hint { color: #7A4A32; }
+.wish-ask .btn { justify-self: start; }

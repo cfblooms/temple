@@ -43,7 +43,7 @@ export function initGuide({ wrap, state, save, sfx }) {
     clearTimeout(doneTimer);
     last = st.key + '|' + st.step;
     el.classList.remove('ok');
-    el.querySelector('.rite-h').textContent = `參拜 ${st.step + 1}／${STEPS.length}・${STEPS[st.step]}${st.sub ? ` ${st.sub}` : ''}`;
+    el.querySelector('.rite-h').innerHTML = `<span>參拜 ${st.step + 1}／${STEPS.length}・${STEPS[st.step]}</span>${st.sub ? ` <span>${st.sub}</span>` : ''}`; // 每段不折行（「亮 0／2」不會被拆成兩行）
     el.querySelectorAll('.rite-dots li').forEach((li, i) => { li.className = i < st.step ? 'done' : i === st.step ? 'now' : ''; });
     el.title = st.tip || TIP[st.step];
     el.hidden = false;
