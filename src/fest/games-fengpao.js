@@ -35,28 +35,52 @@ const towerSvg = (w, h) => `<g>
 const rocketSvg = `<path d="M-16 0H6" stroke="#E8D8B0" stroke-width="2"/><rect x="0" y="-3" width="14" height="6" rx="2" fill="#E0443E"/><path d="M14-3l6 3-6 3z" fill="#F3C64A"/>`;
 const goldSvg = (w) => `<circle r="${w / 2}" fill="#F3C64A" stroke="#B8861E" stroke-width="2"/><text y="${w * .2}" text-anchor="middle" class="fest-small" font-size="${w * .55}" fill="#9A2420">旺</text>`;
 
-// 站在人群裡的自己：用自己選的角色圖（跪拜圖只露出腰部以上，下半身被前排的人擋住），
-// 戴上安全帽後，從面罩看得到自己的臉（同一張圖再疊一次，只露出面罩那一塊）。
-const AV_H = 250, AV_TOP = -178, AV_CUT = -30; // 角色圖高度、圖頂端、腰（以下藏在人群後面）
-const HEAD_Y = -124; // 頭的中心
+// 站在人群裡的自己：一個比例一致的 Q 版小人（頭用自己角色的臉），下半身被前排的人擋住。
+// 護具直接畫在身上：全罩安全帽包住頭、面罩看得到自己的臉；毛巾圍在脖子；手套套在兩隻手上；身上本來就穿厚外套。
+const HEAD_Y = -122, HR = 34; // 頭的中心、半徑
 function avatarSvg(me) {
-  const img = (clip) => `<image href="${me.kneel}" x="-70" y="${AV_TOP}" width="140" height="${AV_H}" preserveAspectRatio="xMidYMin meet" clip-path="url(#${clip})"/>`;
-  return `<clipPath id="fpBody"><rect x="-90" y="${AV_TOP - 10}" width="180" height="${AV_CUT - AV_TOP + 10}"/></clipPath>
-    <clipPath id="fpVisor"><ellipse cx="0" cy="${HEAD_Y + 6}" rx="33" ry="25"/></clipPath>
+  const face = me.face || me.kneel;
+  const skin = '#F6D2B4';
+  return `<defs>
+      <clipPath id="fpFace"><circle cx="0" cy="${HEAD_Y}" r="${HR - 1}"/></clipPath>
+      <clipPath id="fpVisor"><ellipse cx="0" cy="${HEAD_Y + 4}" rx="27" ry="23"/></clipPath>
+      <linearGradient id="fpJacket" x1="0" x2="1"><stop offset="0" stop-color="#9A2A22"/><stop offset=".45" stop-color="#D8443A"/><stop offset="1" stop-color="#8A2018"/></linearGradient>
+      <radialGradient id="fpHelm" cx=".35" cy=".3"><stop offset="0" stop-color="#FFF0A0"/><stop offset=".55" stop-color="#F3C64A"/><stop offset="1" stop-color="#C8901E"/></radialGradient>
+    </defs>
     <g id="fpLean">
-    <g id="fpBodyImg">${img('fpBody')}</g>
-    <g id="gTowel" style="display:none" transform="translate(0 -78)">${art('fp-towel', 76, 42, towelSvg)}</g>
-    <g id="gGloves" style="display:none" transform="translate(0 -52)">${art('fp-gloves', 58, 42, glovesSvg)}</g>
-    <g id="gHelmet" style="display:none"><g transform="translate(0 ${HEAD_Y - 2})">${art('fp-helmet', 104, 104, helmetSvg)}</g>${img('fpVisor')}<ellipse cx="0" cy="${HEAD_Y + 6}" rx="33" ry="25" fill="#BFE0F2" opacity=".14"/></g>
+    <!-- 厚外套＋袖子 -->
+    <path d="M-30 -84 C-44 -78 -52 -56 -54 -30 L-38 -28 C-36 -50 -32 -64 -24 -72Z" fill="url(#fpJacket)" stroke="#6A1410" stroke-width="1.5"/>
+    <path d="M30 -84 C44 -78 52 -56 54 -30 L38 -28 C36 -50 32 -64 24 -72Z" fill="url(#fpJacket)" stroke="#6A1410" stroke-width="1.5"/>
+    <path d="M-38 0 C-40 -50 -32 -86 0 -88 C32 -86 40 -50 38 0Z" fill="url(#fpJacket)" stroke="#6A1410" stroke-width="1.5"/>
+    <path d="M0 -86 V0" stroke="#5A100C" stroke-width="2"/><path d="M-3 -80 h6 M-3 -70 h6 M-3 -60 h6 M-3 -50 h6" stroke="#E8C080" stroke-width="1.4"/>
+    <path d="M-36 -40 h72" stroke="#F3C64A" stroke-width="3" opacity=".8"/>
+    <!-- 手（沒戴手套時） -->
+    <g id="fpHands">${[-46, 46].map((x) => `<circle cx="${x}" cy="-26" r="8.5" fill="${skin}" stroke="#C89A7A" stroke-width="1.2"/>`).join('')}</g>
+    <!-- 脖子和頭 -->
+    <rect x="-9" y="${HEAD_Y + HR - 6}" width="18" height="12" fill="${skin}"/>
+    <circle cx="0" cy="${HEAD_Y}" r="${HR}" fill="#FFF4E0"/>
+    <image href="${face}" x="${-HR}" y="${HEAD_Y - HR}" width="${HR * 2}" height="${HR * 2}" preserveAspectRatio="xMidYMid slice" clip-path="url(#fpFace)"/>
+    <!-- 毛巾 -->
+    <g id="gTowel" style="display:none"><path d="M-30 -92 C-16 -82 16 -82 30 -92 L32 -80 C16 -70 -16 -70 -32 -80Z" fill="#FFF8EC" stroke="#D8C8B0" stroke-width="1.6"/><path d="M-28 -86 C-14 -78 14 -78 28 -86" stroke="#E0443E" stroke-width="2.4" fill="none"/><path d="M16 -76 l4 22 9 -2 -3 -22Z" fill="#FFF8EC" stroke="#D8C8B0" stroke-width="1.6"/></g>
+    <!-- 手套 -->
+    <g id="gGloves" style="display:none">${[-46, 46].map((x, i) => `<g transform="translate(${x} -28) rotate(${i ? 12 : -12})"><path d="M-10 10 V-4 C-10 -12 -5 -15 0 -15 S10 -12 10 -4 V10Z" fill="#F7F2E6" stroke="#C8BCA0" stroke-width="1.6"/><ellipse cx="${i ? 10 : -10}" cy="-2" rx="4" ry="6.5" fill="#F7F2E6" stroke="#C8BCA0" stroke-width="1.6"/><rect x="-11" y="7" width="22" height="7" rx="3" fill="#3E7EC8"/></g>`).join('')}</g>
+    <!-- 全罩安全帽：外殼包住整顆頭，面罩挖空看得到臉 -->
+    <g id="gHelmet" style="display:none">
+      <path fill-rule="evenodd" d="M${-HR - 8} ${HEAD_Y + 4} C${-HR - 10} ${HEAD_Y - 40} ${-20} ${HEAD_Y - HR - 12} 0 ${HEAD_Y - HR - 12} S${HR + 10} ${HEAD_Y - 40} ${HR + 8} ${HEAD_Y + 4} L${HR + 6} ${HEAD_Y + 26} C${20} ${HEAD_Y + 40} ${-20} ${HEAD_Y + 40} ${-HR - 6} ${HEAD_Y + 26}Z M-27 ${HEAD_Y + 4} a27 23 0 1 0 54 0 a27 23 0 1 0 -54 0Z" fill="url(#fpHelm)" stroke="#9A6A10" stroke-width="2"/>
+      <ellipse cx="0" cy="${HEAD_Y + 4}" rx="27" ry="23" fill="#9AD0F0" opacity=".22" stroke="#3A4A5A" stroke-width="2.2"/>
+      <path d="M-20 ${HEAD_Y - 10} C-12 ${HEAD_Y - 16} 0 ${HEAD_Y - 17} 8 ${HEAD_Y - 14}" stroke="#FFF" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+      <rect x="-5" y="${HEAD_Y - HR - 12}" width="10" height="14" rx="3" fill="#E0443E"/>
+      <path d="M-14 ${HEAD_Y + 32} h28" stroke="#9A6A10" stroke-width="3" stroke-linecap="round"/>
+    </g>
     </g>`;
 }
 // 前排的人（背影），擋住自己的下半身，看起來是站在人群裡
 const frontCrowd = (y) => `<g pointer-events="none">${Array.from({ length: 9 }, (_, i) => { const x = i * 45 - 4 + (i % 2) * 10, yy = y + (i % 2) * 10; return `<g transform="translate(${x} ${yy})"><path d="M-30 70 C-30 20 -22 8 0 8 S30 20 30 70Z" fill="${['#1E2030', '#2A1E28', '#222A2A'][i % 3]}"/><circle cy="-8" r="19" fill="${['#2A2630', '#3A3440', '#24222A', '#4A3A2A'][i % 4]}"/><path d="M-12-20 a15 15 0 0 1 16 -4" stroke="#FFF" stroke-width="3" stroke-linecap="round" opacity=".25" fill="none"/><path d="M-28 30h56" stroke="#000" stroke-width="10" opacity=".2"/></g>`; }).join('')}</g>`;
 
 const GEAR = [
-  { id: 'helmet', name: '全罩安全帽', at: [92, 420], size: [64, 64], draw: helmetSvg, to: [0, -124], why: '臉和眼睛最怕被炮打到' },
-  { id: 'towel', name: '毛巾圍脖子', at: [92, 520], size: [62, 36], draw: towelSvg, to: [0, -78], why: '塞住領口，火花才不會鑽進衣服' },
-  { id: 'gloves', name: '棉手套', at: [272, 470], size: [62, 44], draw: glovesSvg, to: [0, -52], why: '手也要包起來' },
+  { id: 'helmet', name: '全罩安全帽', at: [96, 420], size: [64, 64], draw: helmetSvg, to: [0, -122], why: '臉和眼睛最怕被炮打到' },
+  { id: 'towel', name: '毛巾圍脖子', at: [96, 520], size: [62, 36], draw: towelSvg, to: [0, -84], why: '塞住領口，火花才不會鑽進衣服' },
+  { id: 'gloves', name: '棉手套', at: [268, 470], size: [62, 44], draw: glovesSvg, to: [0, -30], why: '手也要包起來' },
 ];
 const TIERS = [[90, '旺到爆', '鹽水人說炮炸得越旺，今年就越旺。你撐完整座炮城，今年旺到爆！'], [60, '大旺', '炮城炸得好旺，今年事事順，運勢一路往上衝。'], [30, '很旺', '炮聲響亮，把霉運都炸跑了，今年穩穩地旺。'], [0, '小旺', '有拜有保佑，炮城點著就是好兆頭，明年再來炸更旺。']];
 
@@ -90,6 +114,7 @@ const fengpao = {
     const wear = (g) => {
       st.$('#gear-' + g.id).style.display = 'none';
       st.$('#g' + g.id[0].toUpperCase() + g.id.slice(1)).style.display = '';
+      if (g.id === 'gloves') st.$('#fpHands').style.display = 'none';
       worn++; st.sfx.knock(); st.burst('star', 180 + g.to[0], FEET + g.to[1], 10);
       if (worn < GEAR.length) st.say(`穿好了，${g.why}。還有 ${GEAR.length - worn} 樣。`, 'temple');
       else st.later(400, readyToLight);

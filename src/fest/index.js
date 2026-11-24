@@ -88,6 +88,7 @@ export function initFest({ $, state, save, say, sfx, openSheet, closeSheet, esc,
   let stage = null, hidden = [];
   let curOff = 0;
   const canStamp = (id, real) => real && state.festStamps[id] !== dayKey() && ((GAMES[id]?.days && curOff === 0) || !stamped(id));
+  if (import.meta.env.DEV) window.__fest = { start: (...a) => start(...a) }; // 測試用：直接開某個節慶某一天
   function start(id, { real = false, day, L: festL, off = 0 } = {}) {
     curOff = off;
     const f = festById(id), game = GAMES[id];

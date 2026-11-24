@@ -2,7 +2,7 @@
 // 十四：寫牌位貼上牌位牆 → 晚上到河邊放水燈（燈上寫姓氏）
 // 十五：擺普渡桌（可以擺供品店買的普渡供品）→ 把載著祖先名字的紙法船送進金爐
 // 素淨的畫面，不用紅燈籠。手勢規則：拿起來的東西浮在手指上方，做動作時鏡頭拉近。
-import { art, clamp, rand, place } from './core.js';
+import { art, hasArt, sitArt, sitImg, clamp, rand, place } from './core.js';
 import { backdrop } from './games-1.js';
 import fruitUrl from '../assets/offer/fruit.webp';
 import teaUrl from '../assets/offer/tea.webp';
@@ -238,7 +238,7 @@ function puduTable(st, o, next) {
   st.set(`${backdrop('zhongyuan', { wall: ['#D8D4CC', '#B8B0A4'], table: 380, tableColor: ['#B8A07A', '#8A7650'], extra: `<rect x="40" y="120" width="70" height="150" fill="#F4EEE2" stroke="#C8BEB0"/><rect x="250" y="120" width="70" height="150" fill="#F4EEE2" stroke="#C8BEB0"/><text x="180" y="110" text-anchor="middle" class="fest-sign" style="fill:#6A5A4A;font-size:26px">慶讚中元</text>` })}
     ${SPOTS.map(([x, y], i) => `<ellipse id="zs${i}" cx="${x}" cy="${y + 20}" rx="28" ry="7" fill="none" stroke="#FFF" stroke-width="2" stroke-dasharray="5 5"/>`).join('')}
     <g id="zxSpots"></g><g id="zxItems"></g>
-    ${BASE.map(([k, url, w, h]) => `<g id="zy-${k}" class="fest-hit" filter="url(#fToy)">${hit(w, h)}${url ? img(url, w, h) : art('zy-basin', w, h, basin)}</g>`).join('')}`);
+    ${BASE.map(([k, url, w, h]) => `<g id="zy-${k}" class="fest-hit" filter="url(#fToy)"><g transform="translate(0 ${20 - h / 2})">${hit(w, h)}</g><g transform="translate(0 20)">${url ? sitImg(url, w, h) : sitArt('zy-basin', w, h, basin)}</g></g>`).join('')}`);
   BASE.forEach(([k], i) => place(st.$('#zy-' + k), ...REST[i]));
   const tabs = myTablets(o.state);
   st.say(`七月十五普渡正日。把供品擺上桌，請${tabs.length ? `<b>${escX(tabs[0].name)}</b>和` : '祖先和'}四方沒人祭拜的好兄弟來享用。別忘了<b>臉盆和毛巾</b>，讓祂們遠道而來可以洗洗手。`, 'temple');
@@ -269,7 +269,7 @@ function puduTable(st, o, next) {
     st.$('#zxSpots').innerHTML = XSPOTS.slice(0, list.length).map(([x, y], i) => `<ellipse id="zx${i}" cx="${x}" cy="${y + 18}" rx="26" ry="6" fill="none" stroke="#FFF" stroke-width="2" stroke-dasharray="5 5"/>`).join('');
     const XR = list.map((_, i) => [60 + i * (240 / Math.max(1, list.length - 1 || 1)), 584]);
     if (list.length === 1) XR[0] = [180, 584];
-    st.$('#zxItems').innerHTML = list.map((it, i) => `<g id="zxi${i}" class="fest-hit" filter="url(#fToy)">${hit(64, 64)}${it.img ? img(it.img, 60, 60) : `<circle r="24" fill="#F3C64A"/>`}<text y="44" text-anchor="middle" class="fest-tip" style="font-size:12px">${escX(it.name)}</text></g>`).join('');
+    st.$('#zxItems').innerHTML = list.map((it, i) => `<g id="zxi${i}" class="fest-hit" filter="url(#fToy)"><g transform="translate(0 -12)">${hit(64, 64)}</g><g transform="translate(0 18)">${it.img ? sitImg(it.img, 60, 60) : `<circle cy="-24" r="24" fill="#F3C64A"/>`}</g><text y="34" text-anchor="middle" class="fest-tip" style="font-size:12px">${escX(it.name)}</text></g>`).join('');
     list.forEach((it, i) => {
       const el = st.$('#zxi' + i); let done = false;
       place(el, ...XR[i]);
@@ -297,6 +297,56 @@ function puduTable(st, o, next) {
   }
 }
 
+// 紙紮財寶：燒給祖先在那邊過好日子（都是紙做的，畫成紙紮的樣子：亮色＋金邊）。有 Gemini 圖 zy-<id> 就換掉
+const gold = '#F3C64A', goldD = '#B8860B';
+const TREASURES = [
+  { id: 'villa', name: '豪宅別墅', big: true, draw: `<path d="M-30 -2 L-30 -26 L30 -26 L30 -2Z" fill="#FFF4E0" stroke="${goldD}" stroke-width="1.2"/><path d="M-34 -26 L0 -44 L34 -26Z" fill="#C8302A" stroke="${goldD}" stroke-width="1.2"/><path d="M-22 -40 L22 -40" stroke="${gold}" stroke-width="2"/>${[-20, -6, 8, 22].map((x) => `<rect x="${x - 3}" y="-22" width="6" height="8" fill="#7AB8E0" stroke="${goldD}" stroke-width=".8"/>`).join('')}<rect x="-5" y="-12" width="10" height="10" fill="#8A3A20" stroke="${gold}"/>${[-26, 26].map((x) => `<rect x="${x - 2}" y="-26" width="4" height="24" fill="${gold}"/>`).join('')}<rect x="-32" y="-3" width="64" height="3" fill="${gold}"/><text y="-30" text-anchor="middle" style="font-size:6px;fill:#FFE29A;font-weight:700">別墅</text>` },
+  { id: 'car', name: '超跑', big: true, draw: `<path d="M-32 -6 Q-30 -16 -16 -18 L-6 -26 Q8 -28 18 -18 L30 -14 Q34 -10 32 -6Z" fill="#E0242A" stroke="#7A1010" stroke-width="1.2"/><path d="M-4 -24 L14 -18 L-10 -18Z" fill="#9AD0F0"/><path d="M-30 -10 h62" stroke="${gold}" stroke-width="1.4"/>${[-20, 20].map((x) => `<circle cx="${x}" cy="-5" r="6" fill="#222"/><circle cx="${x}" cy="-5" r="3" fill="#D8D8E0"/>`).join('')}<rect x="27" y="-14" width="5" height="3" fill="#FFE07A"/>` },
+  { id: 'gold', name: '金條', big: true, draw: `${[[-14, 0], [0, 0], [14, 0], [-7, -8], [7, -8], [0, -16]].map(([x, y]) => `<path d="M${x - 8} ${y} L${x - 6} ${y - 7} L${x + 6} ${y - 7} L${x + 8} ${y}Z" fill="${gold}" stroke="${goldD}" stroke-width="1"/><path d="M${x - 5} ${y - 5} h7" stroke="#FFF3C0" stroke-width="1"/>`).join('')}` },
+  { id: 'ingot', name: '元寶', big: true, draw: `${[[-12, 0], [12, 0], [0, -10]].map(([x, y]) => `<path d="M${x - 13} ${y - 8} Q${x} ${y + 4} ${x + 13} ${y - 8} Q${x + 10} ${y + 2} ${x} ${y + 2} Q${x - 10} ${y + 2} ${x - 13} ${y - 8}Z" fill="${gold}" stroke="${goldD}" stroke-width="1"/><ellipse cx="${x}" cy="${y - 7}" rx="6" ry="4" fill="#FFD84A" stroke="${goldD}" stroke-width=".8"/>`).join('')}` },
+  { id: 'bag', name: '名牌包', draw: `<path d="M-12 -18 Q-12 -28 0 -28 Q12 -28 12 -18" stroke="#6A3A1A" stroke-width="2.4" fill="none"/><path d="M-18 -18 L18 -18 L20 0 L-20 0Z" fill="#E07A2A" stroke="#8A4A14" stroke-width="1.2"/><path d="M-18 -12 h36" stroke="#8A4A14" stroke-width="1"/><rect x="-4" y="-14" width="8" height="5" rx="1" fill="${gold}" stroke="${goldD}" stroke-width=".8"/>` },
+  { id: 'watch', name: '金錶', draw: `<rect x="-5" y="-30" width="10" height="30" rx="3" fill="${gold}" stroke="${goldD}"/><circle cy="-15" r="10" fill="${gold}" stroke="${goldD}" stroke-width="1.2"/><circle cy="-15" r="7.4" fill="#1A2A4A"/><path d="M0 -15 v-5 M0 -15 l4 2" stroke="#FFF" stroke-width="1"/>${[0, 90, 180, 270].map((a) => `<circle cx="0" cy="-21" r=".8" fill="#FFE07A" transform="rotate(${a} 0 -15)"/>`).join('')}` },
+  { id: 'phone', name: '最新手機', draw: `<rect x="-9" y="-30" width="18" height="30" rx="3" fill="#2A2A30" stroke="#888" stroke-width="1"/><rect x="-7" y="-27" width="14" height="24" rx="1.6" fill="#5A7AE0"/><path d="M-7 -12 Q0 -22 7 -16 L7 -3 L-7 -3Z" fill="#9A6AE0" opacity=".8"/><rect x="-3" y="-29" width="6" height="1.6" rx=".8" fill="#111"/>` },
+  { id: 'game', name: '遊戲機', draw: `<rect x="-20" y="-16" width="40" height="16" rx="3" fill="#2A2A30"/><rect x="-12" y="-14.5" width="24" height="13" rx="1" fill="#6AC0E0"/><rect x="-22" y="-16" width="9" height="16" rx="4" fill="#E0443E"/><rect x="13" y="-16" width="9" height="16" rx="4" fill="#3A8AE0"/><circle cx="-17.5" cy="-11" r="1.8" fill="#222"/>${[[17, -11], [19, -8], [15, -8], [17, -5]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#FFF"/>`).join('')}` },
+];
+const treasure = (t, w, h) => sitArt('zy-' + t.id, w, h, `<g transform="translate(0 ${h / 2}) scale(${(w / 64).toFixed(3)})">${t.draw}</g>`, .3);
+// 法船上的甲板位置（船的區域座標；對齊 zy-boat 圖的船舷）
+const DECK = () => (hasArt('zy-boat')
+  ? [[-31, 30, 26], [-14, 30, 26], [18, 30, 26], [36, 30, 26], [-24, 38, 19], [-7, 38, 19], [10, 38, 19], [27, 38, 19]]
+  : [[-40, 6, 20], [-22, 6, 20], [22, 6, 20], [40, 6, 20], [-31, 12, 15], [-12, 12, 15], [12, 12, 15], [31, 12, 15]]);
+const loadedHtml = (ids) => { const d = DECK(); return ids.map((id, i) => { const t = TREASURES.find((x) => x.id === id), [x, y, w] = d[i]; return `<g transform="translate(${x} ${y})">${treasure(t, w, w)}</g>`; }).join(''); };
+
+// 先把紙紮財寶裝上法船（點一下就飛上船），裝好再送去燒
+function loadBoat(st, o, names, next) {
+  const BC = [180, 300], BS = 2.5, SHELF = TREASURES.map((_, i) => [52 + (i % 4) * 85, i < 4 ? 500 : 568]);
+  let loaded = [];
+  st.set(`${backdrop('zhongyuan-boat', { wall: ['#1E2236', '#3A3A50'], table: 470, tableColor: ['#5A5050', '#3A3434'] })}
+    <rect x="12" y="452" width="336" height="150" rx="14" fill="#2A1A14" opacity=".55"/>
+    <g id="lBoat" transform="translate(${BC[0]} ${BC[1]}) scale(${BS})"><g filter="url(#fToy)">${art('zy-boat', 160, 110, boatArt)}${sailNames(names)}</g><g id="lDeck"></g></g>
+    ${TREASURES.map((t, i) => `<g id="tr-${t.id}" class="fest-hit" data-t="${t.id}" transform="translate(${SHELF[i][0]} ${SHELF[i][1] + 16})">${hit(70, 70)}${treasure(t, 52, 48)}<text y="16" text-anchor="middle" class="fest-small" fill="#FFE29A">${t.name}</text></g>`).join('')}`);
+  st.progress(0, 2);
+  st.say('燒法船之前，先把<b>紙紮財寶</b>裝上船：豪宅、超跑、名牌包、金錶、最新手機、遊戲機、金條、元寶……讓祖先和好兄弟在那邊也過好日子。<b>點一下</b>就會搬上船，至少裝 4 樣。', 'temple');
+  const go = () => { st.buttons([]); next(loaded); };
+  const load = (id) => {
+    if (loaded.includes(id) || loaded.length >= 8) return;
+    const el = st.$('#tr-' + id), i = loaded.length, [dx, dy, w] = DECK()[i];
+    loaded.push(id); st.sfx.pop();
+    const from = [+el.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)/)[1], +el.getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)/)[2]];
+    const to = [BC[0] + dx * BS, BC[1] + dy * BS];
+    el.classList.remove('fest-hit');
+    st.tween(420, (k, e) => place(el, from[0] + (to[0] - from[0]) * e, from[1] + (to[1] - from[1]) * e - Math.sin(k * Math.PI) * 60, 1 - .1 * e), () => {
+      el.style.display = 'none';
+      st.$('#lDeck').innerHTML = loadedHtml(loaded);
+      st.burst('star', to[0], to[1] - 20, 8, { color: '#FFE29A' });
+    });
+    if (loaded.length === 4) st.say('法船越來越氣派了！還可以再裝，裝好了按「<b>法船啟航</b>」。', 'temple');
+    if (loaded.length >= 4) st.buttons([{ label: '法船啟航', primary: true, on: go }, ...(loaded.length < 8 ? [{ label: '全部裝上', on: () => TREASURES.forEach((t, k) => st.later(k * 120, () => load(t.id))) }] : [])]);
+    if (loaded.length === 8) st.say('八樣財寶全部裝滿，法船金光閃閃！按「<b>法船啟航</b>」送祂們上路。', 'temple');
+  };
+  st.world.addEventListener('click', (e) => { const g = e.target.closest('[data-t]'); if (g) load(g.dataset.t); });
+  st.buttons([{ label: '全部裝上', on: () => TREASURES.forEach((t, k) => st.later(k * 120, () => load(t.id))) }]);
+}
+
 // 燒法船：按住紙法船（浮在手指上方），送進金爐口
 function burnBoat(st, o) {
   st.buttons([]);
@@ -306,16 +356,19 @@ function burnBoat(st, o) {
   const fh = [...Object.values(F.reg || {}), ...(F.done || [])].flatMap((r) => (r?.names || []).filter((n) => n.kind === 'cj').map((n) => n.name)).filter(Boolean);
   const all = [...new Set([...tabs.map((t) => t.name), ...fh])];
   const names = all.length ? all : ['歷代祖先'];
+  loadBoat(st, o, names, (loaded) => burnLoaded(st, o, names, loaded));
+}
+function burnLoaded(st, o, names, loaded) {
   const FW = 210, FH = 268, FC = [180, 330], MOUTH = [180, FC[1] + 88], REST = [180, 528]; // 法船放高一點，不要被下面的按鈕蓋住
   st.set(`${backdrop('zhongyuan-boat', { wall: ['#1E2236', '#3A3A50'], table: 470, tableColor: ['#5A5050', '#3A3434'], extra: `
     ${Array.from({ length: 18 }, () => `<circle cx="${rand(10, 350)}" cy="${rand(10, 200)}" r="${rand(.8, 1.8).toFixed(1)}" fill="#FFF4D8" opacity="${rand(.3, .8).toFixed(2)}"/>`).join('')}` })}
     <g id="zGlow" opacity=".35" pointer-events="none"><ellipse cx="${MOUTH[0]}" cy="${MOUTH[1]}" rx="80" ry="60" fill="url(#fGlow)"/></g>
     <image href="${furnaceUrl}" x="${FC[0] - FW / 2}" y="${FC[1] - FH / 2}" width="${FW}" height="${FH}" filter="url(#fToy)"/>
     <circle id="zMouth" cx="${MOUTH[0]}" cy="${MOUTH[1]}" r="34" fill="none" stroke="#FFF4D8" stroke-width="2.5" stroke-dasharray="7 6"/>
-    <g id="zBoat" class="fest-hit" filter="url(#fToy)">${hit(170, 120)}${art('zy-boat', 160, 110, boatArt)}${sailNames(names)}</g>`);
+    <g id="zBoat" class="fest-hit" filter="url(#fToy)">${hit(170, 120)}${art('zy-boat', 160, 110, boatArt)}${sailNames(names)}${loadedHtml(loaded)}</g>`);
   const el = st.$('#zBoat');
   place(el, ...REST);
-  st.say(`紙法船的帆上寫著<b>${names.slice(0, 3).map(escX).join('、')}</b>${names.length > 3 ? '等' : ''}。按住法船（會浮在手指上方），送進<b>金爐口</b>。`, 'temple');
+  st.say(`法船裝滿了 ${loaded.length} 樣財寶，帆上寫著<b>${names.slice(0, 3).map(escX).join('、')}</b>${names.length > 3 ? '等' : ''}。按住法船（會浮在手指上方），送進<b>金爐口</b>。`, 'temple');
   let pos = [...REST], done = false;
   const go = () => {
     if (done) return; done = true; st.buttons([]);
@@ -330,7 +383,7 @@ function burnBoat(st, o) {
   };
   // 法船化成金光，載著名字升天
   function rise() {
-    const ghost = st.add(`<g pointer-events="none" opacity="0">${boatArt()}${sailNames(names)}</g>`);
+    const ghost = st.add(`<g pointer-events="none" opacity="0"><ellipse rx="90" ry="70" fill="url(#fGlow)"/>${art('zy-boat', 160, 110, boatArt)}${sailNames(names)}${loadedHtml(loaded)}</g>`);
     const y0 = FC[1] - FH / 2 - 10;
     st.reset(1600);
     st.tween(2600, (k, e) => {
@@ -340,7 +393,7 @@ function burnBoat(st, o) {
     }, () => {
       st.progress(2, 2); st.sfx.chime();
       st.floatText('法船啟航', 180, 120, '#FFF4D0');
-      st.later(1200, () => o.done(`法船載著${names.length > 1 ? `${names.length} 張牌位上的名字` : `「${escX(names[0])}」`}和大家的祝福升天了。中元普渡圓滿，七月也是孝親月，記得打電話給家裡的長輩。`));
+      st.later(1200, () => o.done(`法船載著${names.length > 1 ? `${names.length} 張牌位上的名字` : `「${escX(names[0])}」`}、${loaded.length} 樣紙紮財寶和大家的祝福升天了。中元普渡圓滿，七月也是孝親月，記得打電話給家裡的長輩。`));
     });
   }
   st.hold(el, {

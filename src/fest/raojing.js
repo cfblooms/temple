@@ -3,7 +3,7 @@
 // → 4 神轎來了，跪在路上鑽轎腳 → 5 媽祖停在你的香案前，給你一張平安符。
 // 手勢規則：拿起來的東西浮在手指上方；做動作時鏡頭拉近那一塊。
 // 有 Gemini 圖（src/assets/fest/mz-*.webp、bg-mazu.webp）就自動換掉下面的手繪 SVG。
-import { art, hasArt, rand, place } from './core.js';
+import { art, hasArt, sitImg, rand, place } from './core.js';
 import { backdrop } from './games-1.js';
 import { CHARS } from '../chars.js';
 import burnerUrl from '../assets/burner.webp';
@@ -111,14 +111,15 @@ const amuletFallback = `<rect x="-18" y="-26" width="36" height="52" rx="5" fill
   <path d="M-4 26 v12 M0 26 v14 M4 26 v12" stroke="#F3C64A" stroke-width="2"/>`;
 const palmSvg = `<circle r="36" fill="#000" opacity="0"/><path d="M-10 30 v-14 q-14 -2 -14 -16 v-14 q0 -6 6 -6 q5 0 5 6 v-14 q0 -6 6 -6 q5 0 5 6 v-4 q0 -6 6 -6 q5 0 5 6 v4 q0 -6 6 -6 q5 0 5 6 v26 q6 -8 12 -6 q5 2 1 10 q-8 14 -18 24 v10z" fill="#FFD9B8" stroke="#C88A60" stroke-width="2"/>`;
 
-// slot 的高度讓供品底部「坐」在香案桌面上（以前底部落在桌裙上，看起來浮在桌子前面）
+// 供品的原點在「底部」（sitImg），slot 就是桌面上的點：mz-table 圖的桌面在 y≈482～505，供品底部放在 497 才是「坐」在桌上
+const TOPY = TABLE[1] - 23;
 const OFFER = [
-  { id: 'burner', name: '香爐', url: burnerUrl, w: 52, h: 38, slot: [TABLE[0] - 2, TABLE[1] - 28] },
-  { id: 'flowers', name: '鮮花', url: flowersUrl, w: 26, h: 48, slot: [TABLE[0] - 52, TABLE[1] - 34] },
-  { id: 'fruit', name: '水果', url: fruitUrl, w: 38, h: 44, slot: [TABLE[0] + 46, TABLE[1] - 30] },
-  { id: 'tea', name: '清茶', url: teaUrl, w: 38, h: 27, slot: [TABLE[0] - 28, TABLE[1] - 24] },
+  { id: 'flowers', name: '鮮花', url: flowersUrl, w: 26, h: 48, slot: [TABLE[0] - 52, TOPY - 1] },
+  { id: 'tea', name: '清茶', url: teaUrl, w: 38, h: 27, slot: [TABLE[0] - 22, TOPY + 3] },
+  { id: 'burner', name: '香爐', url: burnerUrl, w: 50, h: 37, slot: [TABLE[0] + 10, TOPY] },
+  { id: 'fruit', name: '水果', url: fruitUrl, w: 38, h: 44, slot: [TABLE[0] + 50, TOPY - 1] },
 ];
-const TRAY = [[62, 610], [116, 614], [170, 610], [224, 614]]; // 左下角留空，不要被「試玩」標籤擋住
+const TRAY = [[62, 630], [116, 632], [170, 630], [224, 632]]; // 左下角留空，不要被「試玩」標籤擋住
 
 /* ---------- 合照：把舞台畫成 PNG ---------- */
 async function snapshot(svg) {
@@ -165,8 +166,8 @@ export const mazu = {
         <path d="M0 470 H360" stroke="#FFF" stroke-width="3" stroke-dasharray="18 14" opacity=".6"/>` })}
       <g id="lane"></g>
       <g id="table" transform="translate(${TABLE[0]} ${TABLE[1]})">${art('mz-table', 160, 110, `<g transform="translate(0 -14)">${tableFallback}</g>`)}</g>
-      ${OFFER.map((it) => `<ellipse id="slot-${it.id}" cx="${it.slot[0]}" cy="${it.slot[1] + it.h / 2 - 2}" rx="${it.w / 2 + 2}" ry="5" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="4 3" data-nophoto/>`).join('')}
-      ${OFFER.map((it) => `<g id="of-${it.id}" class="fest-hit" filter="url(#fToy)">${hit(Math.max(48, it.w + 10), Math.max(48, it.h + 10))}${img(it.url, it.w, it.h)}</g>`).join('')}
+      ${OFFER.map((it) => `<ellipse id="slot-${it.id}" cx="${it.slot[0]}" cy="${it.slot[1] - 1}" rx="${it.w / 2 + 1}" ry="4" fill="rgb(255 244 216 / .2)" stroke="#FFF4D8" stroke-width="1.6" stroke-dasharray="4 3" data-nophoto/>`).join('')}
+      ${OFFER.map((it) => `<g id="of-${it.id}" class="fest-hit"><g transform="translate(0 ${-it.h / 2})">${hit(Math.max(48, it.w + 10), Math.max(48, it.h + 10))}</g>${sitImg(it.url, it.w, it.h, .4)}</g>`).join('')}
       <g id="npc" style="display:none"><ellipse rx="40" ry="7" fill="#000" opacity=".15"/>${kneelImg(npc, .9)}</g>
       ${crowd.slice(1).map((c, i) => `<g id="npc${i + 1}" style="display:none"><ellipse rx="36" ry="6" fill="#000" opacity=".15"/>${kneelImg(c, .8)}</g>`).join('')}
       <g id="av"><ellipse rx="46" ry="8" fill="#000" opacity=".15"/>${kneelImg(me)}</g>
@@ -248,8 +249,8 @@ export const mazu = {
           done = true; placed++;
           place(el, ...it.slot); el.classList.remove('fest-hit'); el.style.pointerEvents = 'none';
           $('#slot-' + it.id)?.remove();
-          st.sfx.knock(); st.burst('star', it.slot[0], it.slot[1], 8);
-          st.floatText(it.name, it.slot[0], it.slot[1] - 30);
+          st.sfx.knock(); st.burst('star', it.slot[0], it.slot[1] - 10, 8);
+          st.floatText(it.name, it.slot[0], it.slot[1] - 50);
           if (placed === OFFER.length) {
             step(); st.sfx.chime();
             st.say('香案擺好了！遠遠聽到鑼鼓聲……<b>千里眼、順風耳</b>大仙尪仔開路來了！', 'temple');
