@@ -1,6 +1,7 @@
 // 第二批節慶小遊戲：天公生、元宵、清明
-import { art, hasArt, clamp, rand, pick, place } from './core.js';
+import { art, hasArt, sitArt, clamp, rand, pick, place } from './core.js';
 import { backdrop } from './games-1.js';
+import { pickRiddles } from './riddles.js';
 
 const D = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
 function flyTo(st, el, from, to, ms, s0 = 1, s1 = 1, done) {
@@ -15,6 +16,8 @@ const TG_ITEMS = [
   { id: 'gu', name: '香菇', top: true, draw: `<ellipse cy="4" rx="7" ry="9" fill="#EBD7B8"/><path d="M-20 2C-20-14 20-14 20 2Z" fill="#8A5A34"/><circle cx="-6" cy="-6" r="2.4" fill="#C49A6A"/><circle cx="7" cy="-4" r="2" fill="#C49A6A"/>` },
   { id: 'jinzhen', name: '金針', top: true, draw: `${[-12, -4, 4, 12].map((x, i) => `<path d="M${x} 12 Q${x + 3} -2 ${x - 2} -14" stroke="#F09A2A" stroke-width="5" stroke-linecap="round" fill="none"/>`).join('')}<rect x="-16" y="4" width="32" height="5" rx="2" fill="#E0443E"/>` },
   { id: 'erh', name: '木耳', top: true, draw: `<path d="M-18 4C-22-12-4-16 0-6C4-16 22-12 18 4C10 14-10 14-18 4Z" fill="#3A2A2A"/><path d="M-10 0C-6-4 6-4 10 0" stroke="#5A4646" stroke-width="2" fill="none"/>` },
+  { id: 'orange', name: '橘子塔', top: true, draw: `<defs><radialGradient id="tgOr" cx=".35" cy=".3"><stop offset="0" stop-color="#FFD27A"/><stop offset=".6" stop-color="#F59A1E"/><stop offset="1" stop-color="#C8640A"/></radialGradient></defs><ellipse cy="17" rx="22" ry="4" fill="#C8302A"/>${[[-14, 9], [0, 9], [14, 9], [-7, -3], [7, -3], [0, -15]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="7.6" fill="url(#tgOr)"/><circle cx="${x - 2.5}" cy="${y - 3}" r="1.6" fill="#FFF3C8" opacity=".7"/>`).join('')}<path d="M0 -22 l-2 -5 M0 -22 q4 -4 7 -2" stroke="#3E7A2A" stroke-width="1.8" fill="none"/><rect x="-5" y="-12" width="10" height="8" fill="#E0443E" transform="rotate(45 0 -8)"/>` },
+  { id: 'malao', name: '麻荖', top: true, draw: `<ellipse cy="12" rx="22" ry="6" fill="#F4E8D0" stroke="#D8C8A0"/>${[[-12, 4], [0, 2], [12, 4], [-6, -6], [6, -6]].map(([x, y]) => `<g transform="translate(${x} ${y}) rotate(-12)"><rect x="-10" y="-5" width="20" height="10" rx="5" fill="#FFF8EC" stroke="#E2D2B4"/>${[-6, -2, 2, 6].map((dx) => `<circle cx="${dx}" cy="${(dx % 4) ? -1 : 1.5}" r="1.3" fill="#F0E2C2"/>`).join('')}</g>`).join('')}<rect x="-6" y="-16" width="12" height="9" fill="#E0443E"/><text y="-9" text-anchor="middle" style="font-size:7px;fill:#FFE29A;font-weight:700">囍</text>` },
   { id: 'ji', name: '全雞', top: false, draw: `<ellipse cy="4" rx="22" ry="13" fill="#E8B060"/><circle cx="18" cy="-8" r="8" fill="#E8B060"/><path d="M24 -14l4-4 2 5z" fill="#E0443E"/><path d="M-22 0l-8-6M-20 8l-8 2" stroke="#C8904A" stroke-width="4" stroke-linecap="round"/>` },
   { id: 'gui', name: '紅龜粿', top: false, draw: `<ellipse rx="22" ry="15" fill="#E0443E"/><path d="M-10-6h20M-12 0h24M-10 6h20M0-12v24" stroke="#B02A22" stroke-width="2"/><circle cx="22" cy="-2" r="5" fill="#E0443E"/><ellipse cy="15" rx="20" ry="3" fill="#7BB35A"/>` },
 ];
@@ -22,8 +25,10 @@ const cane = `<rect x="-5" y="-110" width="10" height="220" rx="4" fill="#7A3A5A
 
 const tiangong = {
   play(st, o) {
-    const TOP = [[96, 282], [148, 282], [212, 282], [264, 282]], LOW = [[140, 412], [220, 412]], CANE = [[34, 330], [326, 330]];
-    const REST = [[46, 530], [100, 540], [154, 530], [208, 540], [262, 530], [316, 540]];
+    // 供品底部對齊桌面：頂桌桌面 y≈296、下桌桌面 y≈404（對齊背景圖）
+    const TOP = [76, 118, 160, 202, 244, 286].map((x) => [x, 296]), LOW = [[124, 404], [236, 404]], CANE = [[34, 330], [326, 330]];
+    const REST = [[42, 548], [96, 562], [150, 548], [204, 562], [258, 548], [312, 562], [70, 606], [290, 606]];
+    const NALL = TG_ITEMS.length + 2;
     let topFill = 0, lowFill = 0, canes = 0, pos = [0, 0];
     const items = shuffle(TG_ITEMS);
     st.set(`${backdrop('tiangong', { wall: ['#3A2A50', '#6A3A40'], table: 470, tableColor: ['#8A3020', '#5A2014'], extra: `
@@ -32,15 +37,15 @@ const tiangong = {
       <rect x="66" y="300" width="228" height="10" fill="#E8B060" opacity=".6"/>
       <rect x="90" y="388" width="180" height="10" fill="#E0443E"/><rect x="40" y="430" width="280" height="16" fill="#A8402A"/>
       <text x="300" y="296" class="fest-small" fill="#FFE29A">頂桌</text><text x="276" y="426" class="fest-small" fill="#FFE29A">下桌</text>`, over: `<text x="180" y="96" text-anchor="middle" class="fest-sign">天公</text><text x="300" y="282" class="fest-small" fill="#FFE29A">頂桌</text><text x="300" y="386" class="fest-small" fill="#FFE29A">下桌</text>` })}
-      ${TOP.map(([x, y], i) => `<ellipse id="ts${i}" cx="${x}" cy="${y + 12}" rx="22" ry="6" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 4"/>`).join('')}
-      ${LOW.map(([x, y], i) => `<ellipse id="ls${i}" cx="${x}" cy="${y + 14}" rx="26" ry="6" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 4"/>`).join('')}
+      ${TOP.map(([x, y], i) => `<ellipse id="ts${i}" cx="${x}" cy="${y - 1}" rx="18" ry="4.5" fill="rgb(255 244 216 / .15)" stroke="#FFF4D8" stroke-width="1.8" stroke-dasharray="4 3"/>`).join('')}
+      ${LOW.map(([x, y], i) => `<ellipse id="ls${i}" cx="${x}" cy="${y - 1}" rx="26" ry="6" fill="rgb(255 244 216 / .15)" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="5 4"/>`).join('')}
       ${CANE.map(([x, y], i) => `<rect id="cs${i}" x="${x - 9}" y="${y - 112}" width="18" height="224" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="6 5" opacity="0"/>`).join('')}
-      ${items.map((it) => `<g id="tg-${it.id}" class="fest-hit" filter="url(#fToy)"><circle r="28" fill="#000" opacity="0"/>${art('tg-' + it.id, 50, 40, it.draw)}</g>`).join('')}
+      ${items.map((it) => `<g id="tg-${it.id}" class="fest-hit"><circle cy="-20" r="26" fill="#000" opacity="0"/>${it.top ? sitArt('tg-' + it.id, 40, 34, it.draw) : sitArt('tg-' + it.id, 56, 44, it.draw)}</g>`).join('')}
       <g id="cane0" class="fest-hit" filter="url(#fToy)" style="display:none"><rect x="-30" y="-115" width="60" height="230" fill="#000" opacity="0"/>${art('tg-cane', 70, 230, cane)}</g><g id="cane1" class="fest-hit" filter="url(#fToy)" style="display:none"><rect x="-30" y="-115" width="60" height="230" fill="#000" opacity="0"/>${art('tg-cane', 70, 230, cane)}</g>`);
     items.forEach((it, i) => place(st.$('#tg-' + it.id), ...REST[i]));
-    st.progress(0, 8);
-    st.say('正月初九天公生，玉皇大帝生日。天公<b>吃素</b>：麵線、香菇、金針、木耳擺上面的<b>頂桌</b>；全雞和紅龜粿是請從神吃的，擺<b>下桌</b>。', 'temple');
-    const step = () => st.progress(topFill + lowFill + canes, 8);
+    st.progress(0, NALL);
+    st.say('正月初九天公生，玉皇大帝生日。天公<b>吃素</b>：麵線、香菇、金針、木耳、<b>麻荖</b>和<b>橘子塔</b>擺上面的<b>頂桌</b>；全雞和紅龜粿是請從神吃的，擺<b>下桌</b>。', 'temple');
+    const step = () => st.progress(topFill + lowFill + canes, NALL);
     items.forEach((it, i) => {
       const el = st.$('#tg-' + it.id); let done = false;
       const target = () => (it.top ? TOP[topFill] : LOW[lowFill]);
@@ -48,7 +53,7 @@ const tiangong = {
       st.hold(el, {
         magnet: () => (done || !target() ? null : [...target(), 36]),
         onStart() { if (!done) st.zoom(180, 380, 280); },
-        onMove(x, y) { if (done) return; pos = [x, y]; place(el, x, y, 1.1); },
+        onMove(x, y) { if (done) return; pos = [x, y]; place(el, x, y, 1.08); },
         onUp() {
           if (done) return; st.reset();
           const t = target();
@@ -57,7 +62,7 @@ const tiangong = {
             st.$((it.top ? '#ts' : '#ls') + (it.top ? topFill : lowFill)).setAttribute('opacity', '0');
             it.top ? topFill++ : lowFill++;
             st.sfx.pop(); st.burst('star', ...t, 8); step();
-            if (topFill + lowFill === 6) canesUp();
+            if (topFill + lowFill === TG_ITEMS.length) canesUp();
           } else {
             const ot = other();
             if (ot && D(pos, ot) < 50) st.say(it.top ? `${it.name}是素的，要放<b>頂桌</b>給天公。` : `${it.name}是葷的（或是給從神的粿），天公吃素，要放<b>下桌</b>。`, 'temple');
@@ -98,14 +103,6 @@ const tiangong = {
 };
 
 /* ================= 元宵：猜燈謎、放天燈 ================= */
-const RIDDLES = [
-  { q: '千條線，萬條線，掉到水裡看不見。（猜一種天氣）', a: '雨', opts: ['雨', '麵線', '頭髮'] },
-  { q: '麻屋子，紅帳子，裡面住個白胖子。（猜一種食物）', a: '花生', opts: ['花生', '粽子', '湯圓'] },
-  { q: '有面沒有口，有腳沒有手，聽人講話不開口。（猜一樣家具）', a: '桌子', opts: ['桌子', '鏡子', '時鐘'] },
-  { q: '小小一間房，只有一扇窗，又唱歌又演戲，天天都開張。（猜一樣電器）', a: '電視', opts: ['電視', '冰箱', '電話'] },
-  { q: '身穿綠衣裳，肚裡水汪汪，生的子兒多，個個黑臉膛。（猜一種水果）', a: '西瓜', opts: ['西瓜', '芭樂', '奇異果'] },
-  { q: '一個老公公，天天起得早，白天出去晚上回，從來不說話。（猜一樣東西）', a: '太陽', opts: ['太陽', '月亮', '公雞'] },
-];
 const WISHES = ['平安順利', '身體健康', '考試順利', '財源廣進', '好姻緣', '家庭和樂'];
 const lantern = (lit) => hasArt('yx-lantern') ? `<line x1="0" y1="-60" x2="0" y2="-42" stroke="#7A3A1A" stroke-width="2"/>${lit ? '<ellipse rx="46" ry="48" fill="url(#fGlow)" opacity=".8"/>' : ''}
   <g style="filter:${lit ? 'brightness(1.12) saturate(1.1)' : 'brightness(.72) saturate(.8)'}" transform="translate(0 4)">${art('yx-lantern', 70, 93, '')}</g>` : `<line x1="0" y1="-60" x2="0" y2="-34" stroke="#7A3A1A" stroke-width="2"/><rect x="-12" y="-38" width="24" height="7" rx="2" fill="#E0A440"/>
@@ -117,7 +114,10 @@ const skyLantern = (wish) => hasArt('yx-skylantern') ? `<ellipse cy="40" rx="60"
 
 const yuanxiao = {
   play(st, o) {
-    const qs = shuffle(RIDDLES).slice(0, 3), AT = [[80, 190], [180, 160], [280, 190]];
+    // 題庫一百多題＋程式出題，記住看過的題目，一輪之內不重複
+    const seen = o.state ? (o.state.yxSeen ||= []) : [];
+    const qs = pickRiddles(3, seen); if (seen.length > 400) seen.splice(0, seen.length - 400); o.save?.();
+    const AT = [[80, 190], [180, 160], [280, 190]];
     let solved = 0, cur = -1;
     st.set(`${backdrop('yuanxiao', { wall: ['#1E1A40', '#3A2050'], table: 560, tableColor: ['#4A3A30', '#2A1E18'], extra: `<path d="M0 100 Q180 150 360 100" stroke="#5A3A2A" stroke-width="3" fill="none"/>${Array.from({ length: 30 }, () => `<circle cx="${rand(0, 360)}" cy="${rand(0, 500)}" r="${rand(.6, 1.6)}" fill="#FFF8D8" opacity="${rand(.3, .9)}"/>`).join('')}` })}
       ${AT.map(([x, y], i) => `<g id="lan${i}" class="fest-hit" data-i="${i}" transform="translate(${x} ${y})">${lantern(false)}<text y="7" text-anchor="middle" class="fest-small" fill="#FFE29A">謎</text></g>`).join('')}
@@ -194,12 +194,22 @@ const runbing = {
     st.set(`${backdrop('qingming', { wall: ['#DCEBD0', '#B8D4A8'], table: 230, tableColor: ['#D8B48A', '#B08A60'], extra: `<g opacity=".5">${[50, 120, 250, 320].map((x) => `<path d="M${x} 230 q-4-40 8-70 q-14 30-30 40" stroke="#6BA35A" stroke-width="4" fill="none"/>`).join('')}</g>` })}
       ${fam.map((f, i) => `<g id="seat${i}" transform="translate(${SEATS[i][0]} ${SEATS[i][1]})"><circle r="30" fill="#FFF4E0" stroke="#7BB35A" stroke-width="3"/><clipPath id="rbf${i}"><circle r="28"/></clipPath><image href="${face(f.id)}" x="-28" y="-28" width="56" height="56" clip-path="url(#rbf${i})" preserveAspectRatio="xMidYMid slice"/><text y="46" text-anchor="middle" class="fest-small" fill="#3A5A2A">${o.chars?.byId?.(f.id)?.name || ''}</text><g id="mark${i}"></g></g>`).join('')}
       <g id="order"></g>
-      <ellipse cx="${PLATE[0]}" cy="${PLATE[1] + 4}" rx="132" ry="66" fill="#FFFFFF" stroke="#D8C8B0" stroke-width="2"/>
-      <g id="wrap"><ellipse id="skin" cx="${PLATE[0]}" cy="${PLATE[1]}" rx="104" ry="50" fill="#FBF3E2" stroke="#E8D8B8" stroke-width="2"/><g id="fill"></g>
+      <defs>
+        <radialGradient id="rbPlate" cx=".45" cy=".35"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".75" stop-color="#F4F0E8"/><stop offset="1" stop-color="#D8D0C2"/></radialGradient>
+        <radialGradient id="rbSkin" cx=".5" cy=".45"><stop offset="0" stop-color="#FFF9EC"/><stop offset=".8" stop-color="#F7E9CC"/><stop offset="1" stop-color="#EED8B0"/></radialGradient>
+        <linearGradient id="rbRoll" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E2"/><stop offset=".5" stop-color="#F3E0BC"/><stop offset="1" stop-color="#D8BE90"/></linearGradient>
+      </defs>
+      <ellipse cx="${PLATE[0] + 4}" cy="${PLATE[1] + 16}" rx="134" ry="64" fill="#3A2410" opacity=".18"/>
+      <ellipse cx="${PLATE[0]}" cy="${PLATE[1] + 4}" rx="132" ry="66" fill="url(#rbPlate)" stroke="#C8C0B2" stroke-width="1.5"/>
+      <ellipse cx="${PLATE[0]}" cy="${PLATE[1] + 4}" rx="122" ry="60" fill="none" stroke="#5A7AB8" stroke-width="2.2" opacity=".75"/>
+      <ellipse cx="${PLATE[0]}" cy="${PLATE[1] + 6}" rx="108" ry="52" fill="#EFEAE0"/>
+      <g id="wrap"><path id="skin" d="${(() => { const n = 28, pts = Array.from({ length: n }, (_, i) => { const a = i / n * 6.283, r = 1 + Math.sin(i * 2.7) * .025 + Math.cos(i * 1.3) * .02; return [PLATE[0] + Math.cos(a) * 106 * r, PLATE[1] + Math.sin(a) * 51 * r]; }); return 'M' + pts.map((p) => p.map((v) => v.toFixed(1)).join(' ')).join(' L') + 'Z'; })()}" fill="url(#rbSkin)" stroke="#E2CDA4" stroke-width="1.4" stroke-linejoin="round"/>
+        ${Array.from({ length: 14 }, (_, i) => `<ellipse cx="${(PLATE[0] + Math.cos(i * 2.4) * 70 * ((i % 3) / 3 + .3)).toFixed(1)}" cy="${(PLATE[1] + Math.sin(i * 2.4) * 32 * ((i % 3) / 3 + .3)).toFixed(1)}" rx="${(5 + (i % 4) * 2)}" ry="${(2.4 + (i % 3))}" fill="#E8CFA0" opacity=".35"/>`).join('')}
+        <g id="fill"></g>
         <path id="flapL" d="M${PLATE[0] - 104} ${PLATE[1]} Q${PLATE[0] - 70} ${PLATE[1] - 46} ${PLATE[0] - 50} ${PLATE[1]} Q${PLATE[0] - 70} ${PLATE[1] + 46} ${PLATE[0] - 104} ${PLATE[1]}Z" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2" opacity="0"/>
         <path id="flapR" d="M${PLATE[0] + 104} ${PLATE[1]} Q${PLATE[0] + 70} ${PLATE[1] - 46} ${PLATE[0] + 50} ${PLATE[1]} Q${PLATE[0] + 70} ${PLATE[1] + 46} ${PLATE[0] + 104} ${PLATE[1]}Z" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2" opacity="0"/></g>
       <g id="foldHint" opacity="0" pointer-events="none"><path d="M${PLATE[0] - 120} ${PLATE[1]} h40 l-8 -7 m8 7 l-8 7" stroke="#7A5A2A" stroke-width="3" fill="none"/><path d="M${PLATE[0] + 120} ${PLATE[1]} h-40 l8 -7 m-8 7 l8 7" stroke="#7A5A2A" stroke-width="3" fill="none"/></g>
-      <g id="roll" style="display:none" class="fest-hit"><rect x="-70" y="-16" width="140" height="32" rx="16" fill="#F7EBD0" stroke="#E0CCA6" stroke-width="2"/><path d="M-56 0h112" stroke="#E8D8B8" stroke-width="2" stroke-dasharray="8 6"/><g id="rollEnds"></g></g>
+      <g id="roll" style="display:none" class="fest-hit"><ellipse cy="20" rx="72" ry="6" fill="#3A2410" opacity=".18"/><rect x="-72" y="-17" width="144" height="34" rx="17" fill="url(#rbRoll)" stroke="#D2B88A" stroke-width="1.6"/><path d="M-60 -9 Q0 -14 60 -9" stroke="#FFFDF4" stroke-width="3" fill="none" opacity=".8" stroke-linecap="round"/><path d="M-30 -16 Q-26 0 -30 16 M10 -16 Q14 0 10 16" stroke="#E2CDA4" stroke-width="1.2" fill="none"/><g id="rollEnds"></g></g>
       ${RUNBING.map((f, i) => `<g id="rb-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)">${rbIcon(f)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}`);
     RUNBING.forEach((f, i) => place(st.$('#rb-' + f.id), ...REST[i]));
     st.progress(0, fam.length);
@@ -223,7 +233,8 @@ const runbing = {
       if (phase !== 'fill' || laid.includes(f)) return;
       laid.push(f); st.$('#rb-' + f.id).style.display = 'none';
       const n = laid.length, y = PLATE[1] - 24 + (n - 1) * 8;
-      st.$('#fill').insertAdjacentHTML('beforeend', Array.from({ length: 18 }, (_, k) => `<rect x="${PLATE[0] - 72 + k * 8.4 + rand(-3, 3)}" y="${y + rand(-4, 4)}" width="13" height="5" rx="2.5" fill="${f.c}" stroke="rgb(0 0 0 / .12)" stroke-width=".6" transform="rotate(${rand(-25, 25)} ${PLATE[0] - 66 + k * 8.4} ${y})"/>`).join(''));
+      // 料鋪成一長條：一根一根細絲（彎彎的），中間厚兩頭薄，像真的堆在餅皮上
+      st.$('#fill').insertAdjacentHTML('beforeend', `<g>${Array.from({ length: 34 }, (_, k) => { const t = k / 33, x = PLATE[0] - 74 + t * 148 + rand(-4, 4), yy = y + rand(-6, 6) * (1 - Math.abs(t - .5)), L = rand(9, 16), a = rand(-40, 40) * Math.PI / 180, dx = Math.cos(a) * L / 2, dy = Math.sin(a) * L / 2; return `<path d="M${(x - dx).toFixed(1)} ${(yy - dy).toFixed(1)} q${(dx + rand(-3, 3)).toFixed(1)} ${(dy + rand(-3, 3)).toFixed(1)} ${(dx * 2).toFixed(1)} ${(dy * 2).toFixed(1)}" stroke="${f.c}" stroke-width="${rand(2.4, 4).toFixed(1)}" stroke-linecap="round" fill="none"/>`; }).join('')}<path d="M${PLATE[0] - 70} ${y + 3} Q${PLATE[0]} ${y + 9} ${PLATE[0] + 70} ${y + 3}" stroke="rgb(0 0 0 / .08)" stroke-width="5" fill="none"/></g>`);
       st.sfx.pop(); st.emit('spark', PLATE[0] + rand(-40, 40), y, { color: f.c, speed: 30, life: .5 });
     };
     RUNBING.forEach((f, i) => {

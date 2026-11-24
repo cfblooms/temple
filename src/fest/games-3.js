@@ -29,25 +29,33 @@ const duanwu = {
       <circle cx="${HOOK[0]}" cy="${HOOK[1] - 46}" r="5" fill="#F3C64A"/>`, over: `<circle cx="${HOOK[0]}" cy="${HOOK[1] - 46}" r="5" fill="#F3C64A"/>` })}
       <ellipse cx="${BASE[0]}" cy="${BASE[1] + 2}" rx="40" ry="6" fill="#000" opacity=".12"/>
       <g id="egg"><g transform="translate(0 -34)">${art('dw-egg', 54, 72, egg)}</g></g>
-      <g id="meter" transform="translate(180 500)"><rect x="-70" y="-6" width="140" height="12" rx="6" fill="#FFF" opacity=".7"/><rect id="meterFill" x="-70" y="-6" width="0" height="12" rx="6" fill="#3E9E86"/></g>
-      <text x="180" y="560" text-anchor="middle" class="fest-tip">手指在這下面左右移，扶住蛋</text>
+      <g id="meter" transform="translate(104 300)"><text y="-10" text-anchor="middle" class="fest-small" fill="#5A3A20" stroke="#FFF8E6" stroke-width="3" paint-order="stroke">站穩的時間</text><rect x="-70" y="-6" width="140" height="12" rx="6" fill="#FFF" opacity=".8" stroke="#C8A878"/><rect id="meterFill" x="-70" y="-6" width="0" height="12" rx="6" fill="#3E9E86"/></g>
+      <g id="eggUi">
+        <g id="tilt" opacity="0"><path id="tiltArrow" d="M0 0 h26 l-8 -8 M26 0 l-8 8" stroke="#E0443E" stroke-width="4" stroke-linecap="round" fill="none"/></g>
+        <g transform="translate(180 540)">
+          <rect x="-130" y="-22" width="260" height="44" rx="22" fill="#FFF8E6" opacity=".88" stroke="#C8A878" stroke-width="2"/>
+          <path d="M-112 0 l10 -8 v16z M112 0 l-10 -8 v16z" fill="#C8A878"/>
+          <line x1="-96" x2="96" stroke="#E2D2B4" stroke-width="3" stroke-dasharray="6 6"/>
+          <g id="knob"><circle r="17" fill="#F3C64A" stroke="#B8860B" stroke-width="2"/><text y="6" text-anchor="middle" style="font-size:17px">👆</text></g>
+        </g>
+        <text x="180" y="588" text-anchor="middle" class="fest-tip">手指按住這條，左右移來扶蛋</text>
+      </g>
       <g id="sachet" class="fest-hit" filter="url(#fToy)" style="display:none">${art('dw-sachet', 60, 90, sachet)}</g>
       <g id="zong"></g>`);
     const eggEl = st.$('#egg');
     // 先包粽子，包好才立蛋
-    ['#egg', '#meter'].forEach((k) => { st.$(k).style.display = 'none'; });
+    ['#egg', '#meter', '#eggUi'].forEach((k) => { st.$(k).style.display = 'none'; });
     st.$('#egg').previousElementSibling.style.display = 'none';
-    st.$('#meter').nextElementSibling.style.display = 'none';
     phase = 'zong';
     zongzi(st, o, () => {
-      ['#egg', '#meter'].forEach((k) => { st.$(k).style.display = ''; });
+      ['#egg', '#meter', '#eggUi'].forEach((k) => { st.$(k).style.display = ''; });
       st.$('#egg').previousElementSibling.style.display = '';
-      st.$('#meter').nextElementSibling.style.display = '';
       phase = 'egg'; startEgg();
     });
     function startEgg() {
     st.progress(3, 5);
-    st.say(`粽子掛好了！接著<b>正午立蛋</b>！${noon ? '現在剛好是<b>正午</b>，陽氣最旺，蛋特別好立。' : '（正午 11 點到 1 點玩會比較好立。）'}手指按在<b>蛋的下方</b>，蛋往哪邊倒，手指就往哪邊輕輕移，撐 2.5 秒就成功。`, 'temple');
+    st.say(`粽子掛好了！接著<b>正午立蛋</b>！${noon ? '現在剛好是<b>正午</b>，陽氣最旺，蛋特別好立。' : '（正午 11 點到 1 點玩會比較好立。）'}蛋就立在桌子正中間。手指按住<b>下面那條黃色滑桿</b>：蛋往哪邊倒（看紅色箭頭），手指就往<b>同一邊</b>輕輕移，撐 2.5 秒就成功。`, 'temple');
+    st.zoom(180, 420, 300);
     st.touch({
       down(p) { if (phase === 'egg') { fx = p.x; f0 = p.x; } },
       move(p) { if (phase === 'egg') fx = p.x; },
@@ -61,6 +69,10 @@ const duanwu = {
       w *= .95; a += w * dt;
       if (fx !== null) f0 += (fx - f0) * Math.min(1, dt * 1.2); // 手指停住，慢慢回到中立
       place(eggEl, BASE[0], BASE[1], 1, a * 57.3);
+      // 紅色箭頭：蛋正在往哪邊倒；黃色圓鈕：手指現在扶的方向
+      const tl = st.$('#tilt'); tl.setAttribute('opacity', Math.abs(a) > .05 ? Math.min(1, Math.abs(a) * 4).toFixed(2) : '0');
+      tl.setAttribute('transform', `translate(${BASE[0] + (a > 0 ? 34 : -34)} ${BASE[1] - 60}) scale(${a > 0 ? 1 : -1} 1)`);
+      st.$('#knob').setAttribute('transform', `translate(${clamp(fx === null ? 0 : (fx - f0) * 1.6, -96, 96).toFixed(1)} 0)`);
       if (Math.abs(a) < .16 && fx !== null) ok += dt; else ok = Math.max(0, ok - dt * .5);
       st.$('#meterFill').setAttribute('width', (140 * Math.min(1, ok / NEED)).toFixed(1));
       if (Math.abs(a) > 1) {
@@ -74,7 +86,7 @@ const duanwu = {
     function stood() {
       phase = 'sachet'; place(eggEl, BASE[0], BASE[1]); st.sfx.chime(); st.burst('star', BASE[0], BASE[1] - 40, 16);
       st.progress(4, 5); st.floatText('立起來了！', BASE[0], BASE[1] - 90, '#C8382E');
-      st.$('#meter').setAttribute('opacity', '0');
+      st.$('#meter').setAttribute('opacity', '0'); st.$('#eggUi').style.display = 'none';
       const sc = st.$('#sachet'); sc.style.display = ''; const rest = [80, 520]; place(sc, ...rest);
       st.say('蛋站好了，今年好運！再把<b>香包</b>掛到門上的釘子，驅蚊保平安。', 'temple');
       let pos = [...rest], done = false;
@@ -107,25 +119,37 @@ function zongzi(st, o, next) {
   const C = [180, 440], TRAY = ZFILL.map((_, i) => [52 + i * 51, 590]);
   const z = st.$('#zong');
   const riceTex = (y0, h) => Array.from({ length: 16 }, () => `<ellipse cx="${rand(-30, 30).toFixed(1)}" cy="${(y0 + rand(0, h)).toFixed(1)}" rx="3" ry="1.8" fill="#FFFDF4" stroke="#E8E0C8" stroke-width=".5"/>`).join('');
+  // 竹葉：漸層＋中脈＋平行葉脈；包好的粽子是有兩個面的三角錐，棉繩照著錐面一圈一圈綁
+  const veins = (n, x0, x1, y0, y1) => Array.from({ length: n }, (_, i) => { const k = (i + 1) / (n + 1); return `<path d="M${(x0 + (x1 - x0) * k).toFixed(1)} ${y0} L${(x0 + (x1 - x0) * k * .9).toFixed(1)} ${y1}" stroke="#2E6A22" stroke-width=".8" opacity=".35"/>`; }).join('');
+  const leaf = (id, d, mid, fill) => `<g id="${id}"><path d="${d}" fill="${fill}" stroke="#2E6A22" stroke-width="1.6"/><path d="${mid}" stroke="#A8D88A" stroke-width="2" fill="none" opacity=".8"/></g>`;
   z.innerHTML = `
+    <defs>
+      <linearGradient id="zLeafG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7CC05E"/><stop offset=".55" stop-color="#4E9A3A"/><stop offset="1" stop-color="#2F6E26"/></linearGradient>
+      <linearGradient id="zFaceL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8ACB68"/><stop offset="1" stop-color="#4A8E36"/></linearGradient>
+      <linearGradient id="zFaceR" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4A8A34"/><stop offset="1" stop-color="#2A5E1E"/></linearGradient>
+    </defs>
     <g id="zLeaf" transform="translate(${C[0]} ${C[1]})">
-      <path id="zLeafFlat" d="M-110 30 Q-20 -30 110 -10 Q20 30 -110 30Z" fill="#5E9A4A" stroke="#3E7A2E" stroke-width="2"/>
-      <path id="zLeafFlat2" d="M-110 50 Q-10 0 110 16 Q10 56 -110 50Z" fill="#6BAA55" stroke="#3E7A2E" stroke-width="2"/>
+      ${leaf('zLeafFlat', 'M-118 26 C-60 -20 40 -26 118 -12 C50 14 -40 34 -118 26Z', 'M-112 24 C-40 4 40 -6 112 -12', 'url(#zLeafG)')}
+      ${leaf('zLeafFlat2', 'M-118 50 C-50 10 40 6 118 18 C40 46 -40 58 -118 50Z', 'M-112 48 C-40 32 40 24 112 18', 'url(#zLeafG)')}
       <g id="zCone" opacity="0">
-        <path d="M-52 -60 L0 60 L52 -60Z" fill="#5E9A4A" stroke="#3E7A2E" stroke-width="2.5"/>
-        <clipPath id="zClip"><path d="M-48 -58 L0 52 L48 -58Z"/></clipPath>
+        <path d="M-54 -62 Q0 -50 54 -62 L4 62 Q0 66 -4 62Z" fill="url(#zLeafG)" stroke="#2E6A22" stroke-width="2"/>
+        <clipPath id="zClip"><path d="M-48 -58 Q0 -48 48 -58 L0 54Z"/></clipPath>
         <g clip-path="url(#zClip)"><g id="zIn"></g></g>
-        <path d="M-52 -60 Q0 -48 52 -60" stroke="#8ACB6E" stroke-width="3" fill="none"/>
-        <path d="M-30 -40 L0 40 M24 -50 L4 30" stroke="#3E7A2E" stroke-width="1" opacity=".5"/>
+        <path d="M-54 -62 Q-30 0 -4 62" stroke="#2E6A22" stroke-width="1.4" fill="none" opacity=".6"/>
+        <path d="M54 -62 Q10 -40 -10 -52 L4 62" fill="#5FA846" opacity=".55"/>
+        <path d="M-54 -62 Q0 -50 54 -62" stroke="#B8E09A" stroke-width="3" fill="none"/>
       </g>
       <g id="zDone" opacity="0">
-        <path d="M-58 36 L0 -58 L58 36 Q0 50 -58 36Z" fill="#5E9A4A" stroke="#3E7A2E" stroke-width="2.5"/>
-        <path d="M-30 -10 L30 30 M10 -40 L-20 36" stroke="#3E7A2E" stroke-width="1.2" opacity=".5"/>
+        <ellipse cy="40" rx="58" ry="8" fill="#000" opacity=".18"/>
+        <path d="M-60 34 Q-34 -14 -2 -60 Q4 -64 8 -58 L22 38 Q-20 46 -60 34Z" fill="url(#zFaceL)" stroke="#2E6A22" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M8 -58 Q34 -12 58 26 Q40 38 22 38Z" fill="url(#zFaceR)" stroke="#2E6A22" stroke-width="2" stroke-linejoin="round"/>
+        ${veins(6, -50, 14, 34, -40)}
+        <path d="M-46 30 Q-22 -6 2 -52" stroke="#A8D88A" stroke-width="1.6" fill="none" opacity=".6"/>
         <g id="zStr"></g>
       </g>
     </g>
     <g id="zRice" class="fest-hit" data-nograb transform="translate(300 520)"><ellipse cx="0" cy="8" rx="30" ry="9" fill="#C8A878"/><ellipse rx="30" ry="12" fill="#FFFDF4" stroke="#D8C8A8"/>${riceTex(-8, 14)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">糯米</text></g>
-    ${ZFILL.map((f, i) => `<g id="zf-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)" transform="translate(${TRAY[i][0]} ${TRAY[i][1]})">${art('dw-' + f.id, 40, 34, `<circle r="15" fill="#FFF" stroke="#D8C8B0"/>${f.id === 'yolk' ? '<circle r="9" fill="#F0A020"/>' : f.id === 'pork' ? '<rect x="-10" y="-7" width="20" height="14" rx="4" fill="#7A3A1E"/><rect x="-10" y="-2" width="20" height="3" fill="#F4E0C0"/>' : `${[[-5, -3], [5, -4], [0, 5], [-6, 5], [6, 4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${f.c}"/>`).join('')}`}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}
+    ${ZFILL.map((f, i) => `<g id="zf-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)" transform="translate(${TRAY[i][0]} ${TRAY[i][1]})">${art('dw-' + f.id, 52, 40, `<circle r="15" fill="#FFF" stroke="#D8C8B0"/>${f.id === 'yolk' ? '<circle r="9" fill="#F0A020"/>' : f.id === 'pork' ? '<rect x="-10" y="-7" width="20" height="14" rx="4" fill="#7A3A1E"/><rect x="-10" y="-2" width="20" height="3" fill="#F4E0C0"/>' : `${[[-5, -3], [5, -4], [0, 5], [-6, 5], [6, 4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${f.c}"/>`).join('')}`}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}
     <g id="zPad" opacity="0" pointer-events="none"><circle cx="${C[0]}" cy="${C[1] + 120}" r="48" fill="none" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8"/><text x="${C[0]}" y="${C[1] + 126}" text-anchor="middle" class="fest-tip">在這裡畫圈綁繩</text></g>`;
   ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = 'none'; });
   let phase = 'leaf', layers = [], rice = 0, fy0 = null, acc = 0, lastA = null;
@@ -175,7 +199,10 @@ function zongzi(st, o, next) {
   }
   function tie() {
     const turns = Math.min(3, Math.floor(acc / (Math.PI * 2)));
-    st.$('#zStr').innerHTML = Array.from({ length: turns }, (_, i) => `<path d="M-50 ${14 - i * 18} Q0 ${26 - i * 18} 50 ${14 - i * 18}" stroke="#F4ECD8" stroke-width="3.2" fill="none"/>`).join('') + (turns >= 3 ? '<path d="M0 -58 v-60" stroke="#F4ECD8" stroke-width="3"/>' : '');
+    // 棉繩：每一圈都照著錐面的寬度繞（越上面越窄），先畫陰影再畫亮面，最後在頂上打結留一條掛繩
+    const band = (y) => { const k = (38 - y) / 96, hl = -60 + 58 * k, hr = 58 - 50 * k, mid = 22 - 14 * k; return `M${hl.toFixed(1)} ${(y - 2).toFixed(1)} Q${((hl + mid) / 2).toFixed(1)} ${(y + 6).toFixed(1)} ${mid.toFixed(1)} ${(y + 4).toFixed(1)} L${hr.toFixed(1)} ${(y - 6).toFixed(1)}`; };
+    st.$('#zStr').innerHTML = Array.from({ length: turns }, (_, i) => { const d = band(20 - i * 24); return `<path d="${d}" stroke="#9A7A40" stroke-width="5" fill="none" stroke-linecap="round"/><path d="${d}" stroke="#F2E2B4" stroke-width="2.6" fill="none" stroke-linecap="round"/>`; }).join('')
+      + (turns >= 3 ? '<path d="M6 -58 Q-6 -84 6 -112" stroke="#9A7A40" stroke-width="4" fill="none"/><path d="M6 -58 Q-6 -84 6 -112" stroke="#F2E2B4" stroke-width="2" fill="none"/><circle cx="6" cy="-58" r="4" fill="#E2CC94" stroke="#9A7A40"/>' : '');
     if (turns >= 3 && phase === 'tie') {
       phase = 'done'; st.$('#zPad').setAttribute('opacity', '0'); st.buttons([]);
       st.sfx.chime(); st.burst('star', C[0], C[1] - 20, 14); st.floatText('粽子包好了！', C[0], C[1] - 90, '#3E7A2E');
@@ -235,8 +262,8 @@ const qixi = {
       <path d="M150 0 C120 200 240 400 190 645 L250 645 C300 400 180 200 210 0Z" fill="#B8C8FF" opacity=".18"/>` })}
       <g id="bridge"></g>
       ${SLOTS.map(([x, y], i) => `<circle id="qs${i}" cx="${x}" cy="${y}" r="15" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="4 4" opacity=".6"/>`).join('')}
-      <g id="niulang">${art('qx-niulang', 70, 110, niulang)}</g>
-      <g id="zhinu">${art('qx-zhinu', 70, 110, zhinu)}</g>
+      <g id="niulang">${hasArt('qx-niulang') ? `<g transform="translate(0 -56)">${art('qx-niulang', 80, 112, '')}</g>` : art('qx-niulang', 70, 110, niulang)}</g>
+      <g id="zhinu">${hasArt('qx-zhinu') ? `<g transform="translate(0 -56)">${art('qx-zhinu', 90, 112, '')}</g>` : art('qx-zhinu', 70, 110, zhinu)}</g>
       <text x="${NL[0]}" y="${NL[1] + 22}" text-anchor="middle" class="fest-tip" id="nlT">牛郎</text><text x="${ZN[0]}" y="${ZN[1] + 22}" text-anchor="middle" class="fest-tip" id="znT">織女</text>
       <g id="birds"></g>
       <g id="qiao" style="display:none"></g>`);
@@ -291,30 +318,71 @@ const qixi = {
         st.later(1400, qiqiao);
       });
     }
-    // 七夕「乞巧」：月光下穿針，穿過針孔就是向織女討到一雙巧手
+    // 七夕「乞巧」：古時候女孩子在月光下穿「七孔針」，七個針孔一口氣穿過去，就是向織女討到一雙巧手。
+    // 手指按住畫面拖線頭（線頭浮在手指上方，不會被擋住），線頭左右穿過每一個針孔，從上穿到下。
     function qiqiao() {
       phase = 'needle'; st.reset();
-      const q = st.$('#qiao'); q.style.display = '';
-      q.innerHTML = `<rect y="360" width="360" height="285" fill="#0E0E2A" opacity=".5"/><circle cx="290" cy="120" r="34" fill="#FFF2C0"/>
-        <g id="ndl" transform="translate(180 470)">${needle}</g>
-        <path id="thread" d="" stroke="#FF6A8A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-        <text x="180" y="590" text-anchor="middle" class="fest-tip" id="ndlTip">線頭對準針孔時點一下</text>`;
-      let n = 0, x = 0, t0 = performance.now(), sp = 1.6, wait = false;
-      st.say('牛郎織女見面了。七夕也叫<b>乞巧節</b>：女孩子在月光下穿針，向織女求一雙巧手。線頭會左右晃，<b>對準針孔的時候點一下</b>，穿過三根針！', 'temple');
-      const draw = () => { st.$('#thread').setAttribute('d', `M${(180 + x - 60).toFixed(1)} 560 Q${(180 + x - 20).toFixed(1)} 470 ${(180 + x).toFixed(1)} 416`); };
-      loop(st, (dt, t) => { if (phase !== 'needle') return false; if (!wait) { x = Math.sin((t - t0) / 1000 * sp * 2.2) * 70; draw(); } return true; });
-      const go = () => {
-        if (phase !== 'needle' || wait) return;
-        wait = true;
-        if (Math.abs(x) < 9) {
-          n++; st.sfx.chime(); st.burst('star', 180, 416, 12, { color: '#FFB8D8' }); st.floatText(['巧！', '更巧！', '心靈手巧！'][n - 1], 180, 380, '#FFE0F0');
-          st.progress(N + 1 + Math.min(2, n), N + 3);
-          if (n >= 3) { phase = 'end'; st.later(800, end); return; }
-          st.later(700, () => { wait = false; sp += .5; t0 = performance.now(); st.$('#ndlTip').textContent = `第 ${n + 1} 根針`; });
-        } else { st.sfx.knock(); st.floatText('差一點', 180 + x, 390, '#B8D8FF'); st.later(500, () => { wait = false; }); }
+      const q = st.$('#qiao'); q.style.display = ''; st.world.appendChild(q); // 蓋在鵲橋、喜鵲上面
+      const NX = 180, EYES = [262, 300, 338, 376, 414, 452, 490], ER = 8.5, SPOOL = [70, 600];
+      q.innerHTML = `<defs>
+          <linearGradient id="ndlG" x1="0" x2="1"><stop offset="0" stop-color="#8A6A2A"/><stop offset=".35" stop-color="#FFE9A8"/><stop offset=".55" stop-color="#F3C64A"/><stop offset="1" stop-color="#7A5A1E"/></linearGradient>
+          <radialGradient id="moonG"><stop offset="0" stop-color="#FFF8DC"/><stop offset=".7" stop-color="#FFEFB0"/><stop offset="1" stop-color="#FFE29A" stop-opacity="0"/></radialGradient>
+          <mask id="ndlMask"><rect x="0" y="0" width="360" height="645" fill="#FFF"/>${EYES.map((y) => `<ellipse cx="${NX}" cy="${y}" rx="4.2" ry="${ER}" fill="#000"/>`).join('')}</mask>
+        </defs>
+        <rect width="360" height="645" fill="#0A0A26" opacity=".86"/>
+        <circle cx="286" cy="120" r="70" fill="url(#moonG)" opacity=".5"/><circle cx="286" cy="120" r="34" fill="#FFF6D4"/><circle cx="276" cy="112" r="6" fill="#F0E2B0" opacity=".6"/><circle cx="296" cy="130" r="4" fill="#F0E2B0" opacity=".6"/>
+        <g id="ndl">
+          <ellipse cx="${NX}" cy="582" rx="40" ry="8" fill="#000" opacity=".25"/>
+          <path d="M${NX - 9} 232 Q${NX} 214 ${NX + 9} 232 L${NX + 9} 520 L${NX + 2} 576 L${NX - 2} 576 L${NX - 9} 520Z" fill="url(#ndlG)" stroke="#6A4A14" stroke-width="1.2" mask="url(#ndlMask)"/>
+          ${EYES.map((y, i) => `<ellipse id="eye${i}" cx="${NX}" cy="${y}" rx="5.5" ry="${ER + 1.5}" fill="none" stroke="#FFF3C8" stroke-width="1.4" opacity=".8"/>`).join('')}
+          <text x="${NX + 22}" y="250" class="fest-small" fill="#FFE29A">七孔針</text>
+        </g>
+        <g transform="translate(${SPOOL[0]} ${SPOOL[1]})"><rect x="-16" y="-14" width="32" height="28" rx="4" fill="#C8963E"/><rect x="-13" y="-9" width="26" height="18" fill="#F06A8A"/><path d="M-13 -5h26M-13 0h26M-13 5h26" stroke="#D84A6A" stroke-width="1"/></g>
+        <path id="thrDone" fill="none" stroke="#FF6A8A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path id="thread" fill="none" stroke="#FF6A8A" stroke-width="2.6" stroke-linecap="round"/>
+        <g id="tip"><circle r="4" fill="#FF8AA6" stroke="#FFF" stroke-width="1.2"/><circle r="12" fill="none" stroke="#FFE0EC" stroke-width="1.2" stroke-dasharray="3 3" opacity=".8"/></g>
+        <text x="180" y="206" text-anchor="middle" class="fest-tip" id="ndlTip">按住畫面拖線頭，左右穿過發亮的針孔</text>`;
+      let n = 0, tip = [96, 300], last = null, holding = false, sway = 0;
+      const pts = [[...SPOOL]];
+      const eyeX = () => NX + sway;
+      const draw = () => {
+        const doneD = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(' ');
+        st.$('#thrDone').setAttribute('d', doneD);
+        const l = pts[pts.length - 1];
+        st.$('#thread').setAttribute('d', `M${l[0].toFixed(1)} ${l[1].toFixed(1)} Q${((l[0] + tip[0]) / 2).toFixed(1)} ${(Math.max(l[1], tip[1]) + 24).toFixed(1)} ${tip[0].toFixed(1)} ${tip[1].toFixed(1)}`);
+        place(st.$('#tip'), ...tip);
+        EYES.forEach((y, i) => { const e = st.$('#eye' + i); e.setAttribute('stroke', i < n ? '#FF8AA6' : i === n ? '#FFFFFF' : '#FFF3C8'); e.setAttribute('stroke-width', i === n ? '2.4' : '1.4'); e.setAttribute('opacity', i === n ? (0.6 + 0.4 * Math.abs(Math.sin(performance.now() / 300))).toFixed(2) : '.8'); });
       };
-      st.touch({ down: go });
-      st.buttons([{ label: '穿！', primary: true, on: go }, { label: '幫我穿', on: () => { x = 0; wait = false; go(); } }]);
+      const pass = () => {
+        const y = EYES[n]; pts.push([eyeX(), y]); n++;
+        st.sfx.pop(); st.burst('star', eyeX(), y, 8, { color: '#FFB8D8' });
+        st.progress(N + 1 + (n >= 7 ? 2 : n >= 4 ? 1 : 0), N + 3);
+        st.$('#ndlTip').textContent = n < 7 ? `穿過 ${n} 個針孔，還有 ${7 - n} 個` : '七個針孔都穿過了！';
+        if (n >= 7) { phase = 'end'; st.sfx.chime(); st.floatText('心靈手巧！', 180, 220, '#FFE0F0'); st.burst('heart', 180, 380, 18, { color: '#FF8AB0' }); st.later(1100, end); }
+      };
+      st.say('牛郎織女見面了！七夕也叫<b>乞巧節</b>：古時候女孩子在月光下穿「<b>七孔針</b>」，一口氣穿過七個針孔，就是向織女討到一雙巧手。按住畫面拖<b>粉紅線頭</b>，左右來回穿過<b>發亮的針孔</b>，從上面一路穿到下面。', 'temple');
+      st.zoom(180, 390, 300);
+      loop(st, (dt, t) => {
+        if (phase !== 'needle') return false;
+        sway = Math.sin(t / 900) * 3 + Math.sin(t / 370) * 1.2; // 晚風吹，針輕輕晃
+        st.$('#ndl').setAttribute('transform', `translate(${sway.toFixed(2)} 0)`);
+        draw(); return true;
+      });
+      st.touch({
+        down(p) { holding = true; last = null; tip = [p.x, p.y - st.lift()]; },
+        move(p) {
+          if (phase !== 'needle' || !holding) return;
+          const nt = [p.x, p.y - st.lift()];
+          // 線頭從針的一邊移到另一邊，而且高度在發亮的針孔範圍內，就算穿過
+          if (last && n < 7) {
+            const ex = eyeX(), y = EYES[n], cross = (last[0] - ex) * (nt[0] - ex) <= 0;
+            if (cross) { const k = (ex - last[0]) / ((nt[0] - last[0]) || 1e-6), yy = last[1] + (nt[1] - last[1]) * clamp(k, 0, 1); if (Math.abs(yy - y) <= ER) pass(); else if (Math.abs(yy - y) < ER * 3) st.floatText('差一點', ex, yy - 14, '#B8D8FF'); }
+          }
+          last = nt; tip = nt;
+        },
+        up() { holding = false; last = null; },
+      });
+      st.buttons([{ label: '幫我穿', on: () => { const step = () => { if (phase !== 'needle') return; tip = [eyeX() + (n % 2 ? -24 : 24), EYES[n]]; pass(); if (phase === 'needle') st.later(260, step); }; step(); } }]);
     }
     function end() {
       st.buttons([]);

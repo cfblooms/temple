@@ -10,6 +10,10 @@ export function art(key, w, h, fallback) {
   if (url) return `<image href="${url}" x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"/>`;
   return typeof fallback === 'function' ? fallback(w, h) : fallback;
 }
+// 放在桌面上的東西：圖片「底部」對齊原點（y=0 就是桌面），再加一圈貼地陰影，才不會浮在桌上。
+// 圖片比例和框不同時，xMidYMax 讓圖靠底，不會因為置中而懸空。
+export const sitImg = (url, w, h, sh = .36) => `${sh ? `<ellipse cy="-1.5" rx="${(w * sh).toFixed(1)}" ry="${Math.max(2.5, w * .07).toFixed(1)}" fill="#2A0E04" opacity=".32"/>` : ''}<image href="${url}" x="${-w / 2}" y="${-h}" width="${w}" height="${h}" preserveAspectRatio="xMidYMax meet"/>`;
+export const sitArt = (key, w, h, fallback, sh) => { const u = ART[`../assets/fest/${key}.webp`]; return u ? sitImg(u, w, h, sh) : `<g transform="translate(0 ${-h / 2})">${typeof fallback === 'function' ? fallback(w, h) : fallback}</g>`; };
 export const hasArt = (key) => !!ART[`../assets/fest/${key}.webp`];
 export const artUrl = (key) => ART[`../assets/fest/${key}.webp`];
 
@@ -156,6 +160,7 @@ export function makeStage(host, { sfx, say, onClose }) {
     heart: (c) => `<path d="M0 5C-7 0-7-5-3.5-5.5-1.5-6 0-4 0-3c0-1 1.5-3 3.5-2.5C7-5 7 0 0 5z" fill="${c || '#F2627A'}"/>`,
     paper: (c) => `<rect x="-3" y="-2" width="6" height="4" fill="${c || '#E0443E'}"/>`,
     smoke: () => `<circle r="5" fill="#B8B0A8" opacity=".5"/>`,
+    coin: () => `<circle r="5.5" fill="#F3C64A" stroke="#B8860B" stroke-width="1.2"/><rect x="-1.6" y="-1.6" width="3.2" height="3.2" fill="#B8860B"/>`,
   };
   function emit(kind, x, y, o = {}) {
     if (parts.length > 160) return;
