@@ -125,7 +125,7 @@ function zongzi(st, o, next) {
       </g>
     </g>
     <g id="zRice" class="fest-hit" data-nograb transform="translate(300 520)"><ellipse cx="0" cy="8" rx="30" ry="9" fill="#C8A878"/><ellipse rx="30" ry="12" fill="#FFFDF4" stroke="#D8C8A8"/>${riceTex(-8, 14)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">糯米</text></g>
-    ${ZFILL.map((f, i) => `<g id="zf-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)" transform="translate(${TRAY[i][0]} ${TRAY[i][1]})">${art('dw-' + f.id, 40, 34, `<circle r="15" fill="#FFF" stroke="#D8C8B0"/>${f.id === 'yolk' ? '<circle r="9" fill="#F0A020"/>' : f.id === 'pork' ? '<rect x="-10" y="-7" width="20" height="14" rx="4" fill="#7A3A1E"/><rect x="-10" y="-2" width="20" height="3" fill="#F4E0C0"/>' : `${[[-5, -3], [5, -4], [0, 5], [-6, 5], [6, 4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${f.c}"/>`).join('')}`}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}
+    ${ZFILL.map((f, i) => `<g id="zf-${f.id}" class="fest-hit" data-nograb filter="url(#fToy)" transform="translate(${TRAY[i][0]} ${TRAY[i][1]})">${art('dw-' + f.id, 52, 40, `<circle r="15" fill="#FFF" stroke="#D8C8B0"/>${f.id === 'yolk' ? '<circle r="9" fill="#F0A020"/>' : f.id === 'pork' ? '<rect x="-10" y="-7" width="20" height="14" rx="4" fill="#7A3A1E"/><rect x="-10" y="-2" width="20" height="3" fill="#F4E0C0"/>' : `${[[-5, -3], [5, -4], [0, 5], [-6, 5], [6, 4]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="${f.c}"/>`).join('')}`}`)}<text y="30" text-anchor="middle" class="fest-small" fill="#5A3A20">${f.name}</text></g>`).join('')}
     <g id="zPad" opacity="0" pointer-events="none"><circle cx="${C[0]}" cy="${C[1] + 120}" r="48" fill="none" stroke="#FFF4D8" stroke-width="3" stroke-dasharray="8 8"/><text x="${C[0]}" y="${C[1] + 126}" text-anchor="middle" class="fest-tip">在這裡畫圈綁繩</text></g>`;
   ['#zRice', ...ZFILL.map((f) => '#zf-' + f.id)].forEach((k) => { st.$(k).style.display = 'none'; });
   let phase = 'leaf', layers = [], rice = 0, fy0 = null, acc = 0, lastA = null;
@@ -235,8 +235,8 @@ const qixi = {
       <path d="M150 0 C120 200 240 400 190 645 L250 645 C300 400 180 200 210 0Z" fill="#B8C8FF" opacity=".18"/>` })}
       <g id="bridge"></g>
       ${SLOTS.map(([x, y], i) => `<circle id="qs${i}" cx="${x}" cy="${y}" r="15" fill="none" stroke="#FFF4D8" stroke-width="2" stroke-dasharray="4 4" opacity=".6"/>`).join('')}
-      <g id="niulang">${art('qx-niulang', 70, 110, niulang)}</g>
-      <g id="zhinu">${art('qx-zhinu', 70, 110, zhinu)}</g>
+      <g id="niulang">${hasArt('qx-niulang') ? `<g transform="translate(0 -56)">${art('qx-niulang', 80, 112, '')}</g>` : art('qx-niulang', 70, 110, niulang)}</g>
+      <g id="zhinu">${hasArt('qx-zhinu') ? `<g transform="translate(0 -56)">${art('qx-zhinu', 90, 112, '')}</g>` : art('qx-zhinu', 70, 110, zhinu)}</g>
       <text x="${NL[0]}" y="${NL[1] + 22}" text-anchor="middle" class="fest-tip" id="nlT">牛郎</text><text x="${ZN[0]}" y="${ZN[1] + 22}" text-anchor="middle" class="fest-tip" id="znT">織女</text>
       <g id="birds"></g>
       <g id="qiao" style="display:none"></g>`);

@@ -255,7 +255,7 @@ const dongzhi = {
       st.$('#kitchen').style.display = 'none';
       const pot = st.$('#cook > g'); pot.style.display = 'none';
       st.add(`<g id="altar">
-        ${hasArt('bg-dongzhi-altar') ? `<g transform="translate(180 322.5)">${art('bg-dongzhi-altar', 360, 645, '')}</g><text x="180" y="62" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text>` : `
+        ${hasArt('bg-dongzhi-altar') ? `<g transform="translate(180 322.5)">${art('bg-dongzhi-altar', 360, 645, '')}</g><text x="180" y="120" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text>` : `
         <rect width="360" height="645" fill="#8E3324"/>
         <rect width="360" height="300" fill="#B5432E"/><path d="M0 300h360" stroke="#E2B04A" stroke-width="4"/>
         <g transform="translate(180 54)"><rect x="-70" y="-24" width="140" height="44" rx="6" fill="#E0443E" stroke="#E2B04A" stroke-width="2"/><text y="8" text-anchor="middle" class="fest-sign" style="font-size:22px">冬至圓</text></g>
