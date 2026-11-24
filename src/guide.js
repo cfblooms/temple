@@ -18,7 +18,7 @@ export function initGuide({ wrap, state, save, sfx }) {
     <ol class="rite-dots" aria-hidden="true">${STEPS.map(() => '<li></li>').join('')}</ol>
     <b class="rite-h"></b>
     <button type="button" class="rite-x" aria-label="收起參拜流程提示">×</button>`;
-  wrap.closest('.stage').after(el); // 放在殿畫面下面、動作列上面，不蓋住神像
+  wrap.appendChild(el); // 小小一塊疊在殿畫面左上（節慶燈籠下面），不蓋神像
   let doneTimer = 0, last = '';
 
   el.querySelector('.rite-x').addEventListener('click', () => {
@@ -34,7 +34,7 @@ export function initGuide({ wrap, state, save, sfx }) {
       if (last === st.key + '|done' || !last.startsWith(st.key)) { el.hidden = true; last = st.key + '|done'; return; }
       last = st.key + '|done';
       el.classList.add('ok');
-      el.querySelector('.rite-h').textContent = '今天的參拜完成了 ✓';
+      el.querySelector('.rite-h').textContent = '參拜完成 ✓';
       el.querySelectorAll('.rite-dots li').forEach((li) => { li.className = 'done'; });
       el.hidden = false;
       clearTimeout(doneTimer); doneTimer = setTimeout(() => { el.hidden = true; }, 3200);
@@ -43,7 +43,7 @@ export function initGuide({ wrap, state, save, sfx }) {
     clearTimeout(doneTimer);
     last = st.key + '|' + st.step;
     el.classList.remove('ok');
-    el.querySelector('.rite-h').textContent = `參拜 ${st.step + 1}／${STEPS.length} ${STEPS[st.step]}${st.sub ? `（${st.sub}）` : ''}`;
+    el.querySelector('.rite-h').innerHTML = `<span>參拜 ${st.step + 1}／${STEPS.length}・${STEPS[st.step]}</span>${st.sub ? ` <span>${st.sub}</span>` : ''}`; // 每段不折行（「亮 0／2」不會被拆成兩行）
     el.querySelectorAll('.rite-dots li').forEach((li, i) => { li.className = i < st.step ? 'done' : i === st.step ? 'now' : ''; });
     el.title = st.tip || TIP[st.step];
     el.hidden = false;
