@@ -240,7 +240,7 @@ export function makeStage(host, { sfx, say, onClose }) {
     W: VW, H: VH,
     set(html) { world.innerHTML = html; },
     add(html) { world.insertAdjacentHTML('beforeend', html); return world.lastElementChild; },
-    zoom(cx, cy, w = 230, ms = 450) { const h = w * VH / VW; camera({ x: Math.max(0, Math.min(VW - w, cx - w / 2)), y: Math.max(0, Math.min(VH - h, cy - h / 2)), w }, ms); },
+    zoom(cx, cy, w = 230, ms = 450) { if (!touched) return; const h = w * VH / VW; camera({ x: Math.max(0, Math.min(VW - w, cx - w / 2)), y: Math.max(0, Math.min(VH - h, cy - h / 2)), w }, ms); },
     reset(ms = 500) { camera({ x: 0, y: 0, w: VW }, ms); },
     onCleanup(fn) { cleanups.push(fn); },
     get alive() { return alive; },
@@ -251,6 +251,11 @@ export function makeStage(host, { sfx, say, onClose }) {
     },
   };
   host.querySelector('.fest-close').addEventListener('click', () => onClose());
+  // 手指按著畫面時把提示字淡掉（CSS .touching .fest-tip），放開再出現
+  let touched = false; // 一進遊戲先看全景；手指碰過畫面之後，做動作時才拉近
+  const tOn = () => { touched = true; svg.classList.add('touching'); }, tOff = () => svg.classList.remove('touching');
+  svg.addEventListener('pointerdown', tOn, true); actions.addEventListener('pointerdown', () => { touched = true; }); addEventListener('pointerup', tOff); addEventListener('pointercancel', tOff);
+  cleanups.push(() => { removeEventListener('pointerup', tOff); removeEventListener('pointercancel', tOff); });
   return stage;
 }
 

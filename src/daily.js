@@ -47,8 +47,13 @@ export function initDaily({ $, state, save, sfx, wallet, halls, stalls, qianName
     const html = queue.shift(); if (!html) { busy = false; return; }
     busy = true;
     toast.innerHTML = html; toast.hidden = false; toast.classList.remove('in'); void toast.offsetWidth; toast.classList.add('in');
-    setTimeout(() => { toast.hidden = true; setTimeout(next, 250); }, 3400);
+    clearTimeout(toastT); toastT = setTimeout(() => { toast.hidden = true; setTimeout(next, 200); }, 2400);
   };
+  let toastT = 0;
+  // 點一下就收起來；手指一碰遊戲畫面也收起來，不擋著玩
+  const dismiss = () => { if (toast.hidden) return; clearTimeout(toastT); toast.hidden = true; setTimeout(next, 200); };
+  toast.addEventListener('click', dismiss);
+  wrap.addEventListener('pointerdown', (e) => { if (e.target !== toast) dismiss(); }, true);
   const showToast = (html) => { queue.push(html); if (!busy) next(); };
 
   const hallIds = Object.keys(halls);

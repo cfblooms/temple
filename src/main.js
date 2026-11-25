@@ -170,16 +170,30 @@ lunarLine();
 
 /* ---------- 對話列 ---------- */
 const WHO = { temple: ['廟公', ''], cat: ['虎爺', 'cat'], god: ['神明指引', 'god'] };
+// 手機上廟公那格改成浮在畫面上方的小泡泡：讀完自己收起來，手指一碰畫面或點泡泡就馬上收，不會一直擋著（桌機一樣是固定的一條）
+const SAY_FLOAT = matchMedia('(max-width: 600px), (pointer: coarse)');
+let sayTimer = 0;
+const sayHide = () => { clearTimeout(sayTimer); $('#say').classList.add('gone'); };
 function say(text, who = 'temple') {
   const el = $('#say'), w = $('#sayWho');
   w.textContent = WHO[who][0]; w.className = 'say-who ' + WHO[who][1];
   $('#sayText').innerHTML = text;
-  el.classList.remove('pop', 'open'); void el.offsetWidth; el.classList.add('pop');
+  el.classList.remove('pop', 'open', 'gone'); void el.offsetWidth; el.classList.add('pop');
   sayFit();
+  clearTimeout(sayTimer);
+  if (SAY_FLOAT.matches) {
+    const n = $('#sayText').textContent.length; // 大約一秒讀 12 個字，最短 2 秒、最長 5 秒
+    sayTimer = setTimeout(sayHide, Math.min(5000, Math.max(2000, 900 + n * 80)));
+  }
 }
 // 廟公只佔兩行，話太長就出現 ▾，點一下展開（蓋在場景上，場景不會被推下去）
-function sayFit() { const t = $('#sayText'); $('#say').classList.toggle('more', t.scrollHeight > t.clientHeight + 2 || $('#say').classList.contains('open')); }
-$('#say').addEventListener('click', () => { const el = $('#say'); if (el.classList.contains('more')) el.classList.toggle('open'); });
+function sayFit() { const t = $('#sayText'); $('#say').classList.toggle('more', !SAY_FLOAT.matches && (t.scrollHeight > t.clientHeight + 2 || $('#say').classList.contains('open'))); }
+$('#say').addEventListener('click', () => { const el = $('#say'); if (SAY_FLOAT.matches) { sayHide(); return; } if (el.classList.contains('more')) el.classList.toggle('open'); });
+// 手指一碰遊戲畫面，說明字就收起來（展開的長說明也一樣）
+$('.stage').addEventListener('pointerdown', () => { if (SAY_FLOAT.matches) sayHide(); else $('#say').classList.remove('open'); }, true);
+$('#sceneWrap').addEventListener('pointerdown', () => $('#sceneWrap').classList.add('touching'));
+for (const t of ['pointerup', 'pointercancel']) addEventListener(t, () => $('#sceneWrap').classList.remove('touching'));
+SAY_FLOAT.addEventListener?.('change', () => { clearTimeout(sayTimer); $('#say').classList.remove('gone', 'open'); sayFit(); });
 addEventListener('resize', () => { $('#say').classList.remove('open'); sayFit(); });
 document.fonts?.ready.then(sayFit);
 
@@ -224,8 +238,14 @@ function camera(to, ms = 650) {
 function altarView(dy = 0) { const w = 214, cy = 384 + dy + (HALLS[hall] ? HALLS[hall].burnerDy : 0); return { x: 182 - w / 2, y: cy - (w * VH) / 2, w }; }
 const zoomIn = () => camera(altarView());
 // 給各殿用的鏡頭：做動作時把那一塊放大，放開再拉回全景
+// 換殿／換遊戲後，手指還沒碰任何東西之前不准自己拉近（上一個遊戲留下的計時器、一進門就放大，都會讓畫面莫名其妙變大）
+let lastInput = 0, sceneAt = 0;
+const markScene = () => { sceneAt = performance.now(); };
+document.addEventListener('pointerdown', () => { lastInput = performance.now(); }, true);
+document.addEventListener('keydown', () => { lastInput = performance.now(); }, true);
 const cam = {
-  zoom(cx, cy, w = 220, ms = 450) { const h = w * VH; camera({ x: Math.max(0, Math.min(360 - w, cx - w / 2)), y: Math.max(0, Math.min(645 - h, cy - h / 2)), w }, ms); },
+  zoom(cx, cy, w = 220, ms = 450) {
+    if (lastInput <= sceneAt) return; const h = w * VH; camera({ x: Math.max(0, Math.min(360 - w, cx - w / 2)), y: Math.max(0, Math.min(645 - h, cy - h / 2)), w }, ms); },
   reset(delay = 0) { zoomOut(delay); },
 };
 function zoomOut(delay = 0) { clearTimeout(camTimer); camTimer = setTimeout(() => camera(FULL), delay); }
@@ -1303,7 +1323,7 @@ function openStep(id) {
 }
 
 function showMap() {
-  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); SUB[hall]?.leave?.();
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); markScene(); SUB[hall]?.leave?.();
   $('#sceneWrap').hidden = true; $('#bar').hidden = true; $('#caiBar').hidden = true; $('#yueBar').hidden = true; $('#tudiBar').hidden = true; $('#wenBar').hidden = true; $('#jiBar').hidden = true; $('#sanBar').hidden = true; $('#gyBar').hidden = true; $('#ggBar').hidden = true; $('#zsBar').hidden = true; $('#tsBar').hidden = true; $('#muBar').hidden = true; $('#mlBar').hidden = true; leaveStall(); $('#jgHost').hidden = true; jg.reset(); $('#tgBar').hidden = true; $('#mapView').hidden = false;
   $('#btnMap').hidden = true; $('#routeBar').hidden = !routeDay(); paintRoute();
   const r = route(), next = ROUTE.find((x) => !r.done.includes(x.id));
@@ -1315,7 +1335,7 @@ function showMap() {
 }
 
 function switchHall(h) {
-  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); SUB[hall]?.leave?.();
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); markScene(); SUB[hall]?.leave?.();
   hall = h;
   const r = rite(h); // 今天這殿點過的蠟燭、上過的香（有存檔，重新整理也還在）
   const st = { lit: { L: r.L, R: r.R }, sLit: r.L && r.R, until: r.until };
@@ -1436,6 +1456,7 @@ const STALLS = {
   sm: { name: '朱紅牌樓山門', short: '山門', mod: initGate({ ...xapi, goHall: () => SHOW.main(), daily: () => daily }) },
   wa: { name: '淨身石槽', short: '淨身', mod: initWash(xapi) },
 };
+if (import.meta.env.DEV) window.__go = { hall: (h) => SHOW[h](), stall: (k) => showStall(k), map: () => showMap() }; // 測試用
 let stall = null;
 function leaveStall() {
   if (stall) STALLS[stall].mod.leave();
@@ -1443,7 +1464,7 @@ function leaveStall() {
   for (const k of Object.keys(STALLS)) { $(`#${k}Host`).hidden = true; $(`#${k}Bar`).hidden = true; }
 }
 function showStall(k) {
-  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0);
+  if (tool.kind) unequip(); endOffer(0); camera(FULL, 0); markScene();
   if (stall && stall !== k) STALLS[stall].mod.leave();
   stall = k;
   $('#bar').hidden = true;
