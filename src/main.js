@@ -1466,15 +1466,43 @@ const STALLS = {
   sm: { name: '朱紅牌樓山門', short: '山門', mod: initGate({ ...xapi, goHall: () => SHOW.main(), daily: () => daily }) },
   wa: { name: '淨身石槽', short: '淨身', mod: initWash(xapi) },
 };
-// 圖片載不到（網路一時斷掉、快取壞掉）時，iPhone 會畫一個藍色問號方塊。先重試一次，還是不行就把那張圖藏起來，不要讓問號出現在畫面上。
+// 圖片載不到時，iPhone 會畫一個藍色問號方塊。最常見的原因：切到別的 App（例如 Claude）時，iOS 把正在下載的圖砍掉，
+// 而且 Safari 會記住「這個網址失敗過」，同一頁之後再用到同一張圖都直接畫問號。
+// 所以：先藏起來不畫問號 → 換個網址（加 ?r=）重抓，最多 4 次、越等越久 → 回到這個 App 或網路恢復時，把還沒好的再抓一次。
+const failedImgs = new Set();
+const baseUrl = (u) => (u || '').replace(/[?&]r=\d+$/, '');
+const imgAttr = (el) => (el.tagName.toLowerCase() === 'img' ? 'src' : 'href');
+function retryImg(el) {
+  // 先在畫面外用 new Image() 把圖抓回來，成功了才換上去：SVG 的 <image> 失敗過一次以後，換網址也不一定會再發 load 事件
+  const attr = imgAttr(el), url = baseUrl(el.getAttribute(attr)); if (!url) return;
+  const next = url + (url.includes('?') ? '&' : '?') + 'r=' + Date.now(), probe = new Image();
+  probe.onload = () => {
+    if (!el.isConnected || baseUrl(el.getAttribute(attr)) !== url) return;
+    el.setAttribute(attr, next); el.style.visibility = ''; delete el.dataset.retry; failedImgs.delete(el);
+  };
+  probe.onerror = () => imgFailed(el, url);
+  probe.src = next;
+}
+function imgFailed(el, url) {
+  const n = +(el.dataset.retry || 0) + 1; el.dataset.retry = n;
+  if (n <= 4) setTimeout(() => el.isConnected && baseUrl(el.getAttribute(imgAttr(el))) === url && retryImg(el), [300, 1000, 2500, 6000][n - 1]);
+  else failedImgs.add(el);
+}
 document.addEventListener('error', (e) => {
   const el = e.target; if (!(el instanceof Element) || !/^(img|image)$/i.test(el.tagName)) return;
-  const attr = el.tagName.toLowerCase() === 'img' ? 'src' : 'href', url = el.getAttribute(attr);
-  if (!url || url.startsWith('data:')) { el.style.visibility = 'hidden'; return; }
-  if (!el.dataset.retry) { el.dataset.retry = '1'; setTimeout(() => el.setAttribute(attr, url + (url.includes('?') ? '&' : '?') + 'r=' + Date.now()), 600); return; }
   el.style.visibility = 'hidden';
+  const url = el.getAttribute(imgAttr(el));
+  if (!url || url.startsWith('data:')) return;
+  imgFailed(el, baseUrl(url));
 }, true);
-document.addEventListener('load', (e) => { const el = e.target; if (el instanceof Element && el.dataset?.retry) { el.style.visibility = ''; delete el.dataset.retry; } }, true);
+document.addEventListener('load', (e) => {
+  const el = e.target; if (!(el instanceof Element) || !el.dataset?.retry) return;
+  el.style.visibility = ''; delete el.dataset.retry; failedImgs.delete(el);
+}, true);
+const retryFailed = () => { for (const el of failedImgs) { failedImgs.delete(el); if (el.isConnected) { el.dataset.retry = 0; retryImg(el); } } };
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(retryFailed, 300); });
+addEventListener('online', retryFailed);
+addEventListener('pageshow', (e) => { if (e.persisted) retryFailed(); });
 if (import.meta.env.DEV) window.__go = { hall: (h) => SHOW[h](), stall: (k) => showStall(k), map: () => showMap() }; // 測試用
 let stall = null;
 function leaveStall() {
