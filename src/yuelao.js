@@ -10,6 +10,7 @@ import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
 import { tossJiao } from './jiaotoss.js';
 import { wallet } from './wallet.js';
+import { AV_W, AV_H } from './chars.js';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -346,7 +347,7 @@ export function initYuelao(api) {
 
   return {
     enter(char) {
-      const el = S('yAvatar'), h = 130 * char.scale, w = 120 * char.scale;
+      const el = S('yAvatar'), h = AV_H * char.scale, w = AV_W * char.scale;
       el.setAttribute('href', char.kneel); el.setAttribute('width', w); el.setAttribute('height', h);
       el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 593 - h);
       hands = [182, 593 - h * 0.52];

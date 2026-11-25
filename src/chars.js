@@ -19,3 +19,5 @@ export const CHARS = LIST.map(([id, name, scale = 1]) => ({
 }));
 export const DEFAULT_CHAR = 'shades';
 export const charById = (id) => CHARS.find((c) => c.id === id) || CHARS.find((c) => c.id === DEFAULT_CHAR);
+// 殿裡跪拜人偶的大小（場景座標，跪墊在 y=536）；比原本 120×130 大一成，手機上看得比較清楚
+export const AV_W = 132, AV_H = 143;

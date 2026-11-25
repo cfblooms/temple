@@ -59,7 +59,7 @@ export function initTestPanel({ openSheet, closeSheet, festivals, lunarOf, lunar
   const btn = document.createElement('button');
   btn.type = 'button'; btn.id = 'testBtn'; btn.className = 'test-chip';
   const now = new Date();
-  btn.textContent = `試玩 ${offset ? md(now) : '今天'}`;
+  btn.textContent = `試${offset ? md(now) : "玩"}`;
   btn.setAttribute('aria-label', '試玩模式面板');
   document.body.appendChild(btn);
 

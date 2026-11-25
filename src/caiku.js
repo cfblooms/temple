@@ -64,8 +64,8 @@ export function initCaiku({ svg, state, save, say, sfx, burst, emit, openSheet, 
   const NS = 'http://www.w3.org/2000/svg';
   const mk = (tag, attrs = {}, html = '') => { const el = document.createElementNS(NS, tag); for (const k in attrs) el.setAttribute(k, attrs[k]); if (html) el.innerHTML = html; return el; };
 
-  /* ---------- 場景：財庫小牌（左上，財氣下面） ---------- */
-  const chip = mk('g', { id: 'kuChip', class: 'ku-chip', 'data-cai': 'vault', role: 'button', tabindex: '0', 'aria-label': '看財庫、補財庫' }, `
+  /* ---------- 場景：財庫小牌（左邊，財氣下面） ---------- */
+  const chip = mk('g', { id: 'kuChip', class: 'ku-chip', 'data-cai': 'vault', role: 'button', tabindex: '0', 'aria-label': '看財庫、補財庫', transform: 'translate(4 196) scale(.86)' }, `
     <rect x="10" y="46" width="104" height="30" rx="15" fill="#3A1208" opacity=".7"/>
     <text x="24" y="66" font-family="Huninn, sans-serif" font-size="13" fill="#FFE08A">財庫</text>
     <rect x="56" y="56" width="48" height="10" rx="5" fill="#1E0904" stroke="#FFE08A" stroke-opacity=".5"/>

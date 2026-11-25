@@ -73,7 +73,7 @@ export function initNpc({ svg, chars, me, halls, dayKey, sfx, hit }) {
     const base = 472 + (H.base - 536) * 0.35; // 神桌前面一排
     for (let i = 0; i < n; i++) {
       const c = pool.splice(Math.floor(rnd() * pool.length), 1)[0]; if (!c) break;
-      const left = sides[i] === 0, s = 0.56 * (c.scale || 1), w = 130 * s, ht = 142 * s;
+      const left = sides[i] === 0, s = 0.6 * (c.scale || 1), w = 130 * s, ht = 142 * s;
       const x = left ? 80 : 282;
       const el = document.createElementNS(NS, 'g');
       el.setAttribute('class', 'npc');
