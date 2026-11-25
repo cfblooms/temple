@@ -59,7 +59,7 @@ export function initNpc({ svg, chars, me, halls, dayKey, sfx, hit }) {
       <path d="M${p.x - 5} ${y + 21} l5 7 l5 -7z" fill="#FFF8EC"/>
       <text x="${x + w / 2}" y="${y + 15}" text-anchor="middle" font-size="10.5" fill="#5A3A1A">${text}</text>`;
     p.el.appendChild(b);
-    clearTimeout(p.t); p.t = setTimeout(() => b.remove(), 3200);
+    clearTimeout(p.t); p.t = setTimeout(() => b.remove(), 2400);
   }
   function paint(h) {
     hall = h; clearTimeout(timer);

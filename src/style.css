@@ -992,3 +992,48 @@ body.xd-night::after { content: ''; position: fixed; inset: 0; background: #000;
 @media (prefers-reduced-motion: reduce) { .sm-new .sm-lion-body, #smCal.sm-new, .sm-peck { animation: none; } }
 .sm-cal-yi { font: 900 11px var(--font-serif); fill: #FFF; }
 .sm-cal-h.gold { fill: #F6D27A; font-size: 8.5px; }
+
+/* ---------- 手機好玩度修正（1125）---------- */
+/* 1. 不要自己放大：iPhone 點到輸入框時字小於 16px 會整頁放大、橫放時會自動放大字；連點兩下也會放大 */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; touch-action: manipulation; }
+input, textarea, select { font-size: max(16px, 1em) !important; }
+.app { position: relative; height: 100dvh; padding-top: max(6px, env(safe-area-inset-top, 0px)); }
+@media (min-width: 440px) { .app { padding-top: max(10px, env(safe-area-inset-top, 0px)); } }
+
+/* 2. 遊戲畫面裡的手勢一律交給遊戲，不讓瀏覽器拿去捲動／縮放（不然滑到一半會被取消，「滑不過去」） */
+.scene-wrap, .scene-wrap > div, .scene-wrap svg, .scene-wrap canvas, .jt, .sheet svg { touch-action: none; }
+.scene-wrap > .gods { touch-action: pan-x; }
+.scene-wrap .offer-items, .scene-wrap .jx-book, .scene-wrap .fest-form { touch-action: pan-y; }
+.scene-wrap image, .scene-wrap img { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; }
+
+/* 3. 手機：廟公那條改成浮在畫面上方的泡泡，讀完自己收起來，殿內畫面多出一整條的高度 */
+@media (max-width: 600px), (pointer: coarse) {
+  .say, .app:has(#mapView:not([hidden])) .say {
+    position: absolute; z-index: 45; top: calc(max(6px, env(safe-area-inset-top, 0px)) + 40px); left: 50%; transform: translateX(-50%);
+    width: min(calc(100% - 20px), 440px); margin: 0; height: auto; min-height: 0;
+    padding: 6px 12px; font-size: 13.5px; line-height: 1.45;
+    background: rgb(255 248 236 / .96); box-shadow: 0 6px 18px rgb(60 15 10 / .28);
+    transition: opacity .25s, transform .25s; cursor: pointer;
+  }
+  .say .say-text { -webkit-line-clamp: 4; }
+  .say.pop { animation: sayIn .25s ease-out; }
+  .say.gone { opacity: 0; transform: translate(-50%, -8px); pointer-events: none; }
+  /* 進度條變細，按鈕列矮一點，畫面再大一點 */
+  .rite { padding: 1px 0 1px 10px; }
+  .rite-h { font-size: 12px; }
+  .rite-x { min-height: 22px; min-width: 30px; }
+  .bar button { padding: 3px 0 2px; font-size: 11.5px; gap: 1px; }
+  .bar button svg { width: 20px; height: 20px; }
+}
+@keyframes sayIn { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+/* 4. 委託、香火的小通知：短一點、點一下就收；手指在畫面上時先藏起來 */
+.quest-toast { pointer-events: auto; cursor: pointer; transition: opacity .2s; }
+#sceneWrap.touching .quest-toast, #sceneWrap.touching .npc-say { opacity: 0; pointer-events: none; }
+/* 節慶遊戲裡的提示字：手指按著做動作時先淡掉，不擋住正在弄的東西 */
+.fest-host svg.touching .fest-tip { opacity: 0 !important; transition: opacity .15s; }
+/* 節慶小遊戲進行中不顯示殿裡的參拜進度條，畫面再高一點 */
+.app:has(#sceneWrap.festing) .rite { display: none !important; }
+/* 參拜進度小塊：手指在畫面上做動作、或鏡頭拉近時先藏起來，不擋到正在弄的東西 */
+.rite { transition: opacity .2s; }
+.app:has(#sceneWrap.touching) .rite, .app:has(#sceneWrap.close-up) .rite { opacity: 0; pointer-events: none; }
