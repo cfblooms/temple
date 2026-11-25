@@ -8,6 +8,7 @@ import coinUrl from './assets/cai/coin.webp';
 import hongbaoUrl from './assets/cai/hongbao.webp';
 import jiaoFlat from './assets/jiao-flat.webp';
 import jiaoRound from './assets/jiao-round.webp';
+import { AV_W, AV_H } from './chars.js';
 import { tossJiao } from './jiaotoss.js';
 import { initCaiku } from './caiku.js';
 import { wallet, EARN } from './wallet.js';
@@ -58,8 +59,8 @@ export const CAI_SVG = (bg) => `
   <circle transform="translate(182 380) scale(1.38) translate(-182 -380)" id="cHaloC" cx="180" cy="300" r="58" fill="url(#cHalo)" opacity=".3" style="mix-blend-mode:screen"/>
   <rect transform="translate(182 380) scale(1.38) translate(-182 -380)" class="hit" data-cai="deity" role="button" tabindex="0" aria-label="向財神爺問安" x="148" y="255" width="66" height="95" rx="20" fill="transparent"/>
 
-  <!-- 財氣 -->
-  <g pointer-events="none">
+  <!-- 財氣（左邊柱子前；手機上畫面上緣會被裁一點、上面還有神明列和小按鈕，所以放在神像高度，不放左上角） -->
+  <g pointer-events="none" transform="translate(4 196) scale(.86)">
     <rect x="10" y="10" width="104" height="30" rx="15" fill="#3A1208" opacity=".7"/>
     <text x="24" y="31" font-family="Huninn, sans-serif" font-size="15" fill="#FFE08A">財氣 <tspan id="cWealth">0</tspan></text>
   </g>
@@ -371,7 +372,7 @@ export function initCaishen(api) {
 
   return {
     enter(char) {
-      const el = S('cAvatar'), h = 130 * char.scale, w = 120 * char.scale;
+      const el = S('cAvatar'), h = AV_H * char.scale, w = AV_W * char.scale;
       el.setAttribute('href', char.kneel); el.setAttribute('width', w); el.setAttribute('height', h);
       el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h);
       paintWealth(); combo = 0; showCombo(); startBowl();

@@ -1,7 +1,7 @@
 import { TEST, testSaveKey, initTestPanel } from './testmode.js'; // 試玩模式（?test=1），要最先載入：日期平移
 import './style.css';
 import { SCENE_SVG } from './scene.js';
-import { CHARS, DEFAULT_CHAR, charById } from './chars.js';
+import { CHARS, DEFAULT_CHAR, charById, AV_W, AV_H } from './chars.js';
 import { FORTUNES, CATEGORIES, DAILY, cn } from './fortunes.js';
 import { QIAN_LISTS } from './qian-more.js'; // 籤詩加量（各殿 24 首、心安籤 36 首）
 import { initDaily } from './daily.js'; // 每日輕任務、奇遇、香火
@@ -165,7 +165,7 @@ let hall = 'main';
 const hallImg = () => festive ? HALLS[hall].fest : HALLS[hall].bg;
 const today = new Date();
 const dateLine = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}${L ? '・' + L.text : ''}`;
-const lunarLine = () => { $('#lunar').innerHTML = L ? `${L.text}${fest ? `<br><b>${fest[3]}</b>` : isYa ? '<br><b>今日做牙</b>' : ''}` : ''; };
+const lunarLine = () => { $('#lunar').innerHTML = L ? `${L.text.replace(/^農曆/, '<span class="lp">農曆</span>')}${fest ? `<br><b>${fest[3]}</b>` : isYa ? '<br><b>今日做牙</b>' : ''}` : ''; };
 lunarLine();
 
 /* ---------- 對話列 ---------- */
@@ -214,7 +214,16 @@ const S = (id) => svg.getElementById ? svg.getElementById(id) : svg.querySelecto
 const VH = 645 / 360, FULL = { x: 0, y: 0, w: 360 };
 let view = { ...FULL }, camRun = 0, camTimer = 0;
 const zoomed = () => view.w < 359;
+// 殿內（不含攤位）畫面在手機上可以比 360:645 寬一點：多出來的寬度用「從上面裁掉一點天花板」換，底下的地板、跪墊、道具都不動
+const HALL_SVGS = '#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #tgHost > svg, #jgHost > svg';
+function fitHallSvgs() { document.querySelectorAll(HALL_SVGS).forEach((el) => el.setAttribute('preserveAspectRatio', 'xMidYMax slice')); }
 function applyView(v) {
+  // 畫面比 360:645 寬時上面會被裁掉一截；拉近時把鏡頭往上挪一半裁掉的量，要看的東西才會在看得到的那塊正中間（全景時不挪，裁掉的是天花板）
+  const r = $('#sceneWrap').getBoundingClientRect();
+  if (r.width && v.w < 359) {
+    const hidden = Math.max(0, v.w * (VH - r.height / r.width)), k = Math.min(1, (360 - v.w) / 140);
+    v = { ...v, y: v.y - hidden * k / 2 };
+  }
   const box = `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${(v.w * VH).toFixed(2)}`;
   document.querySelectorAll('#sceneHost > svg, #caiHost > svg, #yueHost > svg, #tudiHost > svg, #wenHost > svg, #jiHost > svg, #sanHost > svg, #gyHost > svg, #ggHost > svg, #zsHost > svg, #tsHost > svg, #muHost > svg, #mlHost > svg, #jgHost > svg, #bzHost > svg, #xrHost > svg, #sjHost > svg, #fhHost > svg, #jxHost > svg, #fsHost > svg, #xiHost > svg, #tgHost > svg, #jqHost > svg, #ysHost > svg, #zxHost > svg, #xdHost > svg, #rjHost > svg, #smHost > svg, #waHost > svg').forEach((el) => el.setAttribute('viewBox', box));
   setFxView(v.x, v.y, v.w);
@@ -252,7 +261,7 @@ function zoomOut(delay = 0) { clearTimeout(camTimer); camTimer = setTimeout(() =
 
 function paintAvatar() {
   const c = charById(state.char);
-  const el = S('avatarImg'), h = 130 * c.scale, w = 120 * c.scale;
+  const el = S('avatarImg'), h = AV_H * c.scale, w = AV_W * c.scale;
   el.setAttribute('href', c.kneel);
   el.setAttribute('width', w); el.setAttribute('height', h);
   el.setAttribute('x', 182 - w / 2); el.setAttribute('y', 536 - h); // 其他殿用 #avatarG 整組往下移
@@ -1357,6 +1366,7 @@ function switchHall(h) {
   for (const k of ['A', 'B']) S('jiao' + k).setAttribute('opacity', '0');
   for (const k of ['cai', 'yue', 'tudi', 'wen', 'ji', 'san', 'gy', 'gg', 'zs', 'ts', 'mu', 'ml', 'tg']) { $(`#${k}Host`).hidden = k !== h; $(`#${k}Bar`).hidden = k !== h; }
   leaveStall(); $('#sceneHost').hidden = false; $('#jgHost').hidden = h !== 'ts'; jg.reset();
+  $('#sceneWrap').classList.add('wide'); fitHallSvgs();
   sfx.bowl();
   state.home = h; save(); paintGods();
   markNext();
@@ -1456,6 +1466,15 @@ const STALLS = {
   sm: { name: '朱紅牌樓山門', short: '山門', mod: initGate({ ...xapi, goHall: () => SHOW.main(), daily: () => daily }) },
   wa: { name: '淨身石槽', short: '淨身', mod: initWash(xapi) },
 };
+// 圖片載不到（網路一時斷掉、快取壞掉）時，iPhone 會畫一個藍色問號方塊。先重試一次，還是不行就把那張圖藏起來，不要讓問號出現在畫面上。
+document.addEventListener('error', (e) => {
+  const el = e.target; if (!(el instanceof Element) || !/^(img|image)$/i.test(el.tagName)) return;
+  const attr = el.tagName.toLowerCase() === 'img' ? 'src' : 'href', url = el.getAttribute(attr);
+  if (!url || url.startsWith('data:')) { el.style.visibility = 'hidden'; return; }
+  if (!el.dataset.retry) { el.dataset.retry = '1'; setTimeout(() => el.setAttribute(attr, url + (url.includes('?') ? '&' : '?') + 'r=' + Date.now()), 600); return; }
+  el.style.visibility = 'hidden';
+}, true);
+document.addEventListener('load', (e) => { const el = e.target; if (el instanceof Element && el.dataset?.retry) { el.style.visibility = ''; delete el.dataset.retry; } }, true);
 if (import.meta.env.DEV) window.__go = { hall: (h) => SHOW[h](), stall: (k) => showStall(k), map: () => showMap() }; // 測試用
 let stall = null;
 function leaveStall() {
@@ -1472,6 +1491,7 @@ function showStall(k) {
   $('#jgHost').hidden = true; jg.reset();
   for (const s of Object.keys(STALLS)) { $(`#${s}Host`).hidden = s !== k; $(`#${s}Bar`).hidden = s !== k; }
   $('#sceneHost').hidden = true; $('#basketBtn').hidden = true;
+  $('#sceneWrap').classList.remove('wide');
   $('#mapView').hidden = true; $('#sceneWrap').hidden = false; $('#btnMap').hidden = false; $('#routeBar').hidden = true;
   sfx.bowl(); paintGods();
   STALLS[k].mod.enter();
