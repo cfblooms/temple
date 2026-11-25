@@ -1034,3 +1034,6 @@ input, textarea, select { font-size: max(16px, 1em) !important; }
 .fest-host svg.touching .fest-tip { opacity: 0 !important; transition: opacity .15s; }
 /* 節慶小遊戲進行中不顯示殿裡的參拜進度條，畫面再高一點 */
 .app:has(#sceneWrap.festing) .rite { display: none !important; }
+/* 參拜進度小塊：手指在畫面上做動作、或鏡頭拉近時先藏起來，不擋到正在弄的東西 */
+.rite { transition: opacity .2s; }
+.app:has(#sceneWrap.touching) .rite, .app:has(#sceneWrap.close-up) .rite { opacity: 0; pointer-events: none; }
